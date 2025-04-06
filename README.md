@@ -1,3 +1,1 @@
-# sachinthagaurawa.github.io
-Hi
 

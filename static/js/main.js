@@ -1,0 +1,1 @@
+// Simulated minified React code

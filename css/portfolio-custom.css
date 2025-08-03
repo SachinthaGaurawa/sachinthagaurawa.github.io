@@ -940,7 +940,7 @@ body {
 
 .typed-robot {
     font-family: 'Orbitron', monospace;
-    color: #ffffff;
+    color: white;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;

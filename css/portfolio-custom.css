@@ -32,40 +32,35 @@ body {
 }
 
 /* Hero Section */
-.hero-section {
-    position: relative;
-    background: linear-gradient(135deg, var(--bg-color) 0%, #e3f2fd 100%);
-    overflow: hidden;
+/* Mobile hero text fixes */
+@media (max-width: 768px) {
+  .hero-section {
+    padding-top: 120px !important; /* Add more top padding for mobile */
+    min-height: 100vh;
+  }
+  
+  .hero-name {
+    font-size: 2.5rem !important; /* Reduce font size for mobile */
+    line-height: 1.2;
+    margin-bottom: 1rem !important;
+  }
+  
+  .pulse-glow {
+    font-size: 1.5rem !important; /* Make "I'm" text larger and visible */
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .typed-robot {
+    font-size: 1.2rem !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  /* Ensure container has proper spacing */
+  .container-fluid.hero-section .container {
+    padding-top: 2rem;
+  }
 }
 
-.hero-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M10,10 L90,10 L90,90 L10,90 Z" fill="none" stroke="%23667eea" stroke-width="0.5" opacity="0.1"/><circle cx="10" cy="10" r="2" fill="%23667eea" opacity="0.1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23circuit)"/></svg>') repeat;
-    z-index: -1;
-}
-
-.hero-name {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: textGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes textGlow {
-    from { filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.5)); }
-    to { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.8)); }
-}
-
-/* Profile Section */
-.profile-container {
-    position: relative;
-}
 
 .profile-img {
     border-radius: 20px;
@@ -1039,5 +1034,5 @@ body {
     color: var(--primary-color);
   }
   
-  
+
   

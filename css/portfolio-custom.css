@@ -1112,5 +1112,33 @@ body {
   border: none !important;
 }
 
+
+
+/* Force the nav-pills container to flex and split evenly */
+.nav.nav-pills {
+  display: flex !important;
+  width: 100% !important;
+  border: 2px solid var(--primary-color);  /* Re-add border if needed */
+  border-radius: 0.5rem;                   /* Optional rounding */
+  overflow: hidden;                        /* Keep active block contained */
+}
+
+.nav.nav-pills .nav-item {
+  flex: 1 1 0 !important;
+  text-align: center !important;
+}
+
+.nav.nav-pills .nav-link {
+  width: 100% !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+.nav.nav-pills .nav-link.active {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
   
 

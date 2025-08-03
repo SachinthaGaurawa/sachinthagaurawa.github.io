@@ -43,6 +43,7 @@ body {
     font-size: 2.5rem !important; /* Reduce font size for mobile */
     line-height: 1.2;
     margin-bottom: 1rem !important;
+    color: #9BA49E; /* Lighter ash */
   }
   
   .pulse-glow {
@@ -857,7 +858,6 @@ body {
     
     .hero-name {
         font-size: 2.5rem;
-        color: #9BA49E; /* Lighter ash */
     }
     
     .social-icons {

@@ -35,6 +35,7 @@ body {
 /* Mobile hero text fixes */
 @media (max-width: 768px) {
   .hero-section {
+    color: #000 !important;   /* Pure black */
     padding-top: 120px !important; /* Add more top padding for mobile */
     min-height: 100vh;
   }

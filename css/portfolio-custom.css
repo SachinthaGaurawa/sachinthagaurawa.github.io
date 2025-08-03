@@ -1104,10 +1104,10 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
 
 
 
-
 @media (max-width: 768px) {
-  #backToTop {
+  .back-to-top {
     right: 15px !important;
+    left: auto !important;
   }
 }
 

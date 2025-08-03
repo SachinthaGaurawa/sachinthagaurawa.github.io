@@ -218,22 +218,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  function triggerDownload(type) {
-    const map = {
-      cv: 'Sachintha_Gaurawa_CV.pdf',
-      'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
-      'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
-    };
-    const filename = map[type] || 'document.pdf';
+async function triggerDownload(type) {
+  const map = {
+    cv: 'Sachintha_Gaurawa_CV.pdf',
+    'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
+    'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+  };
+  const filename = map[type] || 'document.pdf';
+  const url = `docs/${filename}`;
+
+  try {
+    // Fetch the file as a blob
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const blob = await response.blob();
+
+    // Create a local URL for the blob and force download
+    const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = `docs/${filename}`;
+    link.href = blobUrl;
     link.download = filename;
-    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // Release the object URL
+    window.URL.revokeObjectURL(blobUrl);
+
     showNotification('✅ Download started successfully!', 'success');
+  } catch (err) {
+    console.error('Download error:', err);
+    showNotification('❌ Failed to download. Please try again.', 'error');
   }
+}
+
   
   // Notification popup
   function showNotification(message, type) {

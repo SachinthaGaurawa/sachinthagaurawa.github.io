@@ -1060,26 +1060,57 @@ body {
   
 
   /* Make the nav-pills container a flexbox */
+.nav-pills .nav-link {
+  border-radius: 0;           /* Remove rounded edges so both tabs touch */
+}
+
+.nav-pills .nav-link.active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border: none !important;    /* Remove any border so it’s a solid block */
+}
+
+.nav-pills .nav-item {
+  flex: 1;                     /* Ensure both tabs evenly split the row */
+  text-align: center;          /* Center the text in each tab */
+}
+
+.nav-pills .nav-link {
+  width: 100%;                 /* Make each link fill its flexed container */
+}
+
+  
+
+/* Force the nav-pills container to flex */
+.nav.nav-pills,
 .nav-pills {
-    display: flex !important;
-  }
+  display: flex !important;
+  width: 100%;
+}
+
+/* Each item fills its half */
+.nav-pills .nav-item,
+.nav.nav-pills .nav-item {
+  flex: 1 1 0 !important;
+  text-align: center !important;
+}
+
+/* Each link fills its container */
+.nav-pills .nav-link,
+.nav.nav-pills .nav-link {
+  width: 100% !important;
+  border-radius: 0 !important;
+  text-align: center;
+  margin-bottom: 0 !important;
+}
+
+/* Active pill is block filled */
+.nav-pills .nav-link.active,
+.nav.nav-pills .nav-link.active {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
   
-  /* Ensure each nav-item takes equal space */
-  .nav-pills .nav-item {
-    flex: 1 1 auto;
-  }
-  
-  /* Make each link fill its nav-item completely */
-  .nav-pills .nav-link {
-    width: 100% !important;
-    border-radius: 0 !important;     /* Remove rounding */
-    text-align: center;              /* Center the text */
-  }
-  
-  /* Style the active link as a solid block */
-  .nav-pills .nav-link.active {
-    background-color: var(--primary-color) !important;
-    color: #fff !important;
-    border: none !important;
-  }
-  
+

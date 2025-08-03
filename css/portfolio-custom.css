@@ -1057,4 +1057,23 @@ body {
   }
   
 
+.nav-pills .nav-link {
+  border-radius: 0;           /* Remove rounded edges so both tabs touch */
+}
+
+.nav-pills .nav-link.active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border: none !important;    /* Remove any border so it’s a solid block */
+}
+
+.nav-pills .nav-item {
+  flex: 1;                     /* Ensure both tabs evenly split the row */
+  text-align: center;          /* Center the text in each tab */
+}
+
+.nav-pills .nav-link {
+  width: 100%;                 /* Make each link fill its flexed container */
+}
+
   

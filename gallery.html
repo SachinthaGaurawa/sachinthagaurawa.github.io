@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gallery - Sachintha Gaurawa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <!-- Bootstrap & Animate -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      background: #f5f7fa;
+      font-family: 'Poppins', sans-serif;
+    }
+    /* Hero & Header styles */
+    .header-bg {
+      background: linear-gradient(135deg, #0470ff, #38e7ab);
+      padding: 50px 0;
+      text-align: center;
+      color: white;
+      position: relative;
+    }
+    .header-bg h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    .header-bg p {
+      font-size: 1.2rem;
+    }
+    /* Album grid */
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 40px 20px;
+    }
+    /* Album card styles */
+    .album-card {
+      background: #fff;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .album-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    }
+    /* Album face image (front) */
+    .album-face {
+      width: 100%;
+      aspect-ratio: 1; /* Square shape for albums */
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease, filter 0.4s ease;
+    }
+    /* Animate icons & effects */
+    .album-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 3rem;
+      color: #0d6efd;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      padding: 15px;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+    /* Show button when hover */
+    .album-card:hover .album-icon {
+      transform: translate(-50%, -50%) scale(1);
+      animation: pulse 1.5s infinite alternate;
+    }
+    /* Album label overlay for hover */
+    .album-label {
+      position: absolute;
+      bottom: 0; left: 0; right:0;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.4));
+      padding: 10px 15px;
+      color: #fff;
+      font-weight: 600;
+      font-family: 'Orbitron', monospace;
+    }
+    /* Details for individual album pages, hidden initially */
+    .album-details {
+      display: none;
+      padding: 30px 20px;
+    }
+    /* Individual images grid in album detail view */
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    .images-grid img {
+      width: 100%;
+      aspect-ratio: 1;  /* Keep square shape for images */
+      object-fit: cover;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .images-grid img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    /* Back button style */
+    .back-btn {
+      margin-top: 30px;
+    }
+
+    /* Animations for pulse effect (icon scaling) */
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-50%, -50%) scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header-bg text-center" data-aos="zoom-in">
+    <h1>Sachintha Gaurawa</h1>
+    <p>Innovator in Electronics & Robotics | AI Safety Systems</p>
+  </div>
+
+  <!-- Album grid -->
+  <section id="albums" class="container my-5" data-aos="fade-up">
+    <h2 class="text-center mb-4" style="font-family:'Orbitron'; font-size:2.5rem;">Projects & Albums</h2>
+    <div class="album-grid" id="albumGrid">
+      <!-- Example Album 1 -->
+      <div class="album-card" data-album="aavss" aria-label="AAVSS Album">
+        <img src="img/aavss-album-cover.jpg" alt="AAVSS Cover" class="album-face" />
+        <div class="album-icon" title="View Album"><i class="fas fa-image"></i></div>
+        <div class="album-label">Autonomous Vehicle Safety System</div>
+      </div>
+      <!-- Example Album 2 -->
+      <div class="album-card" data-album="dataset" aria-label="Dataset Album">
+        <img src="img/dataset-album-cover.jpg" alt="Dataset Cover" class="album-face" />
+        <div class="album-icon" title="View Album"><i class="fas fa-image"></i></div>
+        <div class="album-label">Sri Lanka Driving Dataset</div>
+      </div>
+      <!-- Add more albums here as needed -->
+    </div>
+  </section>
+
+  <!-- Album Details container dynamically generated -->
+  <div class="container" id="albumDetailsContainer" style="display:none;">
+    <!-- Each album detail will load here dynamically -->
+  </div>
+
+  <!-- Bootstrap & Libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 1000, once:true });
+
+    const albums = {
+      aavss: {
+        title: "Advanced Autonomous Vehicle Safety System",
+        images: [
+          "img/aavss/system-overview.jpg",
+          "img/aavss/sensor-setup.jpg",
+          "img/aavss/ai-processing.jpg",
+          "img/aavss/testing-phase.jpg",
+          "img/aavss/results.jpg"
+        ]
+      },
+      dataset: {
+        title: "Sri Lanka Autonomous Driving Dataset",
+        images: [
+          "img/dataset/data-collection.jpg",
+          "img/dataset/road-scenarios.jpg",
+          "img/dataset/weather-conditions.jpg",
+          "img/dataset/traffic-patterns.jpg",
+          "img/dataset/annotation-process.jpg"
+        ]
+      }
+    };
+
+    // When album card clicked
+    $(document).on('click', '.album-card', function() {
+      const albumId = $(this).data('album');
+      showAlbumDetails(albumId);
+    });
+
+    // Load album images dynamically into page
+    function showAlbumDetails(albumId) {
+      const album = albums[albumId];
+      if (!album) return;
+
+      $('#albumGrid').hide();
+      $('#albums').hide();
+
+      const container = $('#albumDetailsContainer');
+      container.empty().show().append(`<h3 class="text-center mb-4" style="font-family:'Orbitron';">${album.title}</h3>`);
+      
+      const grid = $('<div class="images-grid"></div>');
+      
+      album.images.forEach(imgSrc => {
+        const img = $(`<img src="${imgSrc}" alt="${album.title} Image" class="wow fadeIn" data-aos="zoom-in" />`);
+        grid.append(img);
+      });
+      
+      container.append(grid);
+      
+      // Add back button
+      const backBtn = $('<button class="btn btn-secondary back-btn">⬅️ Back to Albums</button>');
+      backBtn.click(() => {
+        container.hide();
+        $('#albumGrid').show();
+        $('#albums').show();
+        container.empty();
+      });
+      container.append(backBtn);
+      
+      // Animate
+      AOS.refresh();
+    }
+  </script>
+</body>
+</html>

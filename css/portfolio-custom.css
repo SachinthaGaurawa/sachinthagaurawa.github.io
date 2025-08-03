@@ -1101,3 +1101,13 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
   border-top-right-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
 }
+
+
+
+
+@media (max-width: 768px) {
+  #backToTop {
+    right: 25px !important;  /* move 15px from the right edge */
+  }
+}
+

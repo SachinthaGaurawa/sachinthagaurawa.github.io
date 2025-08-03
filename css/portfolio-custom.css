@@ -35,20 +35,19 @@ body {
 /* Mobile hero text fixes */
 @media (max-width: 768px) {
   .hero-section {
-    color: #000 !important;   /* Pure black */
-    padding-top: 120px !important; /* Add more top padding for mobile */
+    padding-top: 120px !important; /* Remove color from here */
     min-height: 100vh;
   }
   
   .hero-name {
-    font-size: 2.5rem !important; /* Reduce font size for mobile */
+    color: #000 !important;   /* ✅ Move color to .hero-name */
+    font-size: 2.5rem !important;
     line-height: 1.2;
     margin-bottom: 1rem !important;
-
   }
   
   .pulse-glow {
-    font-size: 1.5rem !important; /* Make "I'm" text larger and visible */
+    font-size: 1.5rem !important;
     margin-bottom: 0.5rem !important;
   }
   
@@ -56,6 +55,27 @@ body {
     font-size: 1.2rem !important;
     margin-bottom: 2rem !important;
   }
+  
+  .container-fluid.hero-section .container {
+    padding-top: 2rem;
+  }
+}
+
+.typed-robot {
+    font-family: 'Orbitron', monospace;
+    color: #2f2f2f !important;  /* ✅ Add !important to override other styles */
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 1.8rem;
+}
+
+.cursor {
+    display: inline-block;
+    animation: blink 0.8s steps(1) infinite;
+    color: #2f2f2f !important;  /* ✅ Match the typed-robot color */
+}
+
   
   /* Ensure container has proper spacing */
   .container-fluid.hero-section .container {
@@ -940,7 +960,7 @@ body {
 
 .typed-robot {
     font-family: 'Orbitron', monospace;
-    color: white;
+    color: #2f2f2f;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;

@@ -1082,3 +1082,22 @@ body {
   color: #fff !important;
   border: none !important;
 }
+
+
+
+
+ul.nav.nav-pills {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Reintroduce rounding on active tab’s outer corners */
+ul.nav.nav-pills > li:first-child > .nav-link.active {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+ul.nav.nav-pills > li:last-child > .nav-link.active {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}

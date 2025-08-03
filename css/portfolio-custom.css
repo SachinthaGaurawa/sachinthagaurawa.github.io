@@ -1107,7 +1107,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
 
 @media (max-width: 768px) {
   #backToTop {
-    right: 25px !important;  /* move 15px from the right edge */
+    right: 55px !important;  /* move 15px from the right edge */
   }
 }
 

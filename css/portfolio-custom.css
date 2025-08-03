@@ -63,7 +63,7 @@ body {
 
 .typed-robot {
     font-family: 'Orbitron', monospace;
-    color: #363535 !important;  /* ✅ Add !important to override other styles */
+    color: #545454 !important;  /* ✅ Add !important to override other styles */
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;

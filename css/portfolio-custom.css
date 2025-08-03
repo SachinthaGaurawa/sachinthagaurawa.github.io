@@ -1,1079 +1,953 @@
-/* Next-Level Portfolio Custom Styles */
-:root {
-    --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --warning-color: #ffc107;
-    --danger-color: #dc3545;
-    --info-color: #0dcaf0;
-    --dark-color: #212529;
-    --light-color: #f8f9fa;
-    --bg-color: #f5f7fa;
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --tech-gradient: linear-gradient(45deg, #00c9ff 0%, #92fe9d 100%);
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Sachintha Gaurawa - Electronic & Robotics Engineer</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="Graduate Electronic & Electrical Engineer specializing in Embedded Systems, Robotics, and AI-driven Safety Solutions" name="description">
+    <meta content="Sachintha Gaurawa, Electronic Engineer, Robotics, Embedded Systems, AI, AAVSS" name="keywords">
 
-/* Orbitron font for tech elements */
-.brand-font, .tech-text, .counter-num {
-    font-family: 'Orbitron', monospace;
-}
-
-/* Custom Background */
-body {
-    background: var(--bg-color);
-}
-
-/* Loading Screen Enhancement */
-.loading-text {
-    font-family: 'Orbitron', monospace;
-    font-weight: 500;
-    animation: pulse 1.5s ease-in-out infinite alternate;
-}
-
-/* Hero Section */
-/* Mobile hero text fixes */
-@media (max-width: 768px) {
-  .hero-section {
-    padding-top: 120px !important; /* Remove color from here */
-    min-height: 100vh;
-  }
-  
-  .hero-name {
-    color: #000 !important;   /* ✅ Move color to .hero-name */
-    font-size: 2.5rem !important;
-    line-height: 1.2;
-    margin-bottom: 1rem !important;
-  }
-  
-  .pulse-glow {
-    font-size: 1.5rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-  
-  .typed-robot {
-    font-size: 1.2rem !important;
-    margin-bottom: 2rem !important;
-  }
-  
-  .container-fluid.hero-section .container {
-    padding-top: 2rem;
-  }
-}
-
-.typed-robot {
-    font-family: 'Orbitron', monospace;
-    color: #545454 !important;  /* ✅ Add !important to override other styles */
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    font-size: 1.8rem;
-}
-
-.cursor {
-    display: inline-block;
-    animation: blink 0.8s steps(1) infinite;
-    color: #2f2f2f !important;  /* ✅ Match the typed-robot color */
-}
-
-  
-  /* Ensure container has proper spacing */
-  .container-fluid.hero-section .container {
-    padding-top: 2rem;
-  }
-}
-
-
-.profile-img {
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.profile-img:hover {
-    transform: scale(1.05) rotate(2deg);
-}
-
-/* Tech Elements */
-.tech-elements {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-}
-
-.circuit-line {
-    position: absolute;
-    background: var(--gradient-primary);
-    height: 2px;
-    animation: circuit-flow 3s linear infinite;
-}
-
-.circuit-1 {
-    top: 20%;
-    left: -50px;
-    width: 100px;
-    animation-delay: 0s;
-}
-
-.circuit-2 {
-    bottom: 30%;
-    right: -50px;
-    width: 80px;
-    animation-delay: 1s;
-}
-
-.circuit-dot {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-.dot-1 { top: 15%; right: 20%; animation-delay: 0.5s; }
-.dot-2 { bottom: 25%; left: 15%; animation-delay: 1.5s; }
-.dot-3 { top: 60%; right: 10%; animation-delay: 2.5s; }
-
-@keyframes circuit-flow {
-    0% { transform: translateX(-100px); opacity: 0; }
-    50% { opacity: 1; }
-    100% { transform: translateX(100px); opacity: 0; }
-}
-
-/* Buttons */
-.download-btn, .linkedin-btn {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.download-btn::before, .linkedin-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
-
-.download-btn:hover::before, .linkedin-btn:hover::before {
-    left: 100%;
-}
-
-/* Social Icons */
-.social-icons {
-    display: flex;
-    gap: 15px;
-}
-
-.social-icon {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--gradient-primary);
-    color: white;
-    border-radius: 12px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    font-size: 20px;
-}
-
-.social-icon:hover {
-    transform: translateY(-5px) rotate(5deg);
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-    color: white;
-}
-
-/* About Section */
-.about-text {
-    font-size: 1.1rem;
-    line-height: 1.8;
-}
-
-.about-highlights p {
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-.about-img {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.about-img:hover {
-    transform: scale(1.05);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-}
-
-.tech-counter {
-    background: var(--gradient-primary);
-    color: white;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-}
-
-.stats-container {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-/* Skills Section */
-.skill {
-    margin-bottom: 2rem;
-}
-
-.progress {
-    height: 10px;
-    border-radius: 10px;
-    background: rgba(0,0,0,0.1);
-}
-
-.skill-bar {
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-}
-
-.skill-bar::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
-.gradient-bar {
-    background: var(--tech-gradient) !important;
-}
-
-/* Tool and Spec Cards */
-.tool-card, .spec-card {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    height: 100%;
-}
-
-.tool-card:hover, .spec-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-
-.tool-icon {
-    font-size: 2.5rem;
-    color: var(--primary-color);
-    margin-bottom: 15px;
-}
-
-/* Education Timeline */
-.education-timeline {
-    position: relative;
-    padding: 2rem 0;
-}
-
-.education-timeline::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--gradient-primary);
-    transform: translateX(-50%);
-}
-
-.timeline-item {
-    display: flex;
-    justify-content: flex-end;
-    padding-right: calc(50% + 30px);
-    position: relative;
-    margin-bottom: 4rem;
-}
-
-.timeline-item:nth-child(even) {
-    justify-content: flex-start;
-    padding-left: calc(50% + 30px);
-    padding-right: 0;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: 50%;
-    top: 20px;
-    width: 20px;
-    height: 20px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    transform: translateX(-50%);
-    border: 4px solid white;
-    box-shadow: 0 0 20px rgba(13, 110, 253, 0.4);
-}
-
-.timeline-content {
-    background: white;
-    padding: 0;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    max-width: 500px;
-    position: relative;
-    overflow: hidden;
-}
-
-.timeline-year {
-    position: absolute;
-    top: -30px;
-    right: 20px;
-    background: var(--gradient-primary);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-}
-
-.timeline-item:nth-child(even) .timeline-year {
-    right: auto;
-    left: 20px;
-}
-
-.timeline-card {
-    padding: 30px;
-}
-
-.degree-icon {
-    width: 60px;
-    height: 60px;
-    background: var(--gradient-primary);
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.diploma-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.diploma-badge {
-    background: var(--light-color);
-    color: var(--primary-color);
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: 1px solid var(--primary-color);
-}
-
-/* Experience Section */
-.experience-card {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.experience-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-}
-
-.exp-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.exp-icon {
-    width: 70px;
-    height: 70px;
-    background: var(--gradient-primary);
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.8rem;
-    margin-right: 20px;
-}
-
-.exp-duration {
-    color: var(--primary-color);
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.exp-achievements {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0;
-}
-
-.exp-achievements li {
-    padding: 8px 0;
-    position: relative;
-    padding-left: 25px;
-}
-
-.exp-achievements li::before {
-    content: '▶';
-    position: absolute;
-    left: 0;
-    color: var(--primary-color);
-    font-size: 0.8rem;
-}
-
-.exp-skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.skill-tag {
-    background: var(--gradient-primary);
-    color: white;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-/* Project Cards */
-.project-card {
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    transition: all 0.4s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.project-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
-}
-
-.project-image {
-    position: relative;
-    overflow: hidden;
-    height: 250px;
-}
-
-.project-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.project-card:hover .project-image img {
-    transform: scale(1.1);
-}
-
-.project-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(13, 110, 253, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.project-card:hover .project-overlay {
-    opacity: 1;
-}
-
-.project-content {
-    padding: 30px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.project-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
-}
-
-.project-badge {
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.project-badge.patent {
-    background: var(--gradient-secondary);
-    color: white;
-}
-
-.project-badge.upcoming {
-    background: var(--warning-color);
-    color: var(--dark-color);
-}
-
-.project-description {
-    flex-grow: 1;
-    margin-bottom: 20px;
-    line-height: 1.6;
-}
-
-.project-tech {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 15px;
-}
-
-.tech-badge {
-    background: var(--light-color);
-    color: var(--primary-color);
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border: 1px solid var(--primary-color);
-}
-
-.project-achievements {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.achievement {
-    background: var(--success-color);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-/* Research Cards */
-.research-card {
-    background: white;
-    border-radius: 20px;
-    padding: 35px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    transition: all 0.4s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-}
-
-.research-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 5px;
-    background: var(--gradient-primary);
-}
-
-.research-card:hover {
-    transform: translateY(-10px) rotateX(5deg);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.2);
-}
-
-.research-icon {
-    width: 80px;
-    height: 80px;
-    background: rgba(13, 110, 253, 0.1);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 25px;
-    font-size: 2rem;
-}
-
-.research-abstract {
-    flex-grow: 1;
-    line-height: 1.7;
-    margin-bottom: 25px;
-}
-
-.research-meta {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.research-status {
-    background: var(--success-color);
-    color: white;
-    padding: 5px 15px;
-    border-radius: 15px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.research-year {
-    background: var(--light-color);
-    color: var(--dark-color);
-    padding: 5px 15px;
-    border-radius: 15px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-/* Membership Cards */
-.membership-card {
-    background: white;
-    border-radius: 20px;
-    padding: 40px 30px;
-    text-align: center;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    transition: all 0.4s ease;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.membership-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(13, 110, 253, 0.1), transparent);
-    animation: rotate 4s linear infinite;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.membership-card:hover::before {
-    opacity: 1;
-}
-
-.membership-card:hover {
-    transform: translateY(-10px) scale(1.05);
-    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
-}
-
-@keyframes rotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.membership-icon {
-    width: 80px;
-    height: 80px;
-    background: var(--gradient-primary);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    margin: 0 auto 25px;
-    position: relative;
-    z-index: 2;
-}
-
-.membership-badge {
-    background: var(--gradient-primary);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    position: relative;
-    z-index: 2;
-}
-
-/* Contact Section */
-.contact-info {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-}
-
-.contact-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 30px;
-    padding: 20px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-
-.contact-item:last-child {
-    border-bottom: none;
-}
-
-.contact-icon {
-    width: 60px;
-    height: 60px;
-    background: var(--gradient-primary);
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.3rem;
-    margin-right: 20px;
-}
-
-.contact-details h6 {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.contact-details a {
-    color: var(--dark-color);
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.contact-details a:hover {
-    color: var(--primary-color);
-}
-
-/* Contact Form */
-.contact-form-container {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-}
-
-.form-floating > .form-control {
-    border: 2px solid rgba(0,0,0,0.1);
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.form-floating > .form-control:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 20px rgba(13, 110, 253, 0.2);
-}
-
-/* Human Verification */
-.human-verification {
-    background: rgba(13, 110, 253, 0.05);
-    border: 2px solid rgba(13, 110, 253, 0.2);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 15px 0;
-}
-
-/* Pulse Animation */
-.pulse-glow {
-    animation: pulseGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes pulseGlow {
-    from { 
-        text-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
-        transform: scale(1);
-    }
-    to { 
-        text-shadow: 0 0 20px rgba(13, 110, 253, 0.8);
-        transform: scale(1.02);
-    }
-}
-
-/* Brand Center Styling */
-.brand-center {
-    background: var(--gradient-primary) !important;
-    border-radius: 15px;
-    transition: all 0.3s ease;
-}
-
-.brand-center:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-}
-
-.brand-center h1 {
-    color: white !important;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-/* Counter Animation */
-.counter {
-    font-family: 'Orbitron', monospace;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .education-timeline::before {
-        left: 30px;
-    }
     
-    .timeline-item {
-        padding-left: 60px;
-        padding-right: 0;
-        justify-content: flex-start;
-    }
+    <!-- Favicon -->
+    <link href="img/favicon.ico" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"> 
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="lib/animate/animate.min.css" rel="stylesheet">
+    <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+    <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/portfolio-custom.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     
-    .timeline-item:nth-child(even) {
-        padding-left: 60px;
-        padding-right: 0;
-        justify-content: flex-start;
-    }
+</head>
+
+<body data-bs-spy="scroll" data-bs-target=".navbar" data-bs-offset="51">
+    <!-- Spinner Start -->
+    <div id="spinner" class="show bg-dark position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <div class="loading-text mt-3 text-primary">Initializing Systems...</div>
+    </div>
+    <!-- Spinner End -->
+
+    <!-- Navbar Start -->
+    <nav class="navbar navbar-expand-lg bg-white navbar-light fixed-top shadow py-lg-0 px-4 px-lg-5 wow fadeIn" data-wow-delay="0.1s">
+        <a href="index.html" class="navbar-brand d-block d-lg-none">
+            <h1 class="text-primary fw-bold m-0 brand-font">SG</h1>
+        </a>
+        <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between py-4 py-lg-0" id="navbarCollapse">
+            <div class="navbar-nav ms-auto py-0">
+                <a href="#home" class="nav-item nav-link active">Home</a>
+                <a href="#about" class="nav-item nav-link">About</a>
+                <a href="#skill" class="nav-item nav-link">Skills</a>
+                <a href="#education" class="nav-item nav-link">Education</a>
+                <a href="#experience" class="nav-item nav-link">Experience</a>
+            </div>
+            
+            <a href="index.html" class="navbar-brand bg-secondary py-3 px-4 mx-3 d-none d-lg-block brand-center">
+                <h1 class="text-primary fw-bold m-0 brand-font">Sachintha Gaurawa</h1>
+            </a>
+             
+            <div class="navbar-nav me-auto py-0">
+                <a href="#project" class="nav-item nav-link">Projects</a>
+                <a href="#research" class="nav-item nav-link">Research</a>
+                <a href="#memberships" class="nav-item nav-link">Memberships</a>
+                <a href="gallery.html" class="nav-item nav-link" target="_blank">Gallery</a>
+                <a href="#contact" class="nav-item nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="container-fluid hero-section my-6 mt-0" id="home">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-6 py-6 pb-0 pt-lg-0" data-aos="fade-right" data-aos-duration="1000">
+                    <<h3 class="text-primary mb-3 pulse-glow">I'm</h3>
+                    <h1 class="display-3 mb-3 hero-name">Mr. Sachintha Gaurawa</h1>
+
+                    
+                    <h2 class="typed-robot">
+                        <span id="typing"></span><span class="cursor">|</span>
+                    </h2>
+                      
+
+
+                    <div class="d-flex align-items-center pt-5">
+                        <button id="downloadCV" class="btn btn-primary py-3 px-4 me-3 download-btn">
+                            <i class="fas fa-download me-2"></i>Download CV
+                        </button>
+                        <a href="https://www.linkedin.com/in/sachinthagaurawa" target="_blank" class="btn btn-outline-primary py-3 px-4 linkedin-btn">
+                            <i class="fab fa-linkedin-in me-2"></i>LinkedIn
+                        </a>
+                    </div>
+                    
+                    <!-- Social Icons -->
+                    
+
+                    
+                </div>
+                <div class="col-lg-6" data-aos="fade-left" data-aos-duration="1000">
+                    <div class="profile-container">
+                        <img class="img-fluid profile-img" src="img/profile.png" alt="Sachintha Gaurawa">
+                        <div class="tech-elements">
+                            <div class="circuit-line circuit-1"></div>
+                            <div class="circuit-line circuit-2"></div>
+                            <div class="circuit-dot dot-1"></div>
+                            <div class="circuit-dot dot-2"></div>
+                            <div class="circuit-dot dot-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Header End -->
+
+    <!-- About Start -->
+    <div class="container-xxl py-6" id="about" style="background: #f5f7fa;">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.1s" data-aos="fade-right">
+                    <div class="d-flex align-items-center mb-5">
+                        <div class="years flex-shrink-0 text-center me-4 tech-counter">
+                            <h1 class="display-1 mb-0 counter-num">4</h1>
+                            <h4><span style="letter-spacing:0.5em;">Y e a r</span></h4>
+
+                        </div>
+                        <h3 class="lh-base mb-0">of cutting-edge experience in embedded systems, AI safety and intelligent robotics</h3>
+                    </div>
+                    <p class="mb-4 about-text">
+                        I am a highly motivated postgraduate specializing in <strong>Electrical and Electronic Engineering</strong>, with hands-on expertise 
+                        in embedded systems, automation and intelligent safety technologies. My academic training spans ELV installation, 
+                        PCB design, digital electronics and microcontroller programming. I'm proficient in industry-standard tools including 
+                        <strong>KiCad, SolidWorks, Proteus, MATLAB and Arduino</strong>.
+                    </p>
+                    <p class="mb-4">
+                        I led the design and implementation of the <strong>Advanced Autonomous Vehicle Safety System (AAVSS)</strong> - 
+                        a real-time, AI-integrated embedded platform aimed at reducing road accidents through intelligent monitoring and automation. 
+                        This system earned distinction-level recognition and reflects my commitment to engineering innovation for social impact.
+                    </p>
+                    <div class="about-highlights">
+                        <p class="mb-3"><i class="fas fa-microchip text-primary me-3"></i>Advanced Embedded Systems Design</p>
+                        <p class="mb-3"><i class="fas fa-robot text-primary me-3"></i>AI-Driven Safety Solutions</p>
+                        <p class="mb-3"><i class="fas fa-cogs text-primary me-3"></i>Real-time System Integration</p>
+                        <p class="mb-3"><i class="fas fa-award text-primary me-3"></i>Patent-Pending Innovations</p>
+                    </div>
+                    <a class="btn btn-primary py-3 px-5 mt-3" href="#contact">Get In Touch</a>
+                </div>
+                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s" data-aos="fade-left">
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <img class="img-fluid rounded about-img" src="img/about-1.jpg" alt="">
+                        </div>
+                        <div class="col-sm-6">
+                            <img class="img-fluid rounded about-img" src="img/about-2.jpg" alt="">
+                        </div>
+                    </div>
+                    <div class="stats-container">
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="border-end pe-3 me-3 mb-0">Projects Completed</h5>
+                            <h2 class="text-primary fw-bold mb-0 counter" data-target="15">0</h2>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="border-end pe-3 me-3 mb-0">Research Papers</h5>
+                            <h2 class="text-primary fw-bold mb-0 counter" data-target="5">0</h2>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="border-end pe-3 me-3 mb-0">Certifications</h5>
+                            <h2 class="text-primary fw-bold mb-0 counter" data-target="12">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- About End -->
+
+    <!-- Skills Start -->
+    <div class="container-xxl py-6 pb-5" id="skill">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.1s" data-aos="fade-right">
+                    <h1 class="display-5 mb-5">Skills & Expertise</h1>
+                    <p class="mb-4">My technical expertise spans across multiple domains of electrical engineering, embedded systems, and cutting-edge AI technologies.</p>
+                    <h3 class="mb-4">Technical Skills</h3>
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="100">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">Embedded Systems</h6>
+                                    <h6 class="font-weight-bold">95%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary skill-bar" role="progressbar" data-width="95"></div>
+                                </div>
+                            </div>
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="200">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">PCB Design</h6>
+                                    <h6 class="font-weight-bold">90%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning skill-bar" role="progressbar" data-width="90"></div>
+                                </div>
+                            </div>
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="300">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">MATLAB/Simulink</h6>
+                                    <h6 class="font-weight-bold">88%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger skill-bar" role="progressbar" data-width="88"></div>
+                                </div>
+                            </div>
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="400">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">Python Programming</h6>
+                                    <h6 class="font-weight-bold">92%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success skill-bar" role="progressbar" data-width="92"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="500">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">C/C++ Programming</h6>
+                                    <h6 class="font-weight-bold">90%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info skill-bar" role="progressbar" data-width="90"></div>
+                                </div>
+                            </div>
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="600">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">AI/Machine Learning</h6>
+                                    <h6 class="font-weight-bold">85%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-dark skill-bar" role="progressbar" data-width="85"></div>
+                                </div>
+                            </div>
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="700">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">Robotics & Automation</h6>
+                                    <h6 class="font-weight-bold">87%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-secondary skill-bar" role="progressbar" data-width="87"></div>
+                                </div>
+                            </div>
+                            <div class="skill mb-4" data-aos="fade-up" data-aos-delay="800">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="font-weight-bold">IoT Systems</h6>
+                                    <h6 class="font-weight-bold">83%</h6>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar gradient-bar skill-bar" role="progressbar" data-width="83"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s" data-aos="fade-left">
+                    <ul class="nav nav-pills rounded border border-2 border-primary mb-5">
+                        <li class="nav-item w-50">
+                            <button class="nav-link w-100 py-3 fs-5 active" data-bs-toggle="pill" href="#tab-tools">Tools & Platforms</button>
+                        </li>
+                        <li class="nav-item w-50">
+                            <button class="nav-link w-100 py-3 fs-5 active" data-bs-toggle="pill" href="#tab-tools">Specializations</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="tab-tools" class="tab-pane fade show p-0 active">
+                            <div class="row gy-4 gx-4">
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="100">
+                                    <div class="tool-card">
+                                        <i class="fas fa-microchip tool-icon"></i>
+                                        <h6>Arduino & Raspberry Pi</h6>
+                                        <span>Advanced prototyping</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="200">
+                                    <div class="tool-card">
+                                        <i class="fas fa-brain tool-icon"></i>
+                                        <h6>Jetson Nano</h6>
+                                        <span>Edge AI computing</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="300">
+                                    <div class="tool-card">
+                                        <i class="fas fa-drafting-compass tool-icon"></i>
+                                        <h6>KiCad & Proteus</h6>
+                                        <span>PCB design & simulation</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="400">
+                                    <div class="tool-card">
+                                        <i class="fas fa-cube tool-icon"></i>
+                                        <h6>SolidWorks</h6>
+                                        <span>3D modeling & CAD</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tab-specialization" class="tab-pane fade show p-0">
+                            <div class="row gy-4 gx-4">
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="100">
+                                    <div class="spec-card">
+                                        <h6>Autonomous Vehicle Safety</h6>
+                                        <span>AI-driven collision avoidance systems</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="200">
+                                    <div class="spec-card">
+                                        <h6>Embedded AI</h6>
+                                        <span>Edge computing solutions</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="300">
+                                    <div class="spec-card">
+                                        <h6>Disaster Response Robotics</h6>
+                                        <span>Swarm intelligence systems</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6" data-aos="zoom-in" data-aos-delay="400">
+                                    <div class="spec-card">
+                                        <h6>Multi-Sensor Fusion</h6>
+                                        <span>Real-time data processing</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Skills End -->
+
+    <!-- Education Start -->
+    <div class="container-xxl py-6 pb-5" id="education" style="background: #f5f7fa;">
+        <div class="container">
+            <div class="row g-5 mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-lg-12 text-center">
+                    <h1 class="display-5 mb-0" data-aos="fade-up">Educational Journey</h1>
+                    <p class="lead mt-3" data-aos="fade-up" data-aos-delay="200">Building expertise through comprehensive academic and professional development</p>
+                </div>
+            </div>
+            <div class="education-timeline">
+                <!-- Master's Degree -->
+                <div class="timeline-item" data-aos="fade-right" data-aos-delay="100">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2025-2026</span>
+                        <div class="timeline-card">
+                            <div class="degree-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h4>Master of Science in Automation and Robotics</h4>
+                            <h6 class="text-primary">Anglia Ruskin University, United Kingdom</h6>
+                            <p>Advanced studies in autonomous systems, AI integration, and intelligent automation technologies.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bachelor's Degree -->
+                <div class="timeline-item" data-aos="fade-left" data-aos-delay="200">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2024-2025</span>
+                        <div class="timeline-card">
+                            <div class="degree-icon">
+                                <i class="fas fa-university"></i>
+                            </div>
+                            <h4>Bachelor of Engineering (Hons.) in Electrical and Electronic Engineering</h4>
+                            <h6 class="text-primary">University of Greater Manchester, United Kingdom</h6>
+                            <p>Comprehensive foundation in electrical systems, embedded design, and electronic engineering principles.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prior Study -->
+                <div class="timeline-item" data-aos="fade-right" data-aos-delay="300">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2021-2024</span>
+                        <div class="timeline-card">
+                            <div class="degree-icon">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <h4>Electronic Engineering – Prior Study (Years 1–3)</h4>
+                            <h6 class="text-primary">SLTC Research University, Sri Lanka</h6>
+                            <p>Foundation studies in electronics, circuit analysis, and embedded systems development.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Certifications -->
+                <div class="timeline-item" data-aos="fade-left" data-aos-delay="400">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2023-2025</span>
+                        <div class="timeline-card">
+                            <div class="degree-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h4>Advanced Diploma of Robotics Technology and Telecommunications</h4>
+                            <h6 class="text-primary">Canadian Skill Development Council</h6>
+                            <p>Specialized training in robotics systems, telecommunications, and advanced automation technologies.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Management -->
+                <div class="timeline-item" data-aos="fade-right" data-aos-delay="500">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2024</span>
+                        <div class="timeline-card">
+                            <div class="degree-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <h4>Diploma in Project Management</h4>
+                            <h6 class="text-primary">University of Moratuwa</h6>
+                            <p>Professional project management methodologies and leadership skills.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Diplomas -->
+                <div class="timeline-item" data-aos="fade-left" data-aos-delay="600">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2021-2023</span>
+                        <div class="timeline-card">
+                            <div class="degree-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <h4>Multiple Technical Diplomas</h4>
+                            <div class="diploma-list">
+                                <span class="diploma-badge">Python Programming</span>
+                                <span class="diploma-badge">Web Design</span>
+                                <span class="diploma-badge">Mechatronics</span>
+                                <span class="diploma-badge">Information Technology</span>
+                            </div>
+                            <p>Comprehensive skill development across multiple technical domains.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Education End -->
+
+    <!-- Experience Start -->
+    <div class="container-xxl py-6 pb-5" id="experience">
+        <div class="container">
+            <div class="row g-5 mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-lg-6">
+                    <h1 class="display-5 mb-0" data-aos="fade-right">Professional Experience</h1>
+                </div>
+                <div class="col-lg-6 text-lg-end" data-aos="fade-left">
+                    <p class="lead">Building practical expertise through hands-on technical roles</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-12" data-aos="fade-up" data-aos-delay="200">
+                    <div class="experience-card">
+                        <div class="exp-header">
+                            <div class="exp-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="exp-details">
+                                <h4>Technical Maintenance Specialist</h4>
+                                <h6 class="text-primary">TK SPORTS | Sri Lanka</h6>
+                                <span class="exp-duration">April 2021 - August 2023</span>
+                            </div>
+                        </div>
+                        <div class="exp-content">
+                            <ul class="exp-achievements">
+                                <li>Provided essential maintenance and repair services for advanced embroidery and digital printing machinery</li>
+                                <li>Specialized in rapid diagnosis and resolution of electronic and electrical system failures</li>
+                                <li>Reduced operational downtime by 35% through proactive maintenance protocols</li>
+                                <li>Implemented predictive maintenance strategies using IoT sensors and data analytics</li>
+                                <li>Trained junior technicians in advanced troubleshooting techniques</li>
+                            </ul>
+                            <div class="exp-skills">
+                                <span class="skill-tag">Electronic Troubleshooting</span>
+                                <span class="skill-tag">Preventive Maintenance</span>
+                                <span class="skill-tag">System Diagnostics</span>
+                                <span class="skill-tag">Equipment Optimization</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Experience End -->
+
+    <!-- Projects Start -->
+    <div class="container-xxl py-6 pt-5" id="project" style="background: #f5f7fa;">
+        <div class="container">
+            <div class="row g-5 mb-5 align-items-center wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-lg-6">
+                    <h1 class="display-5 mb-0" data-aos="fade-right">Innovation Projects</h1>
+                </div>
+                <div class="col-lg-6 text-lg-end" data-aos="fade-left">
+                    <p class="lead">Cutting-edge solutions for real-world engineering challenges</p>
+                </div>
+            </div>
+            <div class="row g-4 portfolio-container wow fadeInUp" data-wow-delay="0.1s">
+                <!-- AAVSS Project -->
+                <div class="col-lg-6 col-md-6 portfolio-item" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="project-card">
+                        <div class="project-image">
+                            <img class="img-fluid" src="img/aavss-project.jpg" alt="AAVSS">
+                            <div class="project-overlay">
+                                <div class="project-links">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/aavss-project.jpg" data-lightbox="portfolio">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <div class="project-header">
+                                <h4>Advanced Autonomous Vehicle Safety System (AAVSS)</h4>
+                                <span class="project-badge patent">Patent Pending</span>
+                            </div>
+                            <p class="project-description">
+                                Revolutionary real-time AI-integrated embedded platform designed to dramatically reduce road accidents through 
+                                intelligent monitoring, predictive analysis, and automated intervention systems. Features multi-sensor fusion, 
+                                edge computing, and millisecond-response collision avoidance.
+                            </p>
+                            <div class="project-tech">
+                                <span class="tech-badge">AI/ML</span>
+                                <span class="tech-badge">Embedded Systems</span>
+                                <span class="tech-badge">Multi-Sensor Fusion</span>
+                                <span class="tech-badge">Real-time Processing</span>
+                            </div>
+                            <div class="project-achievements">
+                                <span class="achievement">Distinction Level Recognition</span>
+                                <span class="achievement">Patent Application Filed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Autonomous Driving Dataset -->
+                <div class="col-lg-6 col-md-6 portfolio-item" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="project-card">
+                        <div class="project-image">
+                            <img class="img-fluid" src="img/dataset-project.jpg" alt="Dataset">
+                            <div class="project-overlay">
+                                <div class="project-links">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/dataset-project.jpg" data-lightbox="portfolio">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <div class="project-header">
+                                <h4>Autonomous Driving Dataset for Sri Lanka</h4>
+                                <span class="project-badge upcoming">Upcoming</span>
+                            </div>
+                            <p class="project-description">
+                                Comprehensive dataset creation project focusing on Sri Lankan road conditions, traffic patterns, and driving behaviors. 
+                                This pioneering dataset will enable localized autonomous vehicle development and contribute to global AV research initiatives.
+                            </p>
+                            <div class="project-tech">
+                                <span class="tech-badge">Computer Vision</span>
+                                <span class="tech-badge">Data Collection</span>
+                                <span class="tech-badge">Machine Learning</span>
+                                <span class="tech-badge">Autonomous Vehicles</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Car Parking System -->
+                <div class="col-lg-4 col-md-6 portfolio-item" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="project-card">
+                        <div class="project-image">
+                            <img class="img-fluid" src="img/parking-project.jpg" alt="Smart Parking">
+                            <div class="project-overlay">
+                                <div class="project-links">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/parking-project.jpg" data-lightbox="portfolio">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h5>Smart Car Parking System</h5>
+                            <p>IoT-enabled automated parking solution with real-time space monitoring and mobile app integration.</p>
+                            <div class="project-tech">
+                                <span class="tech-badge">IoT</span>
+                                <span class="tech-badge">Sensors</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automatic Headlight Control -->
+                <div class="col-lg-4 col-md-6 portfolio-item" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="project-card">
+                        <div class="project-image">
+                            <img class="img-fluid" src="img/headlight-project.jpg" alt="Headlight Control">
+                            <div class="project-overlay">
+                                <div class="project-links">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/headlight-project.jpg" data-lightbox="portfolio">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h5>Automatic Headlight Control</h5>
+                            <p>Intelligent lighting system with ambient light sensing and automatic high-beam management.</p>
+                            <div class="project-tech">
+                                <span class="tech-badge">Automotive</span>
+                                <span class="tech-badge">Embedded</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RLC Meter -->
+                <div class="col-lg-4 col-md-6 portfolio-item" data-aos="zoom-in" data-aos-delay="500">
+                    <div class="project-card">
+                        <div class="project-image">
+                            <img class="img-fluid" src="img/rlc-project.jpg" alt="RLC Meter">
+                            <div class="project-overlay">
+                                <div class="project-links">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/rlc-project.jpg" data-lightbox="portfolio">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h5>Precision RLC Meter</h5>
+                            <p>High-accuracy measurement device for resistance, inductance, and capacitance with digital display.</p>
+                            <div class="project-tech">
+                                <span class="tech-badge">Measurement</span>
+                                <span class="tech-badge">Precision</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Projects End -->
+
+    <!-- Research Start -->
+    <div class="container-xxl py-6 pb-5" id="research">
+        <div class="container">
+            <div class="row g-5 mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-lg-6">
+                    <h1 class="display-5 mb-0" data-aos="fade-right">Research & Publications</h1>
+                </div>
+                <div class="col-lg-6 text-lg-end" data-aos="fade-left">
+                    <p class="lead">Contributing to the advancement of AI, robotics, and safety systems</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <!-- Research Paper 1 -->
+                <div class="col-lg-6" data-aos="flip-left" data-aos-delay="100">
+                    <div class="research-card">
+                        <div class="research-icon">
+                            <i class="fas fa-car text-primary"></i>
+                        </div>
+                        <div class="research-content">
+                            <h4>AI-Enhanced Predictive Safety Framework for Autonomous Vehicles Using Embedded Edge Intelligence and Multi-Sensor Fusion</h4>
+                            <p class="research-abstract">
+                                This research presents a novel framework integrating edge AI computing with multi-sensor fusion 
+                                technologies to create predictive safety systems for autonomous vehicles. The system demonstrates 
+                                superior performance in real-time threat detection and collision avoidance.
+                            </p>
+                            <div class="research-meta">
+                                <span class="research-status">Published</span>
+                                <span class="research-year">2024</span>
+                            </div>
+                            <button class="btn btn-primary download-research" data-paper="av-safety-framework">
+                                <i class="fas fa-download me-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Research Paper 2 -->
+                <div class="col-lg-6" data-aos="flip-right" data-aos-delay="200">
+                    <div class="research-card">
+                        <div class="research-icon">
+                            <img src="img/drone_image.png" alt="Drone" width="80" height="80" style="object-fit: contain;">
+                        </div>
+                        
+                        <div class="research-content">
+                            <h4>AI-Driven Disaster Prediction and Rapid Response Drone Swarm Using Edge-Embedded Vision</h4>
+                            <p class="research-abstract">
+                                An innovative approach to disaster management utilizing swarm robotics and AI-driven prediction 
+                                algorithms. The system employs edge-embedded vision processing for rapid disaster detection 
+                                and coordinated autonomous response mechanisms.
+                            </p>
+                            <div class="research-meta">
+                                <span class="research-status">Published</span>
+                                <span class="research-year">2024</span>
+                            </div>
+                            <button class="btn btn-primary download-research" data-paper="drone-disaster-response">
+                                <i class="fas fa-download me-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Research End -->
+
+    <!-- Memberships Start -->
+    <div class="container-xxl py-6 pb-5" id="memberships" style="background: #f5f7fa;">
+        <div class="container">
+            <div class="row g-5 mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-lg-12 text-center">
+                    <h1 class="display-5 mb-0" data-aos="fade-up">Professional Memberships</h1>
+                    <p class="lead mt-3" data-aos="fade-up" data-aos-delay="200">Active participation in leading engineering institutions</p>
+                </div>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="membership-card">
+                        <div class="membership-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h5>IESL</h5>
+                        <p>Institution of Engineers Sri Lanka</p>
+                        <span class="membership-badge">Professional Member</span>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="membership-card">
+                        <div class="membership-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h5>IET</h5>
+                        <p>Institution of Engineering and Technology (UK)</p>
+                        <span class="membership-badge">Associate Member</span>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="membership-card">
+                        <div class="membership-icon">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <h5>Institution of Electronics</h5>
+                        <p>The Institution of Electronics (UK)</p>
+                        <span class="membership-badge">Member</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Memberships End -->
+
+    <!-- Contact Start -->
+    <div class="container-xxl pb-5" id="contact">
+        <div class="container py-5">
+            <div class="row g-5 mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-lg-6">
+                    <h1 class="display-5 mb-0" data-aos="fade-right">Let's Connect</h1>
+                    <p class="lead" data-aos="fade-right" data-aos-delay="200">Ready to collaborate on innovative engineering solutions</p>
+                </div>
+                <div class="col-lg-6 text-lg-end" data-aos="fade-left">
+                    <a class="btn btn-primary py-3 px-5" href="mailto:gaurawasachintha@gmail.com">
+                        <i class="fas fa-envelope me-2"></i>Send Email
+                    </a>
+                </div>
+            </div>
+            <div class="row g-5">
+                <div class="col-lg-5 col-md-6 wow fadeInUp" data-wow-delay="0.1s" data-aos="fade-right">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h6>Address</h6>
+                                <p>No.76, Kongollawatta, Karanthippala, Kuliyapitiya, Sri Lanka 60200</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h6>Phone</h6>
+                                <p><a href="tel:+94778787998">+94 77 878 7998</a></p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h6>Email</h6>
+                                <p><a href="mailto:gaurawasachintha@gmail.com">gaurawasachintha@gmail.com</a></p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fab fa-linkedin"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h6>LinkedIn</h6>
+                                <p><a href="https://www.linkedin.com/in/sachinthagaurawa" target="_blank">linkedin.com/in/sachinthagaurawa</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7 col-md-6 wow fadeInUp" data-wow-delay="0.5s" data-aos="fade-left">
+                    <div class="contact-form-container">
+                        <form id="contactForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required>
+                                        <label for="name">Your Name</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="Your Email" required>
+                                        <label for="email">Your Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Subject" required>
+                                        <label for="subject">Subject</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" placeholder="Leave a message here" id="message" name="message" style="height: 150px" required></textarea>
+                                        <label for="message">Message</label>
+                                    </div>
+                                </div>
+                                <!-- Human Verification -->
+                                <div class="col-12">
+                                    <div class="human-verification">
+                                        <label class="form-label">Human Verification: What is <span id="mathQuestion"></span>?</label>
+                                        <input type="number" class="form-control" id="mathAnswer" placeholder="Your answer" required>
+                                        <input type="hidden" id="correctAnswer">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-primary py-3 px-5" type="submit">
+                                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                                    </button>
+                                    <div id="form-status" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Contact End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    &copy; <span id="currentYear"></span> <a class="border-bottom text-secondary" href="#">Sachintha Gaurawa</a>, All Rights Reserved.
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <span class="text-secondary">Engineered with Innovation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" id="backToTop" class="btn btn-primary btn-lg back-to-top" title="Back to Top">
+        <i class="bi bi-arrow-up"></i>
+    </a>
+      
+
+    <!-- Captcha Modal -->
+    <div class="modal fade" id="captchaModal" tabindex="-1" aria-labelledby="captchaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="captchaModalLabel">Human Verification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Please solve this simple math problem to download:</p>
+                    <div class="text-center">
+                        <h3 id="captchaMath" class="text-primary"></h3>
+                        <input type="number" id="captchaInput" class="form-control mt-3" placeholder="Enter your answer">
+                        <input type="hidden" id="captchaAnswer">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="verifyCaptcha">Verify & Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="lib/wow/wow.min.js"></script>
+    <script src="lib/easing/easing.min.js"></script>
+    <script src="lib/waypoints/waypoints.min.js"></script>
+    <script src="lib/typed/typed.min.js"></script>
+    <script src="lib/counterup/counterup.min.js"></script>
+    <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="lib/isotope/isotope.pkgd.min.js"></script>
+    <script src="lib/lightbox/js/lightbox.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     
-    .timeline-marker {
-        left: 30px;
-    }
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="js/portfolio.js"></script>
     
-    .timeline-year {
-        position: relative;
-        top: 0;
-        right: auto;
-        left: auto;
-        margin-bottom: 15px;
-        display: inline-block;
-    }
-    
-    .brand-center h1 {
-        font-size: 1rem;
-    }
-    
-    .hero-name {
-        font-size: 2.5rem;
-    }
-    
-    .social-icons {
-        justify-content: center;
-        margin-top: 2rem;
-    }
-}
-
-/* Additional AOS Animations */
-[data-aos="flip-left"] {
-    transition-property: transform, opacity;
-}
-
-[data-aos="flip-right"] {
-    transition-property: transform, opacity;
-}
-
-/* Loading animation improvements */
-
-/* Spinner Visibility Control */
-#spinner {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity .3s ease, visibility .3s ease;
-}
-#spinner.show {
-    opacity: 1;
-    visibility: visible;
-}
-
-
-#spinner {
-    background: linear-gradient(135deg, var(--bg-color) 0%, #e3f2fd 100%);
-}
-
-.spinner-border {
-    border-color: var(--primary-color);
-    border-right-color: transparent;
-}
-
-/* Form status styling */
-#form-status {
-    font-weight: 500;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-#form-status.success {
-    background: rgba(25, 135, 84, 0.1);
-    color: var(--success-color);
-    border: 1px solid rgba(25, 135, 84, 0.2);
-}
-
-#form-status.error {
-    background: rgba(220, 53, 69, 0.1);
-    color: var(--danger-color);
-    border: 1px solid rgba(220, 53, 69, 0.2);
-}
-
-/* Gallery button hover effect */
-.nav-item.nav-link[href="gallery.html"] {
-    position: relative;
-    overflow: hidden;
-}
-
-.nav-item.nav-link[href="gallery.html"]::after {
-    content: '🎨';
-    position: absolute;
-    right: -20px;
-    opacity: 0;
-    transition: all 0.3s ease;
-}
-
-.nav-item.nav-link[href="gallery.html"]:hover::after {
-    right: 5px;
-    opacity: 1;
-}
-
-.typed-robot {
-    font-family: 'Orbitron', monospace;
-    color: #2f2f2f;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    font-size: 1.8rem;
-  }
-  .cursor {
-    display: inline-block;
-    animation: blink 0.8s steps(1) infinite;
-    color: #212529;
-  }
-  @keyframes blink {
-    0%,50% { opacity: 1; }
-    51%,100% { opacity: 0; }
-  }
-
-  .spaced-text {
-    letter-spacing: 0.5em;
-    text-transform: uppercase; /* optional: for all caps */
-    font-size: 1.5rem;         /* adjust as needed */
-    font-weight: 600;          /* adjust to match design */
-  }
-  
-   
-  .back-to-top {
-    position: fixed;
-    right: 30px;
-    bottom: 100px;
-    z-index: 1040;
-    display: none;
-    width: 50px;
-    height: 50px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    border-radius: 8px;
-    /* Smooth transitions for all properties */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
-    transform: translateY(20px);
-    background: var(--primary-color);
-    color: white;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-  }
-  
-  .back-to-top.show {
-    opacity: 0.85;
-    transform: translateY(0);
-  }
-  
-  .back-to-top:hover, .back-to-top:focus {
-    opacity: 1;
-    transform: translateY(-5px) scale(1.1);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-    color: white;
-  }
-  
-  .back-to-top i {
-    font-size: 1.2rem;
-    transition: transform 0.2s ease;
-  }
-  
-  .back-to-top:hover i {
-    transform: translateY(-2px);
-  }
-  
-  .back-to-top {
-    /* existing styles... */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
-  }
-  
-  .back-to-top.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-  
-
-  .research-icon {
-    width: 80px;
-    height: 80px;
-    background: rgba(13, 110, 253, 0.1);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 25px;
-    font-size: 2rem;          /* ensures icons are same size */
-    color: var(--primary-color);
-  }
-  
-
-.nav-pills .nav-link {
-  border-radius: 0;           /* Remove rounded edges so both tabs touch */
-}
-
-.nav-pills .nav-link.active {
-  background-color: var(--primary-color) !important;
-  color: white !important;
-  border: none !important;    /* Remove any border so it’s a solid block */
-}
-
-.nav-pills .nav-item {
-  flex: 1;                     /* Ensure both tabs evenly split the row */
-  text-align: center;          /* Center the text in each tab */
-}
-
-.nav-pills .nav-link {
-  width: 100%;                 /* Make each link fill its flexed container */
-}
-
-  
+    <!-- Template Javascript -->
+    <script src="js/main.js"></script>
+    <script src="js/portfolio.js"></script>
+</body>
+</html>

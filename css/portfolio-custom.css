@@ -1111,3 +1111,43 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
   }
 }
 
+
+
+/* Mobile viewport fix */
+@media (max-width: 768px) {
+    /* Prevent horizontal overflow */
+    html, body {
+        overflow-x: hidden;
+        max-width: 100vw;
+    }
+
+
+
+    
+    /* Ensure all containers fit within viewport */
+    .container, .container-fluid {
+        max-width: 100%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    /* Fix timeline cards that might be causing overflow */
+    .timeline-content {
+        max-width: calc(100vw - 80px);
+        margin-right: 0;
+    }
+    
+    /* Position back-to-top button properly */
+    .back-to-top {
+        right: 15px !important;
+        left: auto !important;
+        z-index: 9999;
+    }
+    
+    /* Ensure timeline items don't overflow */
+    .timeline-item {
+        padding-left: 60px !important;
+        padding-right: 15px !important;
+    }
+}
+

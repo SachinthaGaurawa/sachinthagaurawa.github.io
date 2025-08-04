@@ -1,5 +1,10 @@
 /* Next-Level Portfolio JavaScript */
 
+
+// Initialize EmailJS SDK
+emailjs.init("Xl7XarHSSsPc7uaCF");
+
+
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializePortfolio();
@@ -17,8 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
       offset: 100
     });
   
-    // EmailJS initialization (public key)
-    emailjs.init("Xl7XarHSSsPc7uaCF");
   
     // Set current year in footer
     const yearEl = document.getElementById('currentYear');
@@ -130,16 +133,23 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   
       showFormStatus('Sending message...', 'loading');
-      // Use sendForm for simpler mapping
-      emailjs.sendForm('service_abcd1234', 'template_ihvlzds', this)
+
+      emailjs
+        .sendForm('service_thpmguh', 'template_m1n7xw5', this)
         .then(() => {
-          showFormStatus("✅ Message sent successfully! I'll get back to you soon.", 'success');
+          showFormStatus(
+            "✅ Message sent successfully! I'll get back to you soon.",
+            'success'
+          );
           form.reset();
           generateMathQuestion();
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('EmailJS error:', err);
-          showFormStatus('❌ Failed to send message. Please try again or contact me directly.', 'error');
+          showFormStatus(
+            '❌ Failed to send message. Please try again or contact me directly.',
+            'error'
+          );
         });
     });
   }
@@ -372,6 +382,8 @@ async function triggerDownload(type) {
       if(tgt) tgt.scrollIntoView({behavior:'smooth',block:'start'});
     });
   });
+
+  
   
   // CSS keyframes and back-to-top show rule
   const styleTag=document.createElement('style');

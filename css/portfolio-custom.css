@@ -1151,3 +1151,27 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
     }
 }
 
+
+
+
+
+@media (min-width: 769px) {
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .container, .container-fluid {
+    max-width: 1200px; /* Or adjust to 1140px or your preferred width */
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Ensure timeline boxes do not overflow */
+  .timeline-content {
+    max-width: 100%;
+  }
+}
+

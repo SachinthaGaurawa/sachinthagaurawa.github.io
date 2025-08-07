@@ -962,46 +962,6 @@
 
 
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const downloadBtn = document.getElementById('downloadCV');
-  if (!downloadBtn) return;
-
-  function isTouchDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i
-      .test(navigator.userAgent);
-  }
-
-  // Swap button color if desired (optional)
-  if (isTouchDevice()) {
-    downloadBtn.classList.remove('btn-primary');
-    downloadBtn.classList.add('btn-secondary');
-  }
-
-  downloadBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    const fileUrl = window.location.origin + '/files/Sachintha_Gaurawa_CV.pdf';
-    const link = document.createElement('a');
-    link.href = fileUrl;
-
-    if (isTouchDevice()) {
-      // Always open in new tab on tablets & smartphones
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-    } else {
-      // Force download on desktop/laptop
-      link.download = 'Sachintha_Gaurawa_CV.pdf';
-    }
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-});
-</script>
-
-
-
 
 
 

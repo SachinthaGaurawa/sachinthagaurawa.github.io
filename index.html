@@ -956,5 +956,58 @@
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
     <script src="js/portfolio.js"></script>
+
+
+
+
+
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadBtn = document.getElementById('downloadCV');
+    console.log('Download button found:', downloadBtn); // Debug line
+    
+    if (downloadBtn) {
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        downloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Button clicked!'); // Debug line
+            console.log('Is mobile:', isMobile()); // Debug line
+            
+            const link = document.createElement('a');
+            link.href = 'Sachintha_Gaurawa_CV.pdf';
+            
+            if (isMobile()) {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                console.log('Mobile: Opening in new tab'); // Debug line
+            } else {
+                link.download = 'Sachintha_Gaurawa_CV.pdf';
+                console.log('Desktop: Forcing download'); // Debug line
+            }
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('Link clicked and removed'); // Debug line
+        });
+    } else {
+        console.error('Download button not found!');
+    }
+});
+</script>
+
+
+
+
+
+
+
+
+
+
 </body>
 </html>

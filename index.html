@@ -962,38 +962,30 @@
 
 
 
-    <script>
+  <script>
 document.addEventListener('DOMContentLoaded', function() {
   const downloadBtn = document.getElementById('downloadCV');
   if (!downloadBtn) return;
 
-  function isTouchDevice() {
-    // Matches phones and tablets
-    return /Mobi|Android|iPad|Tablet|iPhone|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  }
-
-  // Swap button class
-  if (isTouchDevice()) {
-    downloadBtn.classList.remove('btn-primary');
-    downloadBtn.classList.add('btn-secondary');
-  } else {
-    downloadBtn.classList.remove('btn-secondary');
-    downloadBtn.classList.add('btn-primary');
+  function isMobileOrTablet() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+      .test(navigator.userAgent);
   }
 
   downloadBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    // Construct absolute URL to avoid 404
+
+    // Construct absolute URL to avoid 404s
     const fileUrl = window.location.origin + '/files/Sachintha_Gaurawa_CV.pdf';
     const link = document.createElement('a');
     link.href = fileUrl;
 
-    if (isTouchDevice()) {
-      // Open in new tab on tablet/phone
+    if (isMobileOrTablet()) {
+      // For tablets and smartphones: open in new tab
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
     } else {
-      // Force download on desktop
+      // For desktops and laptops: force download
       link.download = 'Sachintha_Gaurawa_CV.pdf';
     }
 

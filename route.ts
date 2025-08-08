@@ -1,89 +1,118 @@
-// app/api/caption/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type CaptionResp = { caption: string; tags: string[] };
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
-// simple 1-hour memory cache (per instance)
-const cache = new Map<string, { t: number; data: CaptionResp }>();
-const TTL = 60 * 60 * 1000;
-
-function ok(data: any, origin?: string) {
-  return NextResponse.json(data, {
-    headers: {
-      'Cache-Control': 'no-store',
+function corsHeaders(origin?: string) {
+  if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) {
+    return {
       'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    },
-  });
+      'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    };
+  }
+  return {};
 }
-export async function OPTIONS(req: NextRequest) { return ok(null, req.headers.get('origin') || undefined); }
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { headers: corsHeaders(req.headers.get('origin') || undefined) });
+}
 
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || undefined;
+  const headers = { ...corsHeaders(origin), 'Cache-Control': 'no-store' };
+
   try {
-    const { imageUrl } = await req.json();
-    if (!imageUrl) return ok({ error: 'Missing imageUrl' }, origin);
-
-    // cache
-    const hit = cache.get(imageUrl);
-    if (hit && Date.now() - hit.t < TTL) return ok(hit.data, origin);
-
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) return ok({ error: 'OPENAI_API_KEY missing on server' }, origin);
-
-    // 1) Vision caption
-    const capReq = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        temperature: 0.2,
-        max_tokens: 160,
-        messages: [
-          { role: 'system', content: 'Describe the image in one concise sentence. Avoid opinions; be specific.' },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Describe this image in one sentence.' },
-              { type: 'image_url', image_url: { url: imageUrl } }
-            ]
-          }
-        ]
-      })
-    });
-    if (!capReq.ok) {
-      const txt = await capReq.text().catch(()=>''); 
-      return ok({ error: `Vision HTTP ${capReq.status}: ${txt}` }, origin);
+    const { question, context } = await req.json().catch(() => ({} as any));
+    if (!question || !context) {
+      return NextResponse.json({ error: 'Missing question/context' }, { status: 400, headers });
     }
-    const capJson = await capReq.json();
-    const caption = (capJson?.choices?.[0]?.message?.content || '').trim();
 
-    // 2) Tags from caption (no external fetch needed)
-    const tagReq = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        temperature: 0.1,
-        max_tokens: 60,
-        messages: [
-          { role: 'system', content: 'Return 3–6 comma-separated tags. Use short, concrete nouns/adjectives only.' },
-          { role: 'user', content: `Caption: ${caption}\nReturn only tags.` }
-        ]
-      })
-    });
-    const tagJson = await tagReq.json();
-    const tagLine = (tagJson?.choices?.[0]?.message?.content || '').trim();
-    const tags = tagLine.split(',').map(s=>s.trim()).filter(Boolean).slice(0, 8);
+    const PPLX_API_KEY = process.env.PPLX_API_KEY;
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-    const payload: CaptionResp = { caption, tags };
-    cache.set(imageUrl, { t: Date.now(), data: payload });
-    return ok(payload, origin);
-  } catch (e:any) {
-    return ok({ error: e?.message || 'Server error' }, origin);
+    if (!PPLX_API_KEY && !OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'No provider keys configured.' }, { status: 500, headers });
+    }
+
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 30_000);
+
+    // Try Perplexity first
+    if (PPLX_API_KEY) {
+      try {
+        const r = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          signal: ac.signal,
+          headers: {
+            'Authorization': `Bearer ${PPLX_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'sonar',
+            temperature: 0.2,
+            max_tokens: 400,
+            messages: [
+              { role: 'system',
+                content: 'You are a concise technical assistant for a portfolio site. Only use the provided album context.' },
+              { role: 'user',
+                content: `Album context:\n${context}\n\nQuestion: ${question}\nAnswer in 2–6 sentences.` }
+            ]
+          })
+        });
+        if (!r.ok) throw new Error(`Perplexity HTTP ${r.status}: ${await r.text().catch(()=> '')}`);
+        const j = await r.json();
+        const answer = j?.choices?.[0]?.message?.content?.trim() || 'No answer.';
+        clearTimeout(timeout);
+        return NextResponse.json({ answer }, { headers });
+      } catch {
+        // fall through
+      } finally { clearTimeout(timeout); }
+    }
+
+    // Fallback OpenAI
+    if (OPENAI_API_KEY) {
+      const ac2 = new AbortController();
+      const timeout2 = setTimeout(() => ac2.abort(), 30_000);
+      try {
+        const r = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          signal: ac2.signal,
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            temperature: 0.2,
+            max_tokens: 400,
+            messages: [
+              { role: 'system',
+                content: 'You are a concise technical assistant for a portfolio site. Only use the provided album context.' },
+              { role: 'user',
+                content: `Album context:\n${context}\n\nQuestion: ${question}` }
+            ]
+          })
+        });
+        if (!r.ok) throw new Error(`OpenAI HTTP ${r.status}: ${await r.text().catch(()=> '')}`);
+        const j = await r.json();
+        const answer = j?.choices?.[0]?.message?.content?.trim() || 'No answer.';
+        clearTimeout(timeout2);
+        return NextResponse.json({ answer }, { headers });
+      } catch {
+        clearTimeout(timeout2);
+        return NextResponse.json({ error: 'All providers failed.' }, { status: 502, headers });
+      }
+    }
+
+    return NextResponse.json({ error: 'No provider available.' }, { status: 500, headers });
+  } catch (err: any) {
+    const msg = err?.name === 'AbortError' ? 'Upstream request timed out' : (err?.message || 'Server error');
+    return NextResponse.json({ error: msg }, { status: 500, headers });
   }
 }

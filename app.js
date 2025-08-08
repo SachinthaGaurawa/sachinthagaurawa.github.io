@@ -881,3 +881,30 @@ function buildAlbumContext(album){
     caps ? `Captions:\n${caps}` : ''
   ].filter(Boolean).join('\n');
 }
+
+
+
+// ===== API base (absolute URL) =====
+const API_BASE = 'https://album-ai-api.vercel.app'; // <-- use your Vercel URL
+
+async function postJSON(path, payload) {
+  const r = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(()=>'');
+    throw new Error(`HTTP ${r.status} ${r.statusText} — ${txt}`);
+  }
+  return r.json();
+}
+
+
+
+const { answer } = await postJSON('/api/ask', {
+  question,
+  context,
+  albumId: currentAlbum.id
+});
+out.textContent = answer || 'No answer.';

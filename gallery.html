@@ -1,236 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gallery - Sachintha Gaurawa</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  />
-  <!-- Bootstrap & Animate -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
-  <link rel="stylesheet" href="css/style.css" />
-  <style>
-    body {
-      background: #f5f7fa;
-      font-family: 'Poppins', sans-serif;
-    }
-    /* Hero & Header styles */
-    .header-bg {
-      background: linear-gradient(135deg, #0470ff, #38e7ab);
-      padding: 50px 0;
-      text-align: center;
-      color: white;
-      position: relative;
-    }
-    .header-bg h1 {
-      font-family: 'Orbitron', monospace;
-      font-size: 3rem;
-      margin-bottom: 10px;
-    }
-    .header-bg p {
-      font-size: 1.2rem;
-    }
-    /* Album grid */
-    .album-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      padding: 40px 20px;
-    }
-    /* Album card styles */
-    .album-card {
-      background: #fff;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .album-card:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-    }
-    /* Album face image (front) */
-    .album-face {
-      width: 100%;
-      aspect-ratio: 1; /* Square shape for albums */
-      object-fit: cover;
-      display: block;
-      transition: transform 0.4s ease, filter 0.4s ease;
-    }
-    /* Animate icons & effects */
-    .album-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      font-size: 3rem;
-      color: #0d6efd;
-      background: rgba(255,255,255,0.8);
-      border-radius: 50%;
-      padding: 15px;
-      box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-    }
-    /* Show button when hover */
-    .album-card:hover .album-icon {
-      transform: translate(-50%, -50%) scale(1);
-      animation: pulse 1.5s infinite alternate;
-    }
-    /* Album label overlay for hover */
-    .album-label {
-      position: absolute;
-      bottom: 0; left: 0; right:0;
-      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.4));
-      padding: 10px 15px;
-      color: #fff;
-      font-weight: 600;
-      font-family: 'Orbitron', monospace;
-    }
-    /* Details for individual album pages, hidden initially */
-    .album-details {
-      display: none;
-      padding: 30px 20px;
-    }
-    /* Individual images grid in album detail view */
-    .images-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
-    }
-    .images-grid img {
-      width: 100%;
-      aspect-ratio: 1;  /* Keep square shape for images */
-      object-fit: cover;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .images-grid img:hover {
-      transform: scale(1.05);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    }
-    /* Back button style */
-    .back-btn {
-      margin-top: 30px;
-    }
+  <meta charset="utf-8" />
+  <title>Album — Sachintha Gaurawa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    /* Animations for pulse effect (icon scaling) */
-    @keyframes pulse {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      100% { transform: translate(-50%, -50%) scale(1.2); }
-    }
-  </style>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+  <!-- Icons + Styles -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+  <!-- AOS (Animate On Scroll) -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
+  <script>
+    window.addEventListener('load', () => {
+      if (window.AOS) {
+        AOS.init({
+          duration: 700,
+          once: true,
+          easing: 'ease-out-cubic',
+          offset: 60
+        });
+      }
+    });
+  </script>
+
+  <!-- (Optional) On-device AI utilities -->
+  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers/dist/transformers.min.js" defer></script>
 </head>
 <body>
-  <!-- Header -->
-  <div class="header-bg text-center" data-aos="zoom-in">
-    <h1>Sachintha Gaurawa</h1>
-    <p>Innovator in Electronics & Robotics | AI Safety Systems</p>
-  </div>
+  <!-- Top bar -->
+  <header class="topbar">
+    <a class="brand" href="https://sachinthagaurawa.github.io/" target="_blank" rel="noopener">Sachintha Gaurawa</a>
+    <h1 class="center-title">Album</h1>
+    <div class="spacer"></div>
+  </header>
 
-  <!-- Album grid -->
-  <section id="albums" class="container my-5" data-aos="fade-up">
-    <h2 class="text-center mb-4" style="font-family:'Orbitron'; font-size:2.5rem;">Projects & Albums</h2>
-    <div class="album-grid" id="albumGrid">
-      <!-- Example Album 1 -->
-      <div class="album-card" data-album="aavss" aria-label="AAVSS Album">
-        <img src="img/aavss-album-cover.jpg" alt="AAVSS Cover" class="album-face" />
-        <div class="album-icon" title="View Album"><i class="fas fa-image"></i></div>
-        <div class="album-label">Autonomous Vehicle Safety System</div>
+  <!-- Outside hero -->
+  <section class="hero" data-aos="fade-up">
+    <div class="hero-media" data-aos="zoom-in" data-aos-delay="80">
+      <img
+        class="lazy-cover"
+        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" 
+        data-src="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1600&auto=format&fit=crop"
+        alt="Foggy forest"
+      >
+      <noscript>
+        <img
+          src="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?q=80&w=1600&auto=format&fit=crop"
+          alt="Foggy forest">
+      </noscript>
+      <div class="hero-overlay"></div>
+      <div class="hero-text">
+        <h2>Projects & Albums</h2>
+        <p>Electronics • Robotics • AI Safety — curated visuals, experiments, and demo reels.</p>
       </div>
-      <!-- Example Album 2 -->
-      <div class="album-card" data-album="dataset" aria-label="Dataset Album">
-        <img src="img/dataset-album-cover.jpg" alt="Dataset Cover" class="album-face" />
-        <div class="album-icon" title="View Album"><i class="fas fa-image"></i></div>
-        <div class="album-label">Sri Lanka Driving Dataset</div>
-      </div>
-      <!-- Add more albums here as needed -->
     </div>
   </section>
 
-  <!-- Album Details container dynamically generated -->
-  <div class="container" id="albumDetailsContainer" style="display:none;">
-    <!-- Each album detail will load here dynamically -->
+  <!-- Search -->
+  <section class="controls container" data-aos="fade-up" data-aos-delay="120">
+    <div class="search">
+      <div class="tag-chips" id="chips"></div>
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input id="searchInput" type="text" placeholder="Search by title or tags… (e.g., AAVSS, dataset, lidar)" aria-label="Search albums">
+    </div>
+  </section>
+
+  <!-- Album grid -->
+  <section class="container" id="albumGrid" aria-label="Album Grid" data-aos="fade-up" data-aos-delay="160"></section>
+
+  <!-- INSIDE ALBUM -->
+  <div id="albumView" aria-hidden="true">
+    <button class="close-btn" id="closeAlbum" aria-label="Close album (Esc)">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Banner -->
+    <a id="albumHeroLink" class="album-hero slim" href="#" target="_blank" rel="noopener" data-aos="fade-up" data-aos-delay="40">
+      <img id="albumHeroImg" src="" alt="">
+      <div class="album-hero-overlay"></div>
+      <h2 id="albumHeroTitle"></h2>
+    </a>
+
+    <!-- Description -->
+    <section class="album-desc-block" data-aos="fade-up" data-aos-delay="120">
+      <div class="album-desc-inner">
+        <p id="albumDesc"></p>
+      </div>
+    </section>
+
+    <!-- 🔥 Ask this album (AI) -->
+    <section class="album-ask container" data-aos="fade-up" data-aos-delay="140">
+      <div class="ask-row">
+        <input id="askInput" type="text"
+               placeholder="Ask about this project… (e.g., sensors used, pipeline, FPS)" aria-label="Ask about this album">
+        <button id="askBtn" class="ask-btn" type="button">Ask</button>
+      </div>
+      <div id="askResult" class="ask-result" aria-live="polite"></div>
+    </section>
+
+    <!-- Masonry -->
+    <section class="album-media container" data-aos="fade-up" data-aos-delay="160">
+      <div id="albumMasonry" class="masonry" aria-label="Album media masonry grid"></div>
+    </section>
   </div>
 
-  <!-- Bootstrap & Libraries -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <!-- CLICK LIGHTBOX (opens only on click) -->
+  <div id="viewerOverlay" aria-hidden="true">
+    <div class="viewer-shell">
+      <button class="viewer-close" id="viewerClose" aria-label="Close viewer (Esc)"><i class="fa-solid fa-xmark"></i></button>
+      <button class="nav prev" id="prevBtn" aria-label="Previous (←)"><i class="fa-solid fa-chevron-left"></i></button>
+      <figure class="stage" id="stage" aria-live="polite"></figure>
+      <button class="nav next" id="nextBtn" aria-label="Next (→)"><i class="fa-solid fa-chevron-right"></i></button>
+      <img id="peekPrev" class="peek peek-left" alt="">
+      <img id="peekNext" class="peek peek-right" alt="">
+      <div class="hint">Space: Play/Pause • ←/→: Prev/Next • Tap: Play/Pause • Swipe: Navigate</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer id="siteFooter" class="site-footer" data-aos="fade-up" data-aos-offset="0">
+    <div class="footer-left">
+      © <span id="year"></span> <span class="footer-name">Sachintha Gaurawa</span>, All Rights Reserved.
+    </div>
+    <div class="footer-right">
+      Engineered with Innovation
+    </div>
+  </footer>
+
   <script>
-    AOS.init({ duration: 1000, once:true });
-
-    const albums = {
-      aavss: {
-        title: "Advanced Autonomous Vehicle Safety System",
-        images: [
-          "img/aavss/system-overview.jpg",
-          "img/aavss/sensor-setup.jpg",
-          "img/aavss/ai-processing.jpg",
-          "img/aavss/testing-phase.jpg",
-          "img/aavss/results.jpg"
-        ]
-      },
-      dataset: {
-        title: "Sri Lanka Autonomous Driving Dataset",
-        images: [
-          "img/dataset/data-collection.jpg",
-          "img/dataset/road-scenarios.jpg",
-          "img/dataset/weather-conditions.jpg",
-          "img/dataset/traffic-patterns.jpg",
-          "img/dataset/annotation-process.jpg"
-        ]
-      }
-    };
-
-    // When album card clicked
-    $(document).on('click', '.album-card', function() {
-      const albumId = $(this).data('album');
-      showAlbumDetails(albumId);
-    });
-
-    // Load album images dynamically into page
-    function showAlbumDetails(albumId) {
-      const album = albums[albumId];
-      if (!album) return;
-
-      $('#albumGrid').hide();
-      $('#albums').hide();
-
-      const container = $('#albumDetailsContainer');
-      container.empty().show().append(`<h3 class="text-center mb-4" style="font-family:'Orbitron';">${album.title}</h3>`);
-      
-      const grid = $('<div class="images-grid"></div>');
-      
-      album.images.forEach(imgSrc => {
-        const img = $(`<img src="${imgSrc}" alt="${album.title} Image" class="wow fadeIn" data-aos="zoom-in" />`);
-        grid.append(img);
-      });
-      
-      container.append(grid);
-      
-      // Add back button
-      const backBtn = $('<button class="btn btn-secondary back-btn">⬅️ Back to Albums</button>');
-      backBtn.click(() => {
-        container.hide();
-        $('#albumGrid').show();
-        $('#albums').show();
-        container.empty();
-      });
-      container.append(backBtn);
-      
-      // Animate
-      AOS.refresh();
-    }
+    // Footer year
+    document.getElementById("year").textContent = new Date().getFullYear();
   </script>
+
+  <!-- Your app logic -->
+  <script src="app.js" defer></script>
 </body>
 </html>

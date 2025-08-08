@@ -1175,3 +1175,49 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
   }
 }
 
+
+
+
+
+
+
+
+.contact-icon {
+    position: relative;          /* for absolute centering of the icon */
+    width: 60px;                 /* fixed container width */
+    height: 60px;                /* fixed container height */
+    background: var(--gradient-primary);
+    border-radius: 15px;
+    margin-right: 20px;
+    flex-shrink: 0;              /* if inside a flex container */
+  }
+  
+  .contact-icon svg,
+  .contact-icon img,
+  .contact-icon i {
+    position: absolute;          /* remove from normal flow */
+    top: 60%;                    /* vertical center */
+    left: 60%;                   /* horizontal center */
+    transform: translate(-50%, -50%);
+    width: 32px;                 /* uniform inner icon size */
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    display: block;
+  }
+  
+  /* Responsive for mobile */
+  @media (max-width: 600px) {
+    .contact-icon {
+      width: 50px;
+      height: 50px;
+      margin-right: 15px;
+    }
+  
+    .contact-icon svg,
+    .contact-icon img,
+    .contact-icon i {
+      width: 24px;
+      height: 24px;
+    }
+  }

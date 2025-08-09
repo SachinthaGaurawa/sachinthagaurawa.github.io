@@ -1,15 +1,14 @@
 {
-  "name": "album-ai-api",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "next": "14.2.5",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "type": "module",
+    "dependencies": {
+      "cors": "^2.8.5",
+      "dotenv": "^16.6.1",
+      "express": "^4.21.2",
+      "serve": "^14.2.1"
+    },
+    "scripts": {
+      "dev": "node server.js",
+      "preview": "serve . -p 51461"
+    }
   }
-}
+  

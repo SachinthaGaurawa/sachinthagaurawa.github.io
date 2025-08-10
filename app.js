@@ -584,3 +584,19 @@ function init(){
 
 document.addEventListener('DOMContentLoaded', init);
 console.log('app.js loaded');
+
+
+// Test backend connection
+fetch('https://album-ai-backend-new.vercel.app/api/ai', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    mode: 'ask',
+    question: 'Ping from browser',
+    context: 'Test context'
+  })
+})
+  .then(r => r.text())
+  .then(t => console.log('API says:', t))
+  .catch(console.error);
+

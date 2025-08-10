@@ -6,7 +6,7 @@
 /* ====== CONFIG: set your backend API base (ONE LINE only) ====== */
 // Example: const API_BASE = 'https://my-ai-backend.vercel.app';
 // For local dev (when you run server.js locally): 'http://localhost:3000'
-const API_BASE = 'https://my-ai-backend.vercel.app';  // <-- CHANGE THIS to your real backend URL
+cconst API_BASE = 'https://sachinthagaurawa-github-io.vercel.app'; // <-- CHANGE THIS to your real backend URL
 
 /* ====== tiny helpers ====== */
 const $  = (s, p=document) => p.querySelector(s);

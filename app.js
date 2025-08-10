@@ -9,6 +9,12 @@
 const API_BASE = 'https://album-ai-backend-new.vercel.app';
 // <-- CHANGE THIS to your real backend URL
 
+console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
+
+window.addEventListener('error', (e) => {
+  console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
+});
+
 /* ====== tiny helpers ====== */
 const $  = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];

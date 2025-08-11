@@ -1,11 +1,15 @@
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   poweredByHeader: false,
+
+  // Public constants (safe to expose)
   env: {
     NEXT_PUBLIC_GALLERY_TITLE: 'Album — Sachintha Gaurawa',
   },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -13,6 +17,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'i.ytimg.com' },
     ],
   },
+
   async headers() {
     return [
       {
@@ -26,7 +31,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com",
               "img-src 'self' data: blob: https://images.unsplash.com https://img.youtube.com https://i.ytimg.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' *",
+              "connect-src *",               // allow GitHub Pages to call this API
               "frame-src https://www.youtube.com",
               "media-src 'self' blob:",
               "object-src 'none'",
@@ -45,7 +50,9 @@ const nextConfig = {
       },
     ];
   },
+
+  // IMPORTANT: no rewrites — this app IS the API server.
   output: 'standalone',
 };
 
-module.exports = nextConfig;
+export default nextConfig;

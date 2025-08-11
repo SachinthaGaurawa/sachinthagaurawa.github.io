@@ -6,11 +6,11 @@
 /* ====== CONFIG: set your backend API base (ONE LINE only) ====== */
 // Example: const API_BASE = 'https://my-ai-backend.vercel.app';
 // For local dev (when you run server.js locally): 'http://localhost:3000'
-const API_BASE = 'https://album-ai-backend-new.vercel.app';
-// <-- CHANGE THIS to your real backend URL
+const API_BASE = 'https://album-ai-backend-new.vercel.app'; // <-- your backend URL
 
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
 
+// Show any uncaught errors so we don’t silently fail
 window.addEventListener('error', (e) => {
   console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
 });
@@ -90,8 +90,28 @@ const masonry    = $('#albumMasonry');
 let currentAlbum = null;
 let currentIndex = 0;
 
+/* ====== safety: required elements check ====== */
+function hasRequiredEls() {
+  const required = [
+    ['#albumGrid', grid],
+    ['#albumView', albumView],
+    ['#albumHeroImg', heroImg],
+    ['#albumHeroTitle', heroTitle],
+    ['#albumHeroLink', heroLink],
+    ['#albumDesc', descBox],
+    ['#albumMasonry', masonry],
+  ];
+  const missing = required.filter(([_, el]) => !el).map(([sel]) => sel);
+  if (missing.length) {
+    console.error('[gallery] Missing required elements in HTML:', missing.join(', '));
+    return false;
+  }
+  return true;
+}
+
 /* ====== Grid rendering ====== */
 function addCard(a){
+  if (!grid) return;
   const hasVideo = a.media.some(m=>m.type!=="image");
   const card = document.createElement('article');
   card.className='card'; card.setAttribute('role','button');
@@ -107,12 +127,13 @@ function addCard(a){
 }
 
 function renderGrid(term=""){
+  if (!grid) return;
   const t = term.trim().toLowerCase();
   grid.innerHTML = "";
   ALBUMS
     .filter(a => !t || a.title.toLowerCase().includes(t) || a.tags.join(" ").toLowerCase().includes(t))
     .forEach(addCard);
-  if (window.AOS) AOS.refresh();
+  if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
 /* ====== Album overlay ====== */
@@ -137,8 +158,9 @@ function thumbFor(item){
 }
 
 function ensureAlbumFooter() {
+  if (!albumView) return;
   const mainFooter = document.querySelector('body > .site-footer');
-  if (!mainFooter || !albumView) return;
+  if (!mainFooter) return;
   if (albumView.querySelector('.site-footer.overlay-footer')) return;
 
   const clone = mainFooter.cloneNode(true);
@@ -163,16 +185,19 @@ function ensureAlbumFooter() {
   if (insertionPoint) albumView.insertBefore(clone, insertionPoint);
   else albumView.appendChild(clone);
 
-  if (window.AOS) AOS.refresh();
+  if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
 function removeAlbumFooter() {
+  if (!albumView) return;
   const f = albumView.querySelector('.site-footer.overlay-footer');
   if (f) f.remove();
 }
 
 function openAlbum(id, index=0, push=false){
   const a=findAlbum(id); if(!a) return;
+  if (!albumView || !heroImg || !heroTitle || !heroLink || !descBox || !masonry) return;
+
   currentAlbum=a; currentIndex=index;
 
   heroImg.src=a.cover; heroImg.alt=`${a.title} cover`;
@@ -198,7 +223,7 @@ function openAlbum(id, index=0, push=false){
   if (tiles.length && window.gsap){
     gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'});
   }
-  if (window.AOS) AOS.refresh();
+  if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
   wireAskUI();         // ensure AI input is wired on open
@@ -216,6 +241,7 @@ function openAlbum(id, index=0, push=false){
 function closeAlbum(){
   removeAlbumFooter();
   closeViewer();
+  if (!albumView) return;
   if (window.gsap) {
     gsap.to('#albumView',{opacity:0,duration:.2,ease:'power2.in',onComplete:()=>{
       albumView.classList.remove('active'); albumView.style.opacity="";
@@ -247,6 +273,7 @@ function stopYouTube(){
 function previewSrc(m){ return m.type==='image'?m.src:thumbFor(m); }
 
 function loadMedia(){
+  if (!currentAlbum || !stage || !peekPrev || !peekNext) return;
   const m=currentAlbum.media[currentIndex];
   stage.innerHTML=''; ytIframe=null;
 
@@ -291,12 +318,14 @@ function loadMedia(){
 function openViewer(i){
   currentIndex = i;
   document.body.classList.add('noscroll');
+  if (!viewer) return;
   viewer.classList.add('active'); viewer.setAttribute('aria-hidden','false');
   loadMedia();
   if (window.gsap) gsap.fromTo('.viewer-shell',{y:18,opacity:0},{y:0,opacity:1,duration:.25});
 }
 function closeViewer(){
   stopYouTube();
+  if (!viewer || !stage) return;
   if (window.gsap) {
     gsap.to('.viewer-shell',{y:14,opacity:0,duration:.18,onComplete:()=>{
       viewer.classList.remove('active'); viewer.setAttribute('aria-hidden','true');
@@ -312,6 +341,7 @@ vClose?.addEventListener('click', closeViewer);
 
 function nav(d){
   stopYouTube();
+  if (!currentAlbum) return;
   const L=currentAlbum.media.length;
   currentIndex=(currentIndex+d+L)%L;
   loadMedia();
@@ -320,7 +350,7 @@ $('#prevBtn')?.addEventListener('click', ()=>nav(-1));
 $('#nextBtn')?.addEventListener('click', ()=>nav(1));
 
 document.addEventListener('keydown', e=>{
-  if(viewer.classList.contains('active')){
+  if(viewer?.classList.contains('active')){
     if(e.key==='Escape') closeViewer();
     if(e.key==='ArrowRight') nav(1);
     if(e.key==='ArrowLeft')  nav(-1);
@@ -332,11 +362,11 @@ document.addEventListener('keydown', e=>{
     }
     return;
   }
-  if(albumView.classList.contains('active') && e.key==='Escape'){ closeAlbum(); }
+  if(albumView?.classList.contains('active') && e.key==='Escape'){ closeAlbum(); }
 });
 let startX=0;
-stage.addEventListener('pointerdown', e=> startX=e.clientX);
-stage.addEventListener('pointerup',   e=> { const dx=e.clientX-startX; if(Math.abs(dx)>40) nav(dx<0?1:-1); });
+stage?.addEventListener('pointerdown', e=> startX=e.clientX);
+stage?.addEventListener('pointerup',   e=> { const dx=e.clientX-startX; if(Math.abs(dx)>40) nav(dx<0?1:-1); });
 
 /* ====== AI: Ask this album ====== */
 function buildAlbumContext(album){
@@ -533,6 +563,11 @@ window.addEventListener('popstate', ()=>{
 
 /* ====== Init ====== */
 function init(){
+  if (!hasRequiredEls()) {
+    console.warn('[gallery] Init stopped because required elements are missing on this page.');
+    return;
+  }
+
   // grid + search
   renderGrid();
   setupSearch();
@@ -560,7 +595,7 @@ function init(){
 
   // card tilt (desktop only)
   const supportsFinePointer = matchMedia('(hover:hover) and (pointer:fine)').matches;
-  if (supportsFinePointer) {
+  if (supportsFinePointer && grid) {
     $$('.card').forEach(card => {
       let rAF = 0;
       const onMove = (e) => {
@@ -589,11 +624,10 @@ function init(){
 }
 
 document.addEventListener('DOMContentLoaded', init);
-console.log('app.js loaded');
+console.log('app.js fully initialized');
 
-
-// Test backend connection
-fetch('https://album-ai-backend-new.vercel.app/api/ai', {
+// Quick backend sanity ping (shows result in console)
+fetch(`${API_BASE}/api/ai`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -603,6 +637,5 @@ fetch('https://album-ai-backend-new.vercel.app/api/ai', {
   })
 })
   .then(r => r.text())
-  .then(t => console.log('API says:', t))
-  .catch(console.error);
-
+  .then(t => console.log('[gallery] API ping →', t))
+  .catch(err => console.error('[gallery] API ping failed:', err));

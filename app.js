@@ -458,32 +458,6 @@ function wireAskUI(){
 }
 
 
-btn.onclick = async () => {
-  const q = input.value.trim();
-  if (!q) return;
-
-  out.textContent = 'Thinking…';
-  btn.disabled = true;
-  try {
-    // Try expert AI first
-    const answer = await expertAsk(q);
-    out.textContent = answer || 'No answer.';
-  } catch {
-    // Fallback to album AI
-    const answer = await aiAsk(q, buildAlbumContext(currentAlbum));
-    out.textContent = answer || 'No answer.';
-  } finally {
-    btn.disabled = false;
-  }
-};
-
-input.onkeydown = (e) => {
-  if (e.key === 'Enter') btn.onclick();
-};
-
-
-
-
 /* ====== AI: Smart image captions ====== */
 async function captionImagesInAlbum(album){
   if (!album) return;
@@ -734,3 +708,47 @@ async function expertAsk(question) {
 
 POST  ${API_BASE}/api/ai-expert
 body: { "question": "…" }
+
+
+
+
+function wireAskUI(){
+  const input = $('#askInput');
+  const btn   = $('#askBtn');
+  const out   = $('#askResult');
+  if (!input || !btn || !out) return;
+
+  out.textContent = '';
+  input.value = '';
+  setTimeout(() => input.focus(), 50);
+
+  const ask = async () => {
+    const q = (input.value || '').trim();
+    if (!q) return;
+
+    btn.disabled = true;
+    out.textContent = 'Thinking…';
+
+    try {
+      let answer = '';
+      try {
+        // 1) Try the expert backend first (AAVSS + SL dataset deep Q&A)
+        answer = await expertAsk(q);
+      } catch (e) {
+        // 2) Fallback to album-scoped AI with context
+        console.warn('[gallery] expertAsk failed, falling back:', e?.message || e);
+        const ctx = buildAlbumContext(currentAlbum);
+        answer = await aiAsk(q, ctx);
+      }
+      out.textContent = answer || 'No answer.';
+    } catch (err) {
+      console.error('[gallery] ask error:', err);
+      out.textContent = 'Sorry — the assistant had an issue. Please try again.';
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  btn.onclick = ask;
+  input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
+}

@@ -138,13 +138,27 @@ function addCard(a){
   grid.appendChild(card);
 }
 
-function renderGrid(term=""){
+function renderGrid(term = "") {
   if (!grid) return;
   const t = term.trim().toLowerCase();
+
   grid.innerHTML = "";
+
   ALBUMS
-    .filter(a => !t || a.title.toLowerCase().includes(t) || a.tags.join(" ").toLowerCase().includes(t))
+    .filter(a => {
+      if (!t) return true;
+      const aiTags = (AITagStore.get(a.id) || []).join(" ");
+      const builtin = (a.tags || []).join(" ");
+      const hay = [
+        a.title || "",
+        a.description || "",
+        builtin,
+        aiTags
+      ].join(" ").toLowerCase();
+      return hay.includes(t);
+    })
     .forEach(addCard);
+
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 

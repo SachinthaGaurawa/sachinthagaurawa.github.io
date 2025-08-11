@@ -65,7 +65,7 @@ const AITagStore = {
   }
 };
 
-/* ====== API helpers (unified /api/ai) ====== */
+/* ====== API helpers ====== */
 async function postJSON(url, payload, { retries=0 } = {}) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -89,6 +89,7 @@ async function postJSON(url, payload, { retries=0 } = {}) {
   }
 }
 
+// Album-scoped Q&A
 async function aiAsk(question, context) {
   const j = await postJSON(`${API_BASE}/api/ai`, {
     mode: 'ask',
@@ -98,6 +99,7 @@ async function aiAsk(question, context) {
   return j?.answer || '';
 }
 
+// Vision captions + tags
 async function aiCaption(imageUrl) {
   const j = await postJSON(`${API_BASE}/api/ai`, {
     mode: 'caption',
@@ -105,6 +107,19 @@ async function aiCaption(imageUrl) {
   });
   // { caption, tags }
   return j;
+}
+
+// Expert deep Q&A (AAVSS + Sri Lankan dataset)
+async function expertAsk(question) {
+  const r = await fetch(`${API_BASE}/api/ai-expert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question })
+  });
+  let j = {};
+  try { j = await r.json(); } catch {}
+  if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+  return j.answer; // optional: j.topic, j.provider, j.sources
 }
 
 /* ====== DOM refs ====== */
@@ -158,7 +173,6 @@ function addCard(a){
 function renderGrid(term=""){
   if (!grid) return;
   const t = term.trim().toLowerCase();
-
   grid.innerHTML = "";
 
   // include album.tags + AI tags saved for that album
@@ -423,6 +437,7 @@ function buildAlbumContext(album){
   ].join('\n');
 }
 
+// (kept for compatibility; not used by UI directly after expert fallback)
 async function askAboutAlbum(question){
   const input = $('#askInput');
   const btn   = $('#askBtn');
@@ -445,18 +460,47 @@ async function askAboutAlbum(question){
   }
 }
 
+// Updated: tries expert AI first, then falls back to album AI
 function wireAskUI(){
   const input = $('#askInput');
   const btn   = $('#askBtn');
   const out   = $('#askResult');
   if (!input || !btn || !out) return;
+
   out.textContent = '';
   input.value = '';
-  setTimeout(()=> input.focus(), 50);
-  btn.onclick = () => askAboutAlbum(input.value.trim());
-  input.onkeydown = (e) => { if (e.key === 'Enter') askAboutAlbum(input.value.trim()); };
-}
+  setTimeout(() => input.focus(), 50);
 
+  const ask = async () => {
+    const q = (input.value || '').trim();
+    if (!q) return;
+
+    btn.disabled = true;
+    out.textContent = 'Thinking…';
+
+    try {
+      let answer = '';
+      try {
+        // 1) Try the expert backend first (AAVSS + SL dataset deep Q&A)
+        answer = await expertAsk(q);
+      } catch (e) {
+        // 2) Fallback to album-scoped AI with context
+        console.warn('[gallery] expertAsk failed, falling back:', e?.message || e);
+        const ctx = buildAlbumContext(currentAlbum || ALBUMS[0]);
+        answer = await aiAsk(q, ctx);
+      }
+      out.textContent = answer || 'No answer.';
+    } catch (err) {
+      console.error('[gallery] ask error:', err);
+      out.textContent = 'Sorry — the assistant had an issue. Please try again.';
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  btn.onclick = ask;
+  input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
+}
 
 /* ====== AI: Smart image captions ====== */
 async function captionImagesInAlbum(album){
@@ -689,66 +733,3 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
-
-
-
-async function expertAsk(question) {
-  const r = await fetch(`${API_BASE}/api/ai-expert`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question })
-  });
-  const j = await r.json();
-  if (!r.ok) throw new Error(j.error || 'AI error');
-  return j.answer; // or use j.provider, j.topic, j.sources
-}
-
-
-
-
-POST  ${API_BASE}/api/ai-expert
-body: { "question": "…" }
-
-
-
-
-function wireAskUI(){
-  const input = $('#askInput');
-  const btn   = $('#askBtn');
-  const out   = $('#askResult');
-  if (!input || !btn || !out) return;
-
-  out.textContent = '';
-  input.value = '';
-  setTimeout(() => input.focus(), 50);
-
-  const ask = async () => {
-    const q = (input.value || '').trim();
-    if (!q) return;
-
-    btn.disabled = true;
-    out.textContent = 'Thinking…';
-
-    try {
-      let answer = '';
-      try {
-        // 1) Try the expert backend first (AAVSS + SL dataset deep Q&A)
-        answer = await expertAsk(q);
-      } catch (e) {
-        // 2) Fallback to album-scoped AI with context
-        console.warn('[gallery] expertAsk failed, falling back:', e?.message || e);
-        const ctx = buildAlbumContext(currentAlbum);
-        answer = await aiAsk(q, ctx);
-      }
-      out.textContent = answer || 'No answer.';
-    } catch (err) {
-      console.error('[gallery] ask error:', err);
-      out.textContent = 'Sorry — the assistant had an issue. Please try again.';
-    } finally {
-      btn.disabled = false;
-    }
-  };
-
-  btn.onclick = ask;
-  input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
-}

@@ -688,3 +688,16 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
+
+
+
+async function expertAsk(question) {
+  const r = await fetch(`${API_BASE}/api/ai-expert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'AI error');
+  return j.answer; // or use j.provider, j.topic, j.sources
+}

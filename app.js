@@ -701,3 +701,9 @@ async function expertAsk(question) {
   if (!r.ok) throw new Error(j.error || 'AI error');
   return j.answer; // or use j.provider, j.topic, j.sources
 }
+
+
+
+
+POST  ${API_BASE}/api/ai-expert
+body: { "question": "…" }

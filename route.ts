@@ -1,14 +1,9 @@
-// app/api/ai/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-/** CORS allow-list. In Vercel env add:
- *   CORS_ORIGINS=https://sachinthagaurawa.github.io
- * If empty, we'll allow any origin (useful while testing).
- */
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? '')
   .split(',')
   .map(s => s.trim())
@@ -20,7 +15,7 @@ function corsHeaders(origin?: string): Record<string, string> {
       'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'no-store'
     };
   }
   return { 'Cache-Control': 'no-store' };
@@ -31,95 +26,56 @@ export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
 }
 
-/* -------------------- Provider helpers -------------------- */
 function withTimeout(ms = 30_000) {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), ms);
   return { signal: ac.signal, clear: () => clearTimeout(t) };
 }
 
-async function askPerplexity({
-  question,
-  context,
-  signal,
-}: { question: string; context: string; signal: AbortSignal }) {
+async function askPerplexity({ question, context, signal }: { question: string; context: string; signal: AbortSignal }) {
   const key = process.env.PPLX_API_KEY!;
   const r = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     signal,
-    headers: {
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'sonar', // change to 'sonar-pro' if your account has it
+      model: 'sonar',
       temperature: 0.2,
       max_tokens: 400,
       messages: [
-        {
-          role: 'system',
-          content:
-            'You are a concise technical assistant for a portfolio site. Only use the provided album context. If unknown, say so briefly.',
-        },
-        {
-          role: 'user',
-          content:
-            `Album context:\n${context}\n\n` +
-            `Question: ${question}\n` +
-            `Answer in 2–6 sentences with concrete details if present.`,
-        },
-      ],
-    }),
+        { role: 'system', content: 'You are a concise technical assistant for a portfolio site. Only use the provided album context. If unknown, say so briefly.' },
+        { role: 'user', content: `Album context:\n${context}\n\nQuestion: ${question}\nAnswer in 2–6 sentences with concrete details if present.` }
+      ]
+    })
   });
-  if (!r.ok) {
-    const txt = await r.text().catch(() => '');
-    throw new Error(`Perplexity HTTP ${r.status}: ${txt}`);
-  }
+  if (!r.ok) throw new Error(`Perplexity HTTP ${r.status}: ${await r.text().catch(()=>'')}`);
   const j = await r.json();
   return (j?.choices?.[0]?.message?.content ?? '').trim();
 }
 
-async function askOpenAI({
-  question,
-  context,
-  signal,
-}: { question: string; context: string; signal: AbortSignal }) {
+async function askOpenAI({ question, context, signal }: { question: string; context: string; signal: AbortSignal }) {
   const key = process.env.OPENAI_API_KEY!;
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,
-    headers: {
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       temperature: 0.2,
       max_tokens: 400,
       messages: [
-        {
-          role: 'system',
-          content:
-            'You are a concise technical assistant for a portfolio site. Only use the provided album context. If unknown, say so briefly.',
-        },
-        { role: 'user', content: `Album context:\n${context}\n\nQuestion: ${question}` },
-      ],
-    }),
+        { role: 'system', content: 'You are a concise technical assistant for a portfolio site. Only use the provided album context. If unknown, say so briefly.' },
+        { role: 'user', content: `Album context:\n${context}\n\nQuestion: ${question}` }
+      ]
+    })
   });
-  if (!r.ok) {
-    const txt = await r.text().catch(() => '');
-    throw new Error(`OpenAI HTTP ${r.status}: ${txt}`);
-  }
+  if (!r.ok) throw new Error(`OpenAI HTTP ${r.status}: ${await r.text().catch(()=>'')}`);
   const j = await r.json();
   return (j?.choices?.[0]?.message?.content ?? '').trim();
 }
 
-async function captionWithOpenAI({
-  imageUrl,
-  signal,
-}: { imageUrl: string; signal: AbortSignal }) {
+async function captionWithOpenAI({ imageUrl, signal }: { imageUrl: string; signal: AbortSignal }) {
   const key = process.env.OPENAI_API_KEY!;
-  // 1) Caption
   const cap = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,
@@ -130,24 +86,14 @@ async function captionWithOpenAI({
       max_tokens: 160,
       messages: [
         { role: 'system', content: 'Describe the image in one concise sentence. Avoid opinions; be specific.' },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Describe this image in one sentence.' },
-            { type: 'image_url', image_url: { url: imageUrl } },
-          ],
-        },
-      ],
-    }),
+        { role: 'user', content: [{ type: 'text', text: 'Describe this image in one sentence.' }, { type: 'image_url', image_url: { url: imageUrl } }] }
+      ]
+    })
   });
-  if (!cap.ok) {
-    const txt = await cap.text().catch(() => '');
-    throw new Error(`Vision HTTP ${cap.status}: ${txt}`);
-  }
+  if (!cap.ok) throw new Error(`Vision HTTP ${cap.status}: ${await cap.text().catch(()=> '')}`);
   const capJson = await cap.json();
   const caption: string = (capJson?.choices?.[0]?.message?.content ?? '').trim();
 
-  // 2) Tags
   const tagsReq = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,
@@ -158,67 +104,44 @@ async function captionWithOpenAI({
       max_tokens: 60,
       messages: [
         { role: 'system', content: 'Return 3–6 comma-separated tags. Use short, concrete nouns/adjectives only.' },
-        { role: 'user', content: `Caption: ${caption}\nReturn only tags.` },
-      ],
-    }),
+        { role: 'user', content: `Caption: ${caption}\nReturn only tags.` }
+      ]
+    })
   });
-  if (!tagsReq.ok) {
-    const txt = await tagsReq.text().catch(() => '');
-    throw new Error(`Tags HTTP ${tagsReq.status}: ${txt}`);
-  }
+  if (!tagsReq.ok) throw new Error(`Tags HTTP ${tagsReq.status}: ${await tagsReq.text().catch(()=> '')}`);
   const tagJson = await tagsReq.json();
   const tagLine = (tagJson?.choices?.[0]?.message?.content ?? '').trim();
   const tags = tagLine.split(',').map(s => s.trim()).filter(Boolean).slice(0, 8);
-
   return { caption, tags };
 }
 
-/* ------------------------ Main handler ------------------------ */
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') ?? undefined;
   const headers = corsHeaders(origin);
 
-  // Parse body safely
   let body: any = {};
-  try {
-    body = await req.json();
-  } catch {
-    // keep {}
-  }
+  try { body = await req.json(); } catch {}
   const { mode, question, context, imageUrl } = body || {};
 
   const hasPPLX = !!process.env.PPLX_API_KEY;
-  const hasOAI = !!process.env.OPENAI_API_KEY;
+  const hasOAI  = !!process.env.OPENAI_API_KEY;
 
   if (!hasPPLX && !hasOAI) {
-    return NextResponse.json(
-      { error: 'No provider keys configured (set PPLX_API_KEY and/or OPENAI_API_KEY).' },
-      { status: 500, headers }
-    );
+    return NextResponse.json({ error: 'No provider keys configured (set PPLX_API_KEY and/or OPENAI_API_KEY).' }, { status: 500, headers });
   }
 
-  // --------- Q&A mode ---------
   if (mode === 'ask') {
-    if (!question || !context) {
-      return NextResponse.json({ error: 'Missing question/context' }, { status: 400, headers });
-    }
-    if (String(question).length > 2000) {
-      return NextResponse.json({ error: 'Question too long' }, { status: 413, headers });
-    }
+    if (!question || !context) return NextResponse.json({ error: 'Missing question/context' }, { status: 400, headers });
+    if (String(question).length > 2000) return NextResponse.json({ error: 'Question too long' }, { status: 413, headers });
 
-    // Try Perplexity → OpenAI
     if (hasPPLX) {
       const { signal, clear } = withTimeout(30_000);
       try {
         const answer = await askPerplexity({ question, context, signal });
         clear();
         return NextResponse.json({ answer, provider: 'perplexity' }, { headers });
-      } catch {
-        clear();
-        // fall through to OpenAI
-      }
+      } catch { clear(); }
     }
-
     if (hasOAI) {
       const { signal, clear } = withTimeout(30_000);
       try {
@@ -230,18 +153,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'All providers failed.' }, { status: 502, headers });
       }
     }
-
     return NextResponse.json({ error: 'No provider available.' }, { status: 500, headers });
   }
 
-  // --------- Caption mode ---------
   if (mode === 'caption') {
-    if (!imageUrl) {
-      return NextResponse.json({ error: 'Missing imageUrl' }, { status: 400, headers });
-    }
-    if (!hasOAI) {
-      return NextResponse.json({ error: 'OPENAI_API_KEY required for captions' }, { status: 500, headers });
-    }
+    if (!imageUrl) return NextResponse.json({ error: 'Missing imageUrl' }, { status: 400, headers });
+    if (!hasOAI)   return NextResponse.json({ error: 'OPENAI_API_KEY required for captions' }, { status: 500, headers });
 
     const { signal, clear } = withTimeout(30_000);
     try {

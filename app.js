@@ -660,3 +660,23 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
+
+
+
+
+
+/* ====== Persisted album-level AI tags (used by global search) ====== */
+const AITagStore = {
+  key(id) { return `ai-tags:album:${id}`; },
+  get(id) {
+    try { return JSON.parse(localStorage.getItem(this.key(id)) || '[]'); }
+    catch { return []; }
+  },
+  set(id, tagsArr) {
+    try {
+      const uniq = Array.from(new Set((tagsArr || []).map(t => String(t).trim()).filter(Boolean)));
+      localStorage.setItem(this.key(id), JSON.stringify(uniq));
+      return uniq;
+    } catch { return []; }
+  }
+};

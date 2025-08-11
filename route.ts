@@ -5,24 +5,25 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// ─────────────────────────── CORS ───────────────────────────
-/** Comma-separated list in .env(.local), e.g.:
- *  CORS_ORIGINS=https://sachinthagaurawa.github.io,https://your-domain.com
+/** CORS allow-list. In Vercel env add:
+ *   CORS_ORIGINS=https://sachinthagaurawa.github.io
+ * If empty, we'll allow any origin (useful while testing).
  */
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-function corsHeaders(origin?: string) {
+function corsHeaders(origin?: string): Record<string, string> {
   if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) {
     return {
       'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    } as Record<string, string>;
+      'Cache-Control': 'no-store',
+    };
   }
-  return {};
+  return { 'Cache-Control': 'no-store' };
 }
 
 export async function OPTIONS(req: NextRequest) {
@@ -30,28 +31,35 @@ export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
 }
 
-// ─────────────────────── Utilities ─────────────────────────
+/* -------------------- Provider helpers -------------------- */
+function withTimeout(ms = 30_000) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), ms);
+  return { signal: ac.signal, clear: () => clearTimeout(t) };
+}
+
 async function askPerplexity({
-  question, context, signal,
+  question,
+  context,
+  signal,
 }: { question: string; context: string; signal: AbortSignal }) {
-  const PPLX_API_KEY = process.env.PPLX_API_KEY!;
+  const key = process.env.PPLX_API_KEY!;
   const r = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     signal,
     headers: {
-      'Authorization': `Bearer ${PPLX_API_KEY}`,
+      Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'sonar', // fast + grounded; swap to 'sonar-pro' if available
+      model: 'sonar', // change to 'sonar-pro' if your account has it
       temperature: 0.2,
       max_tokens: 400,
       messages: [
         {
           role: 'system',
           content:
-            'You are a concise technical assistant for a portfolio site. ' +
-            'Only use the provided album context. If unknown, say so briefly.',
+            'You are a concise technical assistant for a portfolio site. Only use the provided album context. If unknown, say so briefly.',
         },
         {
           role: 'user',
@@ -72,14 +80,16 @@ async function askPerplexity({
 }
 
 async function askOpenAI({
-  question, context, signal,
+  question,
+  context,
+  signal,
 }: { question: string; context: string; signal: AbortSignal }) {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+  const key = process.env.OPENAI_API_KEY!;
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -89,7 +99,8 @@ async function askOpenAI({
       messages: [
         {
           role: 'system',
-          content: 'You are a concise technical assistant for a portfolio site. Only use the provided album context.',
+          content:
+            'You are a concise technical assistant for a portfolio site. Only use the provided album context. If unknown, say so briefly.',
         },
         { role: 'user', content: `Album context:\n${context}\n\nQuestion: ${question}` },
       ],
@@ -104,14 +115,15 @@ async function askOpenAI({
 }
 
 async function captionWithOpenAI({
-  imageUrl, signal,
+  imageUrl,
+  signal,
 }: { imageUrl: string; signal: AbortSignal }) {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+  const key = process.env.OPENAI_API_KEY!;
   // 1) Caption
-  const capReq = await fetch('https://api.openai.com/v1/chat/completions', {
+  const cap = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,
-    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       temperature: 0.2,
@@ -122,58 +134,62 @@ async function captionWithOpenAI({
           role: 'user',
           content: [
             { type: 'text', text: 'Describe this image in one sentence.' },
-            { type: 'image_url', image_url: { url: imageUrl } }
-          ]
-        }
-      ]
-    })
+            { type: 'image_url', image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+    }),
   });
-  if (!capReq.ok) {
-    const txt = await capReq.text().catch(() => '');
-    throw new Error(`Vision HTTP ${capReq.status}: ${txt}`);
+  if (!cap.ok) {
+    const txt = await cap.text().catch(() => '');
+    throw new Error(`Vision HTTP ${cap.status}: ${txt}`);
   }
-  const capJson = await capReq.json();
+  const capJson = await cap.json();
   const caption: string = (capJson?.choices?.[0]?.message?.content ?? '').trim();
 
   // 2) Tags
-  const tagReq = await fetch('https://api.openai.com/v1/chat/completions', {
+  const tagsReq = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,
-    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       temperature: 0.1,
       max_tokens: 60,
       messages: [
         { role: 'system', content: 'Return 3–6 comma-separated tags. Use short, concrete nouns/adjectives only.' },
-        { role: 'user', content: `Caption: ${caption}\nReturn only tags.` }
-      ]
-    })
+        { role: 'user', content: `Caption: ${caption}\nReturn only tags.` },
+      ],
+    }),
   });
-  if (!tagReq.ok) {
-    const txt = await tagReq.text().catch(() => '');
-    throw new Error(`Tags HTTP ${tagReq.status}: ${txt}`);
+  if (!tagsReq.ok) {
+    const txt = await tagsReq.text().catch(() => '');
+    throw new Error(`Tags HTTP ${tagsReq.status}: ${txt}`);
   }
-  const tagJson = await tagReq.json();
+  const tagJson = await tagsReq.json();
   const tagLine = (tagJson?.choices?.[0]?.message?.content ?? '').trim();
   const tags = tagLine.split(',').map(s => s.trim()).filter(Boolean).slice(0, 8);
 
   return { caption, tags };
 }
 
-// ────────────────────────── Handler ─────────────────────────
+/* ------------------------ Main handler ------------------------ */
 export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') ?? undefined;
-  const headers = { ...corsHeaders(origin), 'Cache-Control': 'no-store' };
+  const headers = corsHeaders(origin);
 
-  // Parse body
+  // Parse body safely
   let body: any = {};
-  try { body = await req.json(); } catch {}
+  try {
+    body = await req.json();
+  } catch {
+    // keep {}
+  }
   const { mode, question, context, imageUrl } = body || {};
 
-  // Env check
   const hasPPLX = !!process.env.PPLX_API_KEY;
-  const hasOAI  = !!process.env.OPENAI_API_KEY;
+  const hasOAI = !!process.env.OPENAI_API_KEY;
+
   if (!hasPPLX && !hasOAI) {
     return NextResponse.json(
       { error: 'No provider keys configured (set PPLX_API_KEY and/or OPENAI_API_KEY).' },
@@ -181,45 +197,44 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Route by mode
+  // --------- Q&A mode ---------
   if (mode === 'ask') {
     if (!question || !context) {
       return NextResponse.json({ error: 'Missing question/context' }, { status: 400, headers });
     }
-
-    // guardrails
     if (String(question).length > 2000) {
       return NextResponse.json({ error: 'Question too long' }, { status: 413, headers });
     }
 
     // Try Perplexity → OpenAI
     if (hasPPLX) {
-      const ac = new AbortController();
-      const to = setTimeout(() => ac.abort(), 30_000);
+      const { signal, clear } = withTimeout(30_000);
       try {
-        const answer = await askPerplexity({ question, context, signal: ac.signal });
-        clearTimeout(to);
+        const answer = await askPerplexity({ question, context, signal });
+        clear();
         return NextResponse.json({ answer, provider: 'perplexity' }, { headers });
       } catch {
-        clearTimeout(to);
-        // fall through
+        clear();
+        // fall through to OpenAI
       }
     }
+
     if (hasOAI) {
-      const ac = new AbortController();
-      const to = setTimeout(() => ac.abort(), 30_000);
+      const { signal, clear } = withTimeout(30_000);
       try {
-        const answer = await askOpenAI({ question, context, signal: ac.signal });
-        clearTimeout(to);
+        const answer = await askOpenAI({ question, context, signal });
+        clear();
         return NextResponse.json({ answer, provider: 'openai' }, { headers });
       } catch {
-        clearTimeout(to);
+        clear();
         return NextResponse.json({ error: 'All providers failed.' }, { status: 502, headers });
       }
     }
+
     return NextResponse.json({ error: 'No provider available.' }, { status: 500, headers });
   }
 
+  // --------- Caption mode ---------
   if (mode === 'caption') {
     if (!imageUrl) {
       return NextResponse.json({ error: 'Missing imageUrl' }, { status: 400, headers });
@@ -227,19 +242,18 @@ export async function POST(req: NextRequest) {
     if (!hasOAI) {
       return NextResponse.json({ error: 'OPENAI_API_KEY required for captions' }, { status: 500, headers });
     }
-    const ac = new AbortController();
-    const to = setTimeout(() => ac.abort(), 30_000);
+
+    const { signal, clear } = withTimeout(30_000);
     try {
-      const data = await captionWithOpenAI({ imageUrl, signal: ac.signal });
-      clearTimeout(to);
+      const data = await captionWithOpenAI({ imageUrl, signal });
+      clear();
       return NextResponse.json(data, { headers });
     } catch (err: any) {
-      clearTimeout(to);
+      clear();
       const msg = err?.name === 'AbortError' ? 'Upstream request timed out' : (err?.message || 'Server error');
       return NextResponse.json({ error: msg }, { status: 502, headers });
     }
   }
 
-  // Unknown mode
   return NextResponse.json({ error: 'Invalid mode. Use "ask" or "caption".' }, { status: 400, headers });
 }

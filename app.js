@@ -457,6 +457,33 @@ function wireAskUI(){
   input.onkeydown = (e) => { if (e.key === 'Enter') askAboutAlbum(input.value.trim()); };
 }
 
+
+btn.onclick = async () => {
+  const q = input.value.trim();
+  if (!q) return;
+
+  out.textContent = 'Thinking…';
+  btn.disabled = true;
+  try {
+    // Try expert AI first
+    const answer = await expertAsk(q);
+    out.textContent = answer || 'No answer.';
+  } catch {
+    // Fallback to album AI
+    const answer = await aiAsk(q, buildAlbumContext(currentAlbum));
+    out.textContent = answer || 'No answer.';
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+input.onkeydown = (e) => {
+  if (e.key === 'Enter') btn.onclick();
+};
+
+
+
+
 /* ====== AI: Smart image captions ====== */
 async function captionImagesInAlbum(album){
   if (!album) return;

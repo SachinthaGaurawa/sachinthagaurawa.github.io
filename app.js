@@ -473,19 +473,20 @@ async function captionImagesInAlbum(album){
   }
 
   // surface album-level tags below description
-  const desc = document.querySelector('.album-desc-inner');
-  if (desc) {
-    let row = document.getElementById('album-ai-tags');
-    if (!row) { row = document.createElement('div'); row.id = 'album-ai-tags'; row.className = 'tag-chips'; desc.appendChild(row); }
-    row.innerHTML = [...allTags].slice(0,12).map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
-    row.onclick = (e)=>{
-      const b=e.target.closest('.chip'); if (!b) return;
-      const t=b.dataset.t;
-      $('#searchInput').value = t;
-      renderGrid(t);
-    };
-  }
+ // surface album-level tags below description
+const desc = document.querySelector('.album-desc-inner');
+if (desc) {
+  let row = document.getElementById('album-ai-tags');
+  if (!row) { row = document.createElement('div'); row.id = 'album-ai-tags'; row.className = 'tag-chips'; desc.appendChild(row); }
+  row.innerHTML = [...allTags].slice(0,12).map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
+  row.onclick = (e)=>{
+    const b=e.target.closest('.chip'); if (!b) return;
+    const t=b.dataset.t;
+    $('#searchInput').value = t;
+    renderGrid(t);
+  };
 }
+
 
 /* ====== Misc UX ====== */
 function updateAllFooterYears() {

@@ -138,27 +138,13 @@ function addCard(a){
   grid.appendChild(card);
 }
 
-function renderGrid(term = "") {
+function renderGrid(term=""){
   if (!grid) return;
   const t = term.trim().toLowerCase();
-
   grid.innerHTML = "";
-
   ALBUMS
-    .filter(a => {
-      if (!t) return true;
-      const aiTags = (AITagStore.get(a.id) || []).join(" ");
-      const builtin = (a.tags || []).join(" ");
-      const hay = [
-        a.title || "",
-        a.description || "",
-        builtin,
-        aiTags
-      ].join(" ").toLowerCase();
-      return hay.includes(t);
-    })
+    .filter(a => !t || a.title.toLowerCase().includes(t) || a.tags.join(" ").toLowerCase().includes(t))
     .forEach(addCard);
-
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
@@ -473,20 +459,19 @@ async function captionImagesInAlbum(album){
   }
 
   // surface album-level tags below description
- // surface album-level tags below description
-const desc = document.querySelector('.album-desc-inner');
-if (desc) {
-  let row = document.getElementById('album-ai-tags');
-  if (!row) { row = document.createElement('div'); row.id = 'album-ai-tags'; row.className = 'tag-chips'; desc.appendChild(row); }
-  row.innerHTML = [...allTags].slice(0,12).map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
-  row.onclick = (e)=>{
-    const b=e.target.closest('.chip'); if (!b) return;
-    const t=b.dataset.t;
-    $('#searchInput').value = t;
-    renderGrid(t);
-  };
+  const desc = document.querySelector('.album-desc-inner');
+  if (desc) {
+    let row = document.getElementById('album-ai-tags');
+    if (!row) { row = document.createElement('div'); row.id = 'album-ai-tags'; row.className = 'tag-chips'; desc.appendChild(row); }
+    row.innerHTML = [...allTags].slice(0,12).map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
+    row.onclick = (e)=>{
+      const b=e.target.closest('.chip'); if (!b) return;
+      const t=b.dataset.t;
+      $('#searchInput').value = t;
+      renderGrid(t);
+    };
+  }
 }
-
 
 /* ====== Misc UX ====== */
 function updateAllFooterYears() {
@@ -675,23 +660,3 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
-
-
-
-
-
-/* ====== Persisted album-level AI tags (used by global search) ====== */
-const AITagStore = {
-  key(id) { return `ai-tags:album:${id}`; },
-  get(id) {
-    try { return JSON.parse(localStorage.getItem(this.key(id)) || '[]'); }
-    catch { return []; }
-  },
-  set(id, tagsArr) {
-    try {
-      const uniq = Array.from(new Set((tagsArr || []).map(t => String(t).trim()).filter(Boolean)));
-      localStorage.setItem(this.key(id), JSON.stringify(uniq));
-      return uniq;
-    } catch { return []; }
-  }
-};

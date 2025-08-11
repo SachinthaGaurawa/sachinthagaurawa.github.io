@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------
-   Album Gallery + Overlay + Viewer + (AI Ask & Captions)
+   Album Gallery + Overlay + Viewer + (AI Ask & Captions + Expert Q&A)
    Works on static hosting (GitHub Pages) with a remote API.
    ----------------------------------------------------------- */
 
@@ -19,6 +19,9 @@ window.addEventListener('error', (e) => {
 const $  = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];
 const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
+const debounce = (fn, ms=150) => {
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+};
 
 /* ====== Data (sample) ====== */
 const ALBUMS = [
@@ -121,6 +124,97 @@ async function expertAsk(question) {
   if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
   return j.answer; // optional: j.topic, j.provider, j.sources
 }
+
+/* ====== Conversational Brain (topic routing + human style) ====== */
+const ChatBrain = (() => {
+  const TOPICS = {
+    AAVSS: 'AAVSS',
+    DATASET: 'Sri_Lanka_Dataset',
+  };
+
+  const KEYWORDS = {
+    AAVSS: [
+      'aavss','vehicle safety','autonomous vehicle safety','jetson',
+      'sensor fusion','fusion','lidar','radar','camera','nvidia',
+      'driver monitoring','dms','adas','can bus','v2x'
+    ],
+    DATASET: [
+      'dataset','sri lanka','colombo','kandy','galle','annotations',
+      'segmentation','bounding box','lane','night','rain','fog',
+      'traffic signs','autonomous driving dataset'
+    ],
+  };
+
+  const store = {
+    getTopic(){ try { return sessionStorage.getItem('chat_topic') || ''; } catch { return ''; } },
+    setTopic(t){ try { sessionStorage.setItem('chat_topic', t || ''); } catch {} },
+  };
+
+  function currentAlbumTopic() {
+    if (!currentAlbum) return '';
+    if (currentAlbum.id === 'aavss')  return TOPICS.AAVSS;
+    if (currentAlbum.id === 'dataset') return TOPICS.DATASET;
+    return '';
+  }
+
+  function detectTopic(q) {
+    const txt = (q || '').toLowerCase();
+
+    if (/\b(aavss)\b/.test(txt)) return TOPICS.AAVSS;
+    if (/\b(sri\s*lanka|dataset)\b/.test(txt)) return TOPICS.DATASET;
+
+    let a = 0, d = 0;
+    KEYWORDS.AAVSS.forEach(k=>{ if (txt.includes(k)) a++; });
+    KEYWORDS.DATASET.forEach(k=>{ if (txt.includes(k)) d++; });
+
+    if (a > d) return TOPICS.AAVSS;
+    if (d > a) return TOPICS.DATASET;
+
+    return currentAlbumTopic() || store.getTopic() || '';
+  }
+
+  function isShort(q) {
+    const len = (q || '').trim().length;
+    const words = (q || '').trim().split(/\s+/).filter(Boolean).length;
+    return len <= 16 || words <= 3; // e.g., "Sensors", "Models?", "Size?"
+  }
+
+  function buildGuardedQuestion(topic, q) {
+    const style = isShort(q)
+      ? 'Style=concise bullets, 1–5 lines max.'
+      : 'Style=clear, structured, short paragraphs.';
+    const scope =
+      topic === TOPICS.AAVSS
+        ? 'Topic=AAVSS. Only answer about AAVSS unless explicitly asked to compare.'
+        : topic === TOPICS.DATASET
+        ? 'Topic=Sri Lankan Autonomous Driving Dataset. Only answer about the dataset unless explicitly asked to compare.'
+        : 'Topic=Auto-detect. Prefer single-topic answer; do not mix topics unless asked.';
+    const persona =
+      'Persona=Friendly expert, human tone. Use concrete specs (sensor models / dataset stats) when available.';
+
+    return `[${scope}] [${style}] [${persona}] Q: ${q}`;
+  }
+
+  async function ask(q) {
+    let topic = detectTopic(q);
+
+    if (!topic && isShort(q)) {
+      throw { type: 'clarify', choices: [
+        { id: TOPICS.AAVSS,  label: 'AAVSS' },
+        { id: TOPICS.DATASET,label: 'Sri Lankan Dataset' }
+      ]};
+    }
+
+    if (topic) store.setTopic(topic);
+
+    const guarded = buildGuardedQuestion(topic, q);
+    return { topic, guarded };
+  }
+
+  function forceTopic(topic){ store.setTopic(topic); }
+
+  return { ask, forceTopic, TOPICS };
+})();
 
 /* ====== DOM refs ====== */
 const grid       = $('#albumGrid');
@@ -290,9 +384,10 @@ function openAlbum(id, index=0, push=false){
   }
 
   // kick off AI captions (non-blocking)
-  captionImagesInAlbum(currentAlbum).catch(err=>{
+  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{
     console.warn('[gallery] captionImagesInAlbum error:', err?.message || err);
   });
+  (window.requestIdleCallback ? requestIdleCallback(doCaptions, { timeout: 2000 }) : setTimeout(doCaptions, 300));
 }
 
 function closeAlbum(){
@@ -460,16 +555,50 @@ async function askAboutAlbum(question){
   }
 }
 
-// Updated: tries expert AI first, then falls back to album AI
+/* ====== AI UI (Expert-first with topic focus + clarify) ====== */
+function injectClarifyStylesOnce(){
+  if (document.getElementById('clarify-css')) return;
+  const css = `
+    .clarify { background: rgba(0,0,0,.04); border: 1px solid rgba(0,0,0,.08); padding: .75rem; border-radius: 10px; }
+    .clarify .chip { cursor: pointer; }
+  `;
+  const s = document.createElement('style');
+  s.id = 'clarify-css';
+  s.textContent = css;
+  document.head.appendChild(s);
+}
+
 function wireAskUI(){
   const input = $('#askInput');
   const btn   = $('#askBtn');
   const out   = $('#askResult');
   if (!input || !btn || !out) return;
 
+  injectClarifyStylesOnce();
+
   out.textContent = '';
   input.value = '';
   setTimeout(() => input.focus(), 50);
+
+  // Helper: render clarification buttons
+  const renderClarify = (choices, onPick) => {
+    out.innerHTML = `
+      <div class="clarify">
+        Which one did you mean?
+        <div class="clarify-actions" style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap: wrap;">
+          ${choices.map(c => `<button class="chip" data-id="${c.id}">${c.label}</button>`).join('')}
+        </div>
+      </div>
+    `;
+    out.querySelector('.clarify-actions').onclick = async (e) => {
+      const b = e.target.closest('button[data-id]');
+      if (!b) return;
+      const id = b.dataset.id;
+      // Lock the session topic and re-run with the same text
+      ChatBrain.forceTopic(id);
+      btn.click();
+    };
+  };
 
   const ask = async () => {
     const q = (input.value || '').trim();
@@ -479,16 +608,30 @@ function wireAskUI(){
     out.textContent = 'Thinking…';
 
     try {
+      // 1) Topic routing & styling
+      let routed;
+      try {
+        routed = await ChatBrain.ask(q);
+      } catch (e) {
+        if (e?.type === 'clarify') {
+          btn.disabled = false;
+          renderClarify(e.choices, ()=>{});
+          return;
+        }
+        throw e;
+      }
+
+      // 2) Try expert first with the guarded prompt
       let answer = '';
       try {
-        // 1) Try the expert backend first (AAVSS + SL dataset deep Q&A)
-        answer = await expertAsk(q);
-      } catch (e) {
-        // 2) Fallback to album-scoped AI with context
-        console.warn('[gallery] expertAsk failed, falling back:', e?.message || e);
+        answer = await expertAsk(routed.guarded);
+      } catch (ex) {
+        console.warn('[gallery] expertAsk failed, falling back:', ex?.message || ex);
         const ctx = buildAlbumContext(currentAlbum || ALBUMS[0]);
         answer = await aiAsk(q, ctx);
       }
+
+      // 3) Present answer (human-friendly)
       out.textContent = answer || 'No answer.';
     } catch (err) {
       console.error('[gallery] ask error:', err);
@@ -595,7 +738,7 @@ function setupChips(){
 function setupSearch(){
   const search = $('#searchInput');
   if (!search) return;
-  search.addEventListener('input', e=>renderGrid(e.target.value));
+  search.addEventListener('input', debounce(e=>renderGrid(e.target.value), 120));
 }
 
 /* Optional: semantic search (only if transformers loaded) */
@@ -627,7 +770,7 @@ function wireSemanticSearch(){
       return { id:a.id, v: await embed(text) };
     }));
   }
-  search.addEventListener('input', async (e)=>{
+  search.addEventListener('input', debounce(async (e)=>{
     const q = e.target.value.trim();
     if (!q){ renderGrid(''); return; }
     await ensureVecs();
@@ -641,7 +784,7 @@ function wireSemanticSearch(){
     ranked.sort((x,y)=> y.score - x.score);
     grid.innerHTML = '';
     ranked.forEach(({a}) => addCard(a));
-  });
+  }, 160));
 }
 
 /* ====== Deep link ====== */

@@ -1,3 +1,5 @@
+<!-- app.js -->
+<script>
 /* -----------------------------------------------------------
    Album Gallery + Overlay + Viewer + (AI Ask & Captions)
    Works on static hosting (GitHub Pages) with a remote API.
@@ -77,7 +79,7 @@ async function aiAsk(question, context) {
     mode: 'ask',
     question,
     context
-  }, { retries: 0 });
+  });
   return j?.answer || '';
 }
 
@@ -85,7 +87,7 @@ async function aiCaption(imageUrl) {
   const j = await postJSON(`${API_BASE}/api/ai`, {
     mode: 'caption',
     imageUrl
-  }, { retries: 0 });
+  });
   // { caption, tags }
   return j;
 }
@@ -121,7 +123,62 @@ function hasRequiredEls() {
   return true;
 }
 
-/* ====== Grid rendering ====== */
+/* ====== AI TAG PERSISTENCE (NEW) ====== */
+const AITagStore = {
+  key(albumId){ return `ai:album:${albumId}`; },
+  get(albumId){
+    try { return JSON.parse(localStorage.getItem(this.key(albumId))) || []; }
+    catch { return []; }
+  },
+  set(albumId, tags){
+    try {
+      const norm = [...new Set((tags||[]).map(t=>String(t).trim()).filter(Boolean))].slice(0, 50);
+      localStorage.setItem(this.key(albumId), JSON.stringify(norm));
+    } catch {}
+  },
+  allMap(){
+    const out = new Map();
+    try {
+      for (let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if (k && k.startsWith('ai:album:')) {
+          const id = k.slice('ai:album:'.length);
+          const v = JSON.parse(localStorage.getItem(k) || '[]');
+          out.set(id, Array.isArray(v) ? v : []);
+        }
+      }
+    } catch {}
+    return out;
+  }
+};
+
+/* ====== Grid rendering (IMPROVED SEARCH) ====== */
+function collectSearchText(a) {
+  const ai = AITagStore.get(a.id);
+  // Build one lowercased string that includes: title, description, static tags, AI tags
+  return (
+    (a.title || '') + ' ' +
+    (a.description || '') + ' ' +
+    (a.tags || []).join(' ') + ' ' +
+    ai.join(' ')
+  ).toLowerCase();
+}
+
+function searchScore(a, t) {
+  if (!t) return 1; // no search = show all
+  const text = collectSearchText(a);
+
+  let score = 0;
+  // Simple weighted scoring
+  if (a.title?.toLowerCase().includes(t)) score += 2.0;
+  if ((a.tags||[]).join(' ').toLowerCase().includes(t)) score += 1.0;
+  if (AITagStore.get(a.id).join(' ').toLowerCase().includes(t)) score += 1.5; // AI tags boosted
+  if (a.description?.toLowerCase().includes(t)) score += 0.8;
+  if (text.includes(t)) score += 0.4; // catch-all
+
+  return score;
+}
+
 function addCard(a){
   if (!grid) return;
   const hasVideo = a.media.some(m=>m.type!=="image");
@@ -142,9 +199,14 @@ function renderGrid(term=""){
   if (!grid) return;
   const t = term.trim().toLowerCase();
   grid.innerHTML = "";
-  ALBUMS
-    .filter(a => !t || a.title.toLowerCase().includes(t) || a.tags.join(" ").toLowerCase().includes(t))
-    .forEach(addCard);
+
+  const ranked = ALBUMS
+    .map(a => ({ a, score: searchScore(a, t) }))
+    .filter(x => x.score > 0)
+    .sort((x,y) => y.score - x.score);
+
+  ranked.forEach(({a}) => addCard(a));
+
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
@@ -438,7 +500,7 @@ async function captionImagesInAlbum(album){
   if (!album) return;
   const imgs = album.media.map((m,i)=> ({...m, index:i})).filter(m => m.type === 'image');
 
-  const allTags = new Set();
+  const allTags = new Set(AITagStore.get(album.id)); // start with any saved tags
   for (const m of imgs) {
     try {
       const cached = CaptionStore.get(m.src);
@@ -470,6 +532,16 @@ async function captionImagesInAlbum(album){
       $('#searchInput').value = t;
       renderGrid(t);
     };
+  }
+
+  // NEW: persist album-level AI tags so home search can use them
+  const finalTags = [...allTags];
+  AITagStore.set(album.id, finalTags);
+
+  // If user is at home grid, refresh ranking; otherwise no-op
+  const search = $('#searchInput');
+  if (search && !albumView?.classList.contains('active')) {
+    renderGrid(search.value || '');
   }
 }
 
@@ -550,7 +622,7 @@ function wireSemanticSearch(){
   async function ensureVecs(){
     if (ALBUM_VECS) return;
     ALBUM_VECS = await Promise.all(ALBUMS.map(async (a) => {
-      const text = `${a.title}. ${a.description}. ${a.tags.join(' ')}`;
+      const text = `${a.title}. ${a.description}. ${a.tags.join(' ')} ${AITagStore.get(a.id).join(' ')}`;
       return { id:a.id, v: await embed(text) };
     }));
   }
@@ -560,7 +632,7 @@ function wireSemanticSearch(){
     await ensureVecs();
     const qv = await embed(q);
     const ranked = await Promise.all(ALBUMS.map(async (a, i) => {
-      const kw = (a.title + ' ' + a.tags.join(' ') + ' ' + a.description).toLowerCase();
+      const kw = collectSearchText(a);
       const kwBoost = kw.includes(q.toLowerCase()) ? 0.15 : 0;
       const sem = cosine(qv, ALBUM_VECS[i].v);
       return { a, score: sem + kwBoost };
@@ -660,3 +732,4 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
+</script>

@@ -36,19 +36,6 @@
 
   <!-- (Optional) On-device AI utilities -->
   <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers/dist/transformers.min.js" defer></script>
-
-
-
-
-  <script>
-    // Page can set this before app.js loads:
-    window.__API_BASE__ = 'https://album-ai-api.vercel.app';
-    </script>
-    
-    <script src="app.js" defer></script>
-
-    
-    
 </head>
 <body>
   <!-- Top bar -->
@@ -156,11 +143,7 @@
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 
-  <!-- Your app logic: load ONCE, at the end -->
-
-  <script src="app.js" defer></script>
-  <script src="app.js?v=7" defer></script>
-
-  
+  <!-- Load your app logic ONCE (single include only). Keep this at the end. -->
+  <script src="app.js?v=8" defer></script>
 </body>
 </html>

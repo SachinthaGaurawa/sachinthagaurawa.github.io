@@ -19,9 +19,7 @@ window.addEventListener('error', (e) => {
 const $  = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];
 const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
-const debounce = (fn, ms=150) => {
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
-};
+const debounce = (fn, ms=150) => { let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; };
 
 /* ====== Data (sample) ====== */
 const ALBUMS = [
@@ -112,17 +110,17 @@ async function aiCaption(imageUrl) {
   return j;
 }
 
-// Expert deep Q&A (AAVSS + Sri Lankan dataset)
-async function expertAsk(question) {
+// Expert deep Q&A (AAVSS + Sri Lankan dataset) — now supports topicHint
+async function expertAsk(question, topicHint) {
   const r = await fetch(`${API_BASE}/api/ai-expert`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question })
+    body: JSON.stringify({ question, topicHint })
   });
   let j = {};
   try { j = await r.json(); } catch {}
   if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-  return j.answer; // optional: j.topic, j.provider, j.sources
+  return j; // { answer, provider, topic, sources }
 }
 
 /* ====== Conversational Brain (topic routing + human style) ====== */
@@ -179,6 +177,7 @@ const ChatBrain = (() => {
     return len <= 16 || words <= 3; // e.g., "Sensors", "Models?", "Size?"
   }
 
+  // Not strictly needed by backend now, but kept to preserve features/persona
   function buildGuardedQuestion(topic, q) {
     const style = isShort(q)
       ? 'Style=concise bullets, 1–5 lines max.'
@@ -190,7 +189,7 @@ const ChatBrain = (() => {
         ? 'Topic=Sri Lankan Autonomous Driving Dataset. Only answer about the dataset unless explicitly asked to compare.'
         : 'Topic=Auto-detect. Prefer single-topic answer; do not mix topics unless asked.';
     const persona =
-      'Persona=Friendly expert, human tone. Use concrete specs (sensor models / dataset stats) when available.';
+      'Persona=Friendly expert, human tone. Use concrete specs when available.';
 
     return `[${scope}] [${style}] [${persona}] Q: ${q}`;
   }
@@ -581,7 +580,7 @@ function wireAskUI(){
   setTimeout(() => input.focus(), 50);
 
   // Helper: render clarification buttons
-  const renderClarify = (choices, onPick) => {
+  const renderClarify = (choices) => {
     out.innerHTML = `
       <div class="clarify">
         Which one did you mean?
@@ -608,30 +607,44 @@ function wireAskUI(){
     out.textContent = 'Thinking…';
 
     try {
-      // 1) Topic routing & styling
+      // 1) Topic routing & (optional) clarify
       let routed;
       try {
         routed = await ChatBrain.ask(q);
       } catch (e) {
         if (e?.type === 'clarify') {
           btn.disabled = false;
-          renderClarify(e.choices, ()=>{});
+          renderClarify(e.choices);
           return;
         }
         throw e;
       }
 
-      // 2) Try expert first with the guarded prompt
+      // Map ChatBrain topic -> backend topicHint
+      let topicHint = 'all';
+      if (routed.topic === ChatBrain.TOPICS.AAVSS)   topicHint = 'aavss';
+      if (routed.topic === ChatBrain.TOPICS.DATASET) topicHint = 'sldataset';
+      if (!topicHint || topicHint === 'all') {
+        // If still unknown, use current album as a strong hint
+        if (currentAlbum?.id === 'aavss')  topicHint = 'aavss';
+        if (currentAlbum?.id === 'dataset') topicHint = 'sldataset';
+      }
+
+      // 2) Try expert first with topicHint (send RAW question for cleaner retrieval)
       let answer = '';
       try {
-        answer = await expertAsk(routed.guarded);
+        const res = await expertAsk(q, topicHint);
+        answer = res?.answer || '';
       } catch (ex) {
         console.warn('[gallery] expertAsk failed, falling back:', ex?.message || ex);
+      }
+
+      // 3) Fallback to album-scoped AI with context
+      if (!answer) {
         const ctx = buildAlbumContext(currentAlbum || ALBUMS[0]);
         answer = await aiAsk(q, ctx);
       }
 
-      // 3) Present answer (human-friendly)
       out.textContent = answer || 'No answer.';
     } catch (err) {
       console.error('[gallery] ask error:', err);

@@ -298,7 +298,7 @@ function openAlbum(id, index=0, push=false){
 
   masonry.innerHTML="";
   a.media.forEach((m,i)=>{
-    const tile=document.createElement('div'); 
+    const tile=document.createElement('div');
     tile.className='m-item';
     const lazyAttr = i < 2 ? "" : ' loading="lazy"';
     tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>`
@@ -307,7 +307,7 @@ function openAlbum(id, index=0, push=false){
     masonry.appendChild(tile);
   });
 
-  albumView.classList.add('active'); 
+  albumView.classList.add('active');
   albumView.setAttribute('aria-hidden','false');
   if (window.gsap) gsap.fromTo('.album-hero',{opacity:.6,y:10},{opacity:1,y:0,duration:.35,ease:'power2.out'});
 
@@ -319,7 +319,7 @@ function openAlbum(id, index=0, push=false){
 
   ensureAlbumFooter();
   wireAskUI();                 // ensure AI input is wired on open
-  insertAlbumAskHintBelowChat(); // NEW: hint right under chatbot
+  insertAskHint('album');      // NEW: beautiful pill tip right under chatbot
 
   if(push){
     const u=new URL(location.href);
@@ -647,61 +647,56 @@ function renderChat(answerText, topicLabel){
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-/* ====== Ask hint under the search bar (generic for all albums) ====== */
-function insertAskHint(){
-  if (document.getElementById('ask-hint-row')) return;
-  const search = $('#searchInput');
-  if (!search) return;
-  const hint = document.createElement('div');
-  hint.id = 'ask-hint-row';
-  hint.innerHTML = `
-    <div style="
-      margin:.5rem 0 0.25rem;
-      font-size: .92rem;
-      color: #6e8096;">
-      <strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
+/* ====== NEW: Tip pill (short, attractive) ====== */
+function insertAskHint(where = 'album') {
+  // avoid duplicates
+  if (document.getElementById('ask-hint-pill')) return;
+
+  // anchor (album: place under chatbot; search: under global search)
+  let anchor = null;
+  if (where === 'album') {
+    anchor = document.getElementById('askResult');
+  } else {
+    const s = document.getElementById('searchInput');
+    anchor = s ? (s.parentElement || s) : null;
+  }
+  if (!anchor) return;
+
+  const pill = document.createElement('div');
+  pill.id = 'ask-hint-pill';
+  pill.setAttribute('role', 'note');
+  pill.setAttribute('aria-label', 'Tip for asking the assistant');
+  pill.innerHTML = `
+    <div class="ask-hint-pill">
+      <span class="spark" aria-hidden="true">✨</span>
+      <strong>Tip:</strong>&nbsp; Ask this album. Try <em>“Sensors?”</em>, <em>“Pipeline?”</em>, <em>“Labels?”</em>, or <em>“License?”</em>.
     </div>
   `;
-  search.parentElement?.insertBefore(hint, search.nextSibling);
-}
 
-/* ====== NEW: album-level hint directly under the chatbot ====== */
-function injectAskHintStylesOnce(){
-  if (document.getElementById('ask-hint-css')) return;
-  const s = document.createElement('style');
-  s.id = 'ask-hint-css';
-  s.textContent = `
-    .ask-hint{
-      margin:.65rem 0 0;
-      font-size:.95rem;
-      color:rgba(255,255,255,.9);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:10px;
-      padding:.6rem .75rem;
-      line-height:1.45;
-    }
-    .ask-hint .spark{ margin-right:.35rem }
-    .ask-hint em{ font-style: italic; opacity:.95; }
-  `;
-  document.head.appendChild(s);
-}
-function insertAlbumAskHintBelowChat(){
-  const out = document.getElementById('askResult');
-  if (!out) return;
-  injectAskHintStylesOnce();
-  let hint = document.getElementById('album-ask-hint');
-  if (!hint){
-    hint = document.createElement('div');
-    hint.id = 'album-ask-hint';
-    hint.className = 'ask-hint';
-    hint.innerHTML = `
-      <span class="spark">✨</span>
-      <strong>Tip:</strong> Ask short or detailed questions about this album.<br>
-      Try <em>“Sensors?”</em>, <em>“What’s the pipeline?”</em>, <em>“Annotation policy?”</em>,
-      or <em>“Download & license?”</em>. You’ll get crisp, focused answers for the topic you’re viewing.
+  anchor.insertAdjacentElement('afterend', pill);
+
+  if (!document.getElementById('ask-hint-pill-css')) {
+    const s = document.createElement('style');
+    s.id = 'ask-hint-pill-css';
+    s.textContent = `
+      #ask-hint-pill{ margin:10px 0 14px; }
+      .ask-hint-pill{
+        display:flex; align-items:center; gap:10px;
+        padding:12px 14px;
+        border-radius:22px;
+        color:rgba(255,255,255,.92);
+        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+        border: 2px dashed rgba(156, 195, 255, .75);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 4px 16px rgba(0,0,0,.22);
+      }
+      .ask-hint-pill .spark{ filter: drop-shadow(0 0 6px rgba(255,255,255,.45)); }
+      .ask-hint-pill strong{ font-weight:700; }
+      .ask-hint-pill em{ font-style: italic; font-weight:600; opacity:.98; }
+      @media (max-width: 640px){
+        .ask-hint-pill{ font-size:.95rem; padding:10px 12px; }
+      }
     `;
-    out.insertAdjacentElement('afterend', hint);
+    document.head.appendChild(s);
   }
 }
 
@@ -713,7 +708,7 @@ function wireAskUI(){
   if (!input || !btn || !out) return;
 
   injectChatStylesOnce();
-  insertAskHint();
+  insertAskHint('album');        // <<< show the pill right under the chatbot
 
   out.textContent = '';
   input.value = '';
@@ -812,7 +807,7 @@ async function captionImagesInAlbum(album){
   // Save album-level AI tags for global search
   AITagStore.set(album.id, [...allTags]);
 
-  // surface album-level tags below description
+  // surface album-level AI tags below description
   const desc = document.querySelector('.album-desc-inner');
   if (desc) {
     let row = document.getElementById('album-ai-tags');
@@ -991,6 +986,9 @@ function init(){
 
   // semantic search (optional)
   maybeSetupSemantic().then(wireSemanticSearch);
+
+  // Optional global pill under search on grid:
+  // insertAskHint('search');
 }
 
 document.addEventListener('DOMContentLoaded', init);

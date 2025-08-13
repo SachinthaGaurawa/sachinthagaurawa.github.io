@@ -318,7 +318,8 @@ function openAlbum(id, index=0, push=false){
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
-  wireAskUI();         // ensure AI input is wired on open
+  wireAskUI();                 // ensure AI input is wired on open
+  insertAlbumAskHintBelowChat(); // NEW: hint right under chatbot
 
   if(push){
     const u=new URL(location.href);
@@ -546,7 +547,7 @@ function mdToHtml(md){
   // autolink URLs
   t = t.replace(/(https?:\/\/[^\s)]+)(?=\)|\s|$)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 
-  // headings ##, #
+  // headings ###, ##, #
   t = t.replace(/^[ \t]*###?[ \t]+(.+)$/gm, (m, h)=>m.startsWith('###')?`<h3>${h}</h3>`:`<h2>${h}</h2>`);
   t = t.replace(/^[ \t]*#[ \t]+(.+)$/gm, (_m, h)=>`<h1>${h}</h1>`);
 
@@ -662,6 +663,46 @@ function insertAskHint(){
     </div>
   `;
   search.parentElement?.insertBefore(hint, search.nextSibling);
+}
+
+/* ====== NEW: album-level hint directly under the chatbot ====== */
+function injectAskHintStylesOnce(){
+  if (document.getElementById('ask-hint-css')) return;
+  const s = document.createElement('style');
+  s.id = 'ask-hint-css';
+  s.textContent = `
+    .ask-hint{
+      margin:.65rem 0 0;
+      font-size:.95rem;
+      color:rgba(255,255,255,.9);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      padding:.6rem .75rem;
+      line-height:1.45;
+    }
+    .ask-hint .spark{ margin-right:.35rem }
+    .ask-hint em{ font-style: italic; opacity:.95; }
+  `;
+  document.head.appendChild(s);
+}
+function insertAlbumAskHintBelowChat(){
+  const out = document.getElementById('askResult');
+  if (!out) return;
+  injectAskHintStylesOnce();
+  let hint = document.getElementById('album-ask-hint');
+  if (!hint){
+    hint = document.createElement('div');
+    hint.id = 'album-ask-hint';
+    hint.className = 'ask-hint';
+    hint.innerHTML = `
+      <span class="spark">✨</span>
+      <strong>Tip:</strong> Ask short or detailed questions about this album.<br>
+      Try <em>“Sensors?”</em>, <em>“What’s the pipeline?”</em>, <em>“Annotation policy?”</em>,
+      or <em>“Download & license?”</em>. You’ll get crisp, focused answers for the topic you’re viewing.
+    `;
+    out.insertAdjacentElement('afterend', hint);
+  }
 }
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
@@ -973,55 +1014,3 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
-
-
-
-
-
-
-
-
-// --- one-time styles for the hint ---
-function injectAskHintStylesOnce(){
-  if (document.getElementById('ask-hint-css')) return;
-  const s = document.createElement('style');
-  s.id = 'ask-hint-css';
-  s.textContent = `
-    .ask-hint{
-      margin:.65rem 0 0;
-      font-size:.95rem;
-      color:rgba(255,255,255,.9);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:10px;
-      padding:.6rem .75rem;
-      line-height:1.45;
-    }
-    .ask-hint .spark{ margin-right:.35rem }
-    .ask-hint em{ font-style: italic; opacity:.95; }
-  `;
-  document.head.appendChild(s);
-}
-
-// --- place hint directly below the chat output area inside album ---
-function insertAlbumAskHintBelowChat(){
-  const out = document.getElementById('askResult');
-  if (!out) return;
-  injectAskHintStylesOnce();
-
-  // avoid duplicates per album open
-  let hint = document.getElementById('album-ask-hint');
-  if (!hint){
-    hint = document.createElement('div');
-    hint.id = 'album-ask-hint';
-    hint.className = 'ask-hint';
-    hint.innerHTML = `
-      <span class="spark">✨</span>
-      <strong>Tip:</strong> Ask short or detailed questions about this album.<br>
-      Try <em>“Sensors?”</em>, <em>“What’s the pipeline?”</em>, <em>“Annotation policy?”</em>,
-      or <em>“Download & license?”</em>. You’ll get crisp, focused answers for the topic you’re viewing.
-    `;
-    // insert just after the chat output container
-    out.insertAdjacentElement('afterend', hint);
-  }
-}

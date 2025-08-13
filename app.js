@@ -973,3 +973,53 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
+
+
+
+
+
+
+
+
+function insertAskHint() {
+  const search = document.getElementById('searchInput');
+  if (!search) return;
+
+  // avoid duplicates
+  if (document.getElementById('ask-hint')) return;
+
+  const hint = document.createElement('div');
+  hint.id = 'ask-hint';
+  hint.innerHTML = `
+    <div class="ask-hint">
+      <span class="spark">✨</span>
+      <strong>Tip:</strong> Open any album, then ask the assistant things like
+      <em>“Sensors?”</em>, <em>“What’s the pipeline?”</em>, <em>“Annotation policy?”</em> or
+      <em>“Download & license?”</em> — you’ll get crisp, focused answers for that topic.
+    </div>
+  `;
+
+  // place right after the search input
+  const parent = search.parentElement || search;
+  parent.insertAdjacentElement('afterend', hint);
+
+  // light styles
+  if (!document.getElementById('ask-hint-css')){
+    const s = document.createElement('style');
+    s.id = 'ask-hint-css';
+    s.textContent = `
+      .ask-hint{
+        margin:.5rem 0 1rem;
+        font-size:.95rem;
+        color:rgba(255,255,255,.85);
+        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:10px;
+        padding:.6rem .75rem;
+      }
+      .ask-hint .spark{ margin-right:.35rem; }
+      .ask-hint em{ font-style: italic; opacity:.95; }
+    `;
+    document.head.appendChild(s);
+  }
+}

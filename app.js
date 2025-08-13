@@ -1023,3 +1023,19 @@ function insertAskHint() {
     document.head.appendChild(s);
   }
 }
+
+
+
+
+
+
+function init(){
+  if (!hasRequiredEls()) { /* ... */ return; }
+  
+  // grid + search
+  renderGrid();
+  setupSearch();
+  insertAskHint(); // ⬅️ this makes the hint actually appear
+  setupChips();
+  // (rest unchanged)
+}

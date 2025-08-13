@@ -81,10 +81,7 @@ async function postJSON(url, payload, { retries=0 } = {}) {
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
       return j;
     } catch (err) {
-      if (attempt < retries) {
-        await sleep(400 * (attempt + 1));
-        continue;
-      }
+      if (attempt < retries) { await sleep(400 * (attempt + 1)); continue; }
       console.error('[gallery] postJSON failed:', err);
       throw err;
     }
@@ -93,21 +90,17 @@ async function postJSON(url, payload, { retries=0 } = {}) {
 
 // Album-scoped Q&A
 async function aiAsk(question, context) {
-  const j = await postJSON(`${API_BASE}/api/ai`, {
-    mode: 'ask', question, context
-  });
+  const j = await postJSON(`${API_BASE}/api/ai`, { mode: 'ask', question, context });
   return j?.answer || '';
 }
 
 // Vision captions + tags
 async function aiCaption(imageUrl) {
-  const j = await postJSON(`${API_BASE}/api/ai`, {
-    mode: 'caption', imageUrl
-  });
+  const j = await postJSON(`${API_BASE}/api/ai`, { mode: 'caption', imageUrl });
   return j; // { caption, tags }
 }
 
-// Expert deep Q&A (AAVSS + Sri Lankan dataset)
+// Expert deep Q&A (AAVSS + Sri Lankan dataset, or future albums via KB)
 async function expertAsk(question) {
   const r = await fetch(`${API_BASE}/api/ai-expert`, {
     method: 'POST',
@@ -470,7 +463,7 @@ let startX=0;
 stage?.addEventListener('pointerdown', e=> startX=e.clientX);
 stage?.addEventListener('pointerup',   e=> { const dx=e.clientX-startX; if(Math.abs(dx)>40) nav(dx<0?1:-1); });
 
-/* ====== AI: Ask this album ====== */
+/* ====== AI: Album context builder ====== */
 function buildAlbumContext(album){
   if (!album) return "";
   const mediaLines = album.media.map((m,i)=> `${i+1}. ${m.type}${m.src?`:${m.src}`:""}`).join('\n');
@@ -499,7 +492,7 @@ async function askAboutAlbum(question){
   }finally{ btn.disabled = false; }
 }
 
-/* ====== Chat UI Enhancements (single-turn, typing, markdown, controls) ====== */
+/* ====== Chat UI Enhancements (single-turn, typing, rich markdown, controls) ====== */
 function injectChatStylesOnce(){
   if (document.getElementById('chatfx-css')) return;
   const css = `
@@ -519,45 +512,87 @@ function injectChatStylesOnce(){
     animation: blink 1s infinite ease-in-out; }
   .typing-dot:nth-child(2){ animation-delay:.2s } .typing-dot:nth-child(3){ animation-delay:.4s }
   @keyframes blink{ 0%{ opacity:.2 } 50%{ opacity:1 } 100%{ opacity:.2 } }
-  /* markdown-ish */
-  .msg h1,.msg h2,.msg h3{ margin:.4em 0; }
+  /* rich content */
+  .msg h1,.msg h2,.msg h3{ margin:.5em 0 .3em; line-height:1.2; }
+  .msg h1{ font-size:1.2rem } .msg h2{ font-size:1.1rem } .msg h3{ font-size:1.05rem }
   .msg p{ margin:.45em 0; }
-  .msg ul{ padding-left:1.2em; margin:.35em 0; }
+  .msg ul{ padding-left:1.2em; margin:.35em 0; list-style: disc; }
+  .msg ol{ padding-left:1.4em; margin:.35em 0; list-style: decimal; }
   .msg li{ margin:.2em 0; }
   .msg strong{ font-weight:700; }
   .msg em{ font-style:italic; }
-  .msg code{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.95em; padding:.1em .3em;
+  .msg u{ text-decoration: underline; text-underline-offset: 3px; }
+  .msg del{ text-decoration: line-through; }
+  .msg a{ color:#9cc3ff; text-decoration: underline; text-underline-offset:3px; }
+  .msg code{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.95em; padding:.12em .3em;
     background:#0a1118; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
-  /* keep gallery from being pushed by long responses: cap height */
+  /* cap height so gallery isn’t pushed too far */
   .chat-bubble .msg-scroll{ max-height: min(42vh, 520px); overflow:auto; scrollbar-width: thin; }
   `;
   const s = document.createElement('style');
   s.id='chatfx-css'; s.textContent = css; document.head.appendChild(s);
 }
 
-// ultra-light markdown to HTML (safe subset)
+/* --- Ultra-light Markdown → HTML with underline/OL, bullets, links, code --- */
 function mdToHtml(md){
-  let t = (md || '').trim();
-  // escape basic HTML
+  if (!md) return '';
+  let t = md;
+
+  // normalize smart quotes
+  t = t.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  // escape HTML
   t = t.replace(/[&<>]/g, s=> ({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]));
-  // bold **text**
+
+  // autolink URLs
+  t = t.replace(/(https?:\/\/[^\s)]+)(?=\)|\s|$)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // headings ##, #
+  t = t.replace(/^[ \t]*###?[ \t]+(.+)$/gm, (m, h)=>m.startsWith('###')?`<h3>${h}</h3>`:`<h2>${h}</h2>`);
+  t = t.replace(/^[ \t]*#[ \t]+(.+)$/gm, (_m, h)=>`<h1>${h}</h1>`);
+
+  // strong **text** or __text__
   t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  // italic *text*
+  t = t.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+
+  // italic *text* or _text_
   t = t.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
+  t = t.replace(/(^|[\s(])_([^_\n]+)_(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
+
+  // underline ++text++
+  t = t.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
+
+  // strikethrough ~~text~~
+  t = t.replace(/~~([^~\n]+)~~/g, '<del>$1</del>');
+
   // inline code `code`
   t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-  // bullets
+
+  // ordered list blocks
+  t = t.replace(/^(?:\s*\d+\.\s.+(?:\n|$))+?/gm, (block)=>{
+    const items = block.trim().split('\n').map(l=> l.replace(/^\s*\d+\.\s/,'').trim());
+    return `<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
+  });
+
+  // unordered list blocks (- or *)
   t = t.replace(/^(?:\s*[-*]\s.+(?:\n|$))+?/gm, (block)=>{
     const items = block.trim().split('\n').map(l=> l.replace(/^\s*[-*]\s/,'').trim());
     return `<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
   });
-  // paragraphs
-  t = t.split(/\n{2,}/).map(p=> p.startsWith('<ul>') ? p : `<p>${p.replace(/\n/g,'<br>')}</p>`).join('\n');
+
+  // heuristic: in bullet/list lines like "Sensors: LiDAR, Radar" → bold the label
+  t = t.replace(/(<li>)([^:<]+?):\s*/g, (_m, li, label)=> `${li}<strong>${label}:</strong> `);
+
+  // paragraphs (don’t wrap lists or headings)
+  t = t.split(/\n{2,}/).map(chunk=>{
+    if (/^<(ul|ol|h1|h2|h3)/.test(chunk)) return chunk;
+    return `<p>${chunk.replace(/\n/g,'<br>')}</p>`;
+  }).join('\n');
+
   return t;
 }
 
 // typing animation (adds characters progressively)
-async function typeWrite(el, text, { cps=45, minDelay=8, maxDelay=28 } = {}){
+async function typeWrite(el, text, { cps=48, minDelay=8, maxDelay=26 } = {}){
   const safe = text || '';
   let buf = '';
   const target = el;
@@ -583,7 +618,6 @@ function renderChat(answerText, topicLabel){
 
   const msg = document.createElement('div');
   msg.className = 'msg msg-scroll';
-  // start with typing dots while we animate text in
   msg.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
 
   const tools = document.createElement('div');
@@ -599,14 +633,35 @@ function renderChat(answerText, topicLabel){
   out.appendChild(wrap);
 
   // animate typewriting
-  typeWrite(msg, answerText, { cps: 55 }).catch(()=> { msg.innerHTML = mdToHtml(answerText); });
+  typeWrite(msg, answerText, { cps: 56 }).catch(()=> { msg.innerHTML = mdToHtml(answerText); });
 
   // copy
   tools.querySelector('#copyAns').onclick = async ()=>{
-    try{ await navigator.clipboard.writeText(answerText); tools.querySelector('#copyAns').textContent='Copied'; setTimeout(()=>tools.querySelector('#copyAns').textContent='Copy', 1200);}catch{}
+    try{
+      await navigator.clipboard.writeText(answerText);
+      const b = tools.querySelector('#copyAns'); b.textContent='Copied'; setTimeout(()=>b.textContent='Copy', 1200);
+    }catch{}
   };
   // regenerate (re-click Ask)
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
+}
+
+/* ====== Ask hint under the search bar (generic for all albums) ====== */
+function insertAskHint(){
+  if (document.getElementById('ask-hint-row')) return;
+  const search = $('#searchInput');
+  if (!search) return;
+  const hint = document.createElement('div');
+  hint.id = 'ask-hint-row';
+  hint.innerHTML = `
+    <div style="
+      margin:.5rem 0 0.25rem;
+      font-size: .92rem;
+      color: #6e8096;">
+      <strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
+    </div>
+  `;
+  search.parentElement?.insertBefore(hint, search.nextSibling);
 }
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
@@ -617,6 +672,7 @@ function wireAskUI(){
   if (!input || !btn || !out) return;
 
   injectChatStylesOnce();
+  insertAskHint();
 
   out.textContent = '';
   input.value = '';
@@ -672,7 +728,7 @@ function wireAskUI(){
         answer = await aiAsk(q, ctx);
       }
 
-      // 3) Present answer nicely (single-turn bubble)
+      // 3) Present answer (rich, single-turn bubble)
       renderChat(answer || 'No answer.', routed.topic || 'Assistant');
     } catch (err) {
       console.error('[gallery] ask error:', err);

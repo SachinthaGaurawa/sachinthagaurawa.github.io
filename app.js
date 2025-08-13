@@ -648,57 +648,73 @@ function renderChat(answerText, topicLabel){
 }
 
 /* ====== NEW: Tip pill (short, attractive) ====== */
+/* ====== NEW: Tip pill (short, centered, light-blue) ====== */
 function insertAskHint(where = 'album') {
   // avoid duplicates
-  if (document.getElementById('ask-hint-pill')) return;
-
-  // anchor (album: place under chatbot; search: under global search)
-  let anchor = null;
-  if (where === 'album') {
-    anchor = document.getElementById('askResult');
-  } else {
-    const s = document.getElementById('searchInput');
-    anchor = s ? (s.parentElement || s) : null;
+  const EXISTING = document.getElementById('ask-hint-pill');
+  if (EXISTING) {
+    // keep the pill positioned right after the Ask UI if we re-open albums
+    const anchorNow = (where === 'album')
+      ? document.getElementById('askInput')
+      : document.getElementById('searchInput');
+    if (anchorNow && EXISTING.previousElementSibling !== anchorNow) {
+      anchorNow.insertAdjacentElement('afterend', EXISTING);
+    }
+    return;
   }
-  if (!anchor) return;
+
+  // anchor: directly under the Ask input (so it visually belongs to the chatbot)
+  const inputEl = (where === 'album')
+    ? document.getElementById('askInput')
+    : document.getElementById('searchInput');
+  if (!inputEl) return;
 
   const pill = document.createElement('div');
   pill.id = 'ask-hint-pill';
   pill.setAttribute('role', 'note');
   pill.setAttribute('aria-label', 'Tip for asking the assistant');
   pill.innerHTML = `
-    <div class="ask-hint-pill">
-      <span class="spark" aria-hidden="true">✨</span>
-      <strong>Tip:</strong>&nbsp; Ask this album. Try <em>“Sensors?”</em>, <em>“Pipeline?”</em>, <em>“Labels?”</em>, or <em>“License?”</em>.
+    <div class="ask-hint-pill" aria-hidden="true">
+      <span class="spark">✨</span>
+      <strong>Tip:</strong>&nbsp; Ask this album — <em>“Sensors?”</em> <em>“Pipeline?”</em> <em>“Labels?”</em> <em>“License?”</em>
     </div>
   `;
+  inputEl.insertAdjacentElement('afterend', pill);
 
-  anchor.insertAdjacentElement('afterend', pill);
-
+  // styles (only once)
   if (!document.getElementById('ask-hint-pill-css')) {
     const s = document.createElement('style');
     s.id = 'ask-hint-pill-css';
     s.textContent = `
-      #ask-hint-pill{ margin:10px 0 14px; }
+      #ask-hint-pill{ margin:8px 0 12px; }
       .ask-hint-pill{
-        display:flex; align-items:center; gap:10px;
-        padding:12px 14px;
-        border-radius:22px;
-        color:rgba(255,255,255,.92);
-        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
-        border: 2px dashed rgba(156, 195, 255, .75);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 4px 16px rgba(0,0,0,.22);
+        display:flex; justify-content:center; align-items:center; gap:10px;
+        text-align:center;
+        padding:10px 14px;
+        border-radius:24px;
+        font-size:.9rem; line-height:1.4;
+        color:#dbe8ff;
+        background: linear-gradient(180deg, rgba(90,150,255,.16), rgba(90,150,255,.10));
+        border: 2px dashed rgba(150,190,255,.9);
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,.06),
+          0 6px 18px rgba(0,0,0,.22);
+        backdrop-filter: blur(2px);
       }
-      .ask-hint-pill .spark{ filter: drop-shadow(0 0 6px rgba(255,255,255,.45)); }
-      .ask-hint-pill strong{ font-weight:700; }
-      .ask-hint-pill em{ font-style: italic; font-weight:600; opacity:.98; }
-      @media (max-width: 640px){
-        .ask-hint-pill{ font-size:.95rem; padding:10px 12px; }
+      .ask-hint-pill .spark{ filter: drop-shadow(0 0 6px rgba(150,190,255,.75)); }
+      .ask-hint-pill strong{ font-weight:700; color:#eef4ff; }
+      .ask-hint-pill em{
+        font-style: italic; font-weight:600; opacity:.98;
+        padding:0 .15rem;
+      }
+      @media (max-width: 720px){
+        .ask-hint-pill{ font-size:.85rem; padding:9px 12px; }
       }
     `;
     document.head.appendChild(s);
   }
 }
+
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
 function wireAskUI(){

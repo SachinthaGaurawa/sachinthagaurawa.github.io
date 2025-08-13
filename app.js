@@ -669,16 +669,21 @@ function insertAskHint(where = 'album') {
     : document.getElementById('searchInput');
   if (!inputEl) return;
 
-  const pill = document.createElement('div');
-  pill.id = 'ask-hint-pill';
-  pill.setAttribute('role', 'note');
-  pill.setAttribute('aria-label', 'Tip for asking the assistant');
-  pill.innerHTML = `
-    <div class="ask-hint-pill" aria-hidden="true">
-      <span class="spark">✨</span>
-      <strong>Tip:</strong>&nbsp; Ask this album — <em>“Sensors?”</em> <em>“Pipeline?”</em> <em>“Labels?”</em> <em>“License?”</em>
-    </div>
-  `;
+const pill = document.createElement('div');
+pill.id = 'ask-hint-pill';
+pill.setAttribute('role', 'note');
+pill.setAttribute('aria-label', 'Tip for asking the assistant');
+
+const name = (window.currentAlbum?.title || 'this project');
+
+pill.innerHTML = `
+  <span class="spark">✨</span>
+  <strong>Tip:</strong>&nbsp; Ask about <em>${name}</em> — 
+  try <em>“Overview”</em> <em>“How it works?”</em> <em>“Specs”</em> <em>“License”</em>
+`;
+
+document.body.appendChild(pill);
+
   inputEl.insertAdjacentElement('afterend', pill);
 
   // styles (only once)

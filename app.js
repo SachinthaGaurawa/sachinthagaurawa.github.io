@@ -1026,16 +1026,3 @@ function insertAskHint() {
 
 
 
-
-
-
-function init(){
-  if (!hasRequiredEls()) { /* ... */ return; }
-  
-  // grid + search
-  renderGrid();
-  setupSearch();
-  insertAskHint(); // ⬅️ this makes the hint actually appear
-  setupChips();
-  // (rest unchanged)
-}

@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------
-   Album Gallery + Overlay + Viewer + (AI Ask & Captions + Expert Q&A)
+   Album Gallery + Overlay + Viewer + (Expert Chat, Ask & Captions)
    Works on static hosting (GitHub Pages) with a remote API.
    ----------------------------------------------------------- */
 
@@ -19,7 +19,7 @@ window.addEventListener('error', (e) => {
 const $  = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];
 const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
-const debounce = (fn, ms=150) => { let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; };
+const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
 /* ====== Data (sample) ====== */
 const ALBUMS = [
@@ -80,10 +80,7 @@ async function postJSON(url, payload, { retries=0 } = {}) {
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
       return j;
     } catch (err) {
-      if (attempt < retries) {
-        await sleep(400 * (attempt + 1));
-        continue;
-      }
+      if (attempt < retries) { await sleep(400 * (attempt + 1)); continue; }
       console.error('[gallery] postJSON failed:', err);
       throw err;
     }
@@ -106,16 +103,15 @@ async function aiCaption(imageUrl) {
     mode: 'caption',
     imageUrl
   });
-  // { caption, tags }
-  return j;
+  return j; // { caption, tags }
 }
 
-// Expert deep Q&A (AAVSS + Sri Lankan dataset) — now supports topicHint
-async function expertAsk(question, topicHint) {
+// Expert deep Q&A (AAVSS + Sri Lankan dataset)
+async function expertAsk(question) {
   const r = await fetch(`${API_BASE}/api/ai-expert`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, topicHint })
+    body: JSON.stringify({ question })
   });
   let j = {};
   try { j = await r.json(); } catch {}
@@ -125,22 +121,11 @@ async function expertAsk(question, topicHint) {
 
 /* ====== Conversational Brain (topic routing + human style) ====== */
 const ChatBrain = (() => {
-  const TOPICS = {
-    AAVSS: 'AAVSS',
-    DATASET: 'Sri_Lanka_Dataset',
-  };
+  const TOPICS = { AAVSS: 'aavss', DATASET: 'sldataset' };
 
   const KEYWORDS = {
-    AAVSS: [
-      'aavss','vehicle safety','autonomous vehicle safety','jetson',
-      'sensor fusion','fusion','lidar','radar','camera','nvidia',
-      'driver monitoring','dms','adas','can bus','v2x'
-    ],
-    DATASET: [
-      'dataset','sri lanka','colombo','kandy','galle','annotations',
-      'segmentation','bounding box','lane','night','rain','fog',
-      'traffic signs','autonomous driving dataset'
-    ],
+    aavss: ['aavss','vehicle safety','autonomous vehicle safety','jetson','sensor fusion','fusion','lidar','radar','camera','nvidia','adas','tracking','lane','fcw','tensorRT'],
+    sldataset: ['dataset','sri lanka','annotation','labels','split','download','license','classes','lanes','signs','night','rain','fog']
   };
 
   const store = {
@@ -156,64 +141,141 @@ const ChatBrain = (() => {
   }
 
   function detectTopic(q) {
-    const txt = (q || '').toLowerCase();
+    const t = (q || '').toLowerCase();
+    if (/\baavss\b/.test(t)) return TOPICS.AAVSS;
+    if (/\b(sri\s*lanka|dataset)\b/.test(t)) return TOPICS.DATASET;
 
-    if (/\b(aavss)\b/.test(txt)) return TOPICS.AAVSS;
-    if (/\b(sri\s*lanka|dataset)\b/.test(txt)) return TOPICS.DATASET;
-
-    let a = 0, d = 0;
-    KEYWORDS.AAVSS.forEach(k=>{ if (txt.includes(k)) a++; });
-    KEYWORDS.DATASET.forEach(k=>{ if (txt.includes(k)) d++; });
-
-    if (a > d) return TOPICS.AAVSS;
-    if (d > a) return TOPICS.DATASET;
-
+    let a=0,d=0; KEYWORDS.aavss.forEach(k=>{ if(t.includes(k)) a++; }); KEYWORDS.sldataset.forEach(k=>{ if(t.includes(k)) d++; });
+    if (a>d) return TOPICS.AAVSS;
+    if (d>a) return TOPICS.DATASET;
     return currentAlbumTopic() || store.getTopic() || '';
   }
 
   function isShort(q) {
-    const len = (q || '').trim().length;
-    const words = (q || '').trim().split(/\s+/).filter(Boolean).length;
-    return len <= 16 || words <= 3; // e.g., "Sensors", "Models?", "Size?"
+    const words = (q||'').trim().split(/\s+/).filter(Boolean);
+    return words.length <= 3;
   }
 
-  // Not strictly needed by backend now, but kept to preserve features/persona
+  function toneFrom(q){
+    const s = q.toLowerCase();
+    if (/(why|benefit|value|useful)/.test(s)) return 'executive';
+    if (/(how|steps|guide|setup|configure)/.test(s)) return 'step-by-step';
+    if (/(spec|model|fps|latency|metric|numbers?)/.test(s)) return 'spec-list';
+    return isShort(q) ? 'bullets' : 'balanced';
+  }
+
   function buildGuardedQuestion(topic, q) {
-    const style = isShort(q)
-      ? 'Style=concise bullets, 1–5 lines max.'
-      : 'Style=clear, structured, short paragraphs.';
+    const style = isShort(q) ? 'Style=crisp bullets, 3–6 lines max.' : 'Style=short paragraphs with bullets.';
     const scope =
       topic === TOPICS.AAVSS
-        ? 'Topic=AAVSS. Only answer about AAVSS unless explicitly asked to compare.'
+        ? 'Topic=AAVSS. Answer only about AAVSS unless user asks to compare.'
         : topic === TOPICS.DATASET
-        ? 'Topic=Sri Lankan Autonomous Driving Dataset. Only answer about the dataset unless explicitly asked to compare.'
+        ? 'Topic=Sri Lankan Autonomous Driving Dataset. Answer only about the dataset unless user asks to compare.'
         : 'Topic=Auto-detect. Prefer single-topic answer; do not mix topics unless asked.';
-    const persona =
-      'Persona=Friendly expert, human tone. Use concrete specs when available.';
+    const persona = 'Persona=Friendly senior engineer. Human tone. Avoid speculation. Use only KB facts.';
+    const tone = `Tone=${toneFrom(q)} (bold key terms).`;
 
-    return `[${scope}] [${style}] [${persona}] Q: ${q}`;
+    return `[${scope}] [${style}] [${persona}] [${tone}] Q: ${q}`;
   }
 
-  async function ask(q) {
+  async function route(q){
     let topic = detectTopic(q);
+    const short = isShort(q);
 
-    if (!topic && isShort(q)) {
+    if (!topic && short) {
       throw { type: 'clarify', choices: [
-        { id: TOPICS.AAVSS,  label: 'AAVSS' },
-        { id: TOPICS.DATASET,label: 'Sri Lankan Dataset' }
+        { id: 'aavss', label: 'AAVSS' },
+        { id: 'sldataset', label: 'Sri Lankan Dataset' }
       ]};
     }
-
     if (topic) store.setTopic(topic);
-
-    const guarded = buildGuardedQuestion(topic, q);
-    return { topic, guarded };
+    return { topic, guarded: buildGuardedQuestion(topic, q) };
   }
 
-  function forceTopic(topic){ store.setTopic(topic); }
+  function forceTopic(t){ store.setTopic(t); }
+  function getTopic(){ return store.getTopic(); }
 
-  return { ask, forceTopic, TOPICS };
+  return { route, forceTopic, getTopic, isShort };
 })();
+
+/* ====== Safe Markdown-ish renderer (bold/italic/underline, lists, links) ====== */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function linkify(s){
+  return s.replace(/(https?:\/\/[^\s)]+)|(www\.[^\s)]+)/gi, (m)=>{
+    const url = m.startsWith('http') ? m : 'http://'+m;
+    return `<a href="${url}" target="_blank" rel="noopener">${m}</a>`;
+  });
+}
+function inlineMarkup(s){
+  // **bold**, *italic*, __underline__
+  return s
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/__([^_]+)__/g, '<u>$1</u>');
+}
+function mdToHtml(text){
+  const t = linkify(escapeHtml(text));
+  const lines = t.split('\n');
+  let html = '';
+  let inList = false;
+
+  const flushP = (buf) => { if (buf.trim()) html += `<p>${inlineMarkup(buf.trim())}</p>`; };
+
+  let para = '';
+  for (const raw of lines){
+    const line = raw.trimEnd();
+    if (/^(\*|-)\s+/.test(line)){
+      if (para){ flushP(para); para=''; }
+      if (!inList){ html += '<ul>'; inList=true; }
+      html += `<li>${inlineMarkup(line.replace(/^(\*|-)\s+/, ''))}</li>`;
+    } else if (line === ''){
+      if (inList){ html += '</ul>'; inList=false; }
+      if (para){ flushP(para); para=''; }
+    } else {
+      para += (para ? ' ' : '') + line;
+    }
+  }
+  if (inList) html += '</ul>';
+  if (para) flushP(para);
+  return html || '<p></p>';
+}
+
+/* ====== Chat UI (bubbles + typing + suggestions) ====== */
+function injectChatStylesOnce(){
+  if (document.getElementById('chat-css')) return;
+  const css = `
+  .chat-log { max-width: 1100px; margin: .5rem 0 0; padding:0 0 8px; display:flex; flex-direction:column; gap:.6rem; }
+  .bubble { border-radius: 16px; padding: 12px 14px; line-height: 1.45; max-width: 92%; box-shadow: 0 2px 10px rgba(0,0,0,.15); }
+  .bubble.me { align-self: flex-end; background: #1e293b; color: #e5e7eb; }
+  .bubble.ai { align-self: flex-start; background: #0b1324; color: #e6ecff; border: 1px solid rgba(255,255,255,.08); }
+  .bubble.system { align-self:center; background: #0f172a; color:#cbd5e1; padding:8px 12px; font-size:.9rem; border: 1px dashed rgba(255,255,255,.1); }
+  .bubble p { margin: .35rem 0; }
+  .bubble ul { margin: .35rem 0 .35rem 1.1rem; }
+  .typing { display:inline-block; min-width: 36px; }
+  .dot { height:6px; width:6px; background:#93c5fd; border-radius:50%; display:inline-block; margin-right:4px; animation: blink 1.2s infinite; }
+  .dot:nth-child(2){ animation-delay: .15s; } .dot:nth-child(3){ animation-delay: .3s; }
+  @keyframes blink { 0% {opacity:.2} 20%{opacity:1} 100%{opacity:.2} }
+  .suggestions { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.25rem; }
+  .suggestions .chip { background:#0f172a; color:#cbd5e1; border:1px solid rgba(255,255,255,.08); padding:.35rem .6rem; border-radius:999px; cursor:pointer; }
+  .clarify { background: rgba(0,0,0,.06); border: 1px solid rgba(255,255,255,.08); padding: .75rem; border-radius: 10px; }
+  .clarify .chip { cursor: pointer; }
+  `;
+  const s = document.createElement('style'); s.id='chat-css'; s.textContent = css; document.head.appendChild(s);
+}
+
+function makeBubble(role, html){
+  const div = document.createElement('div');
+  div.className = `bubble ${role}`;
+  div.innerHTML = html;
+  return div;
+}
+function makeTyping(){
+  const b = document.createElement('div');
+  b.className = 'bubble ai';
+  b.innerHTML = `<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`;
+  return b;
+}
+function scrollToEnd(el){ el.scrollTop = el.scrollHeight; }
 
 /* ====== DOM refs ====== */
 const grid       = $('#albumGrid');
@@ -230,19 +292,12 @@ let currentIndex = 0;
 /* ====== safety: required elements check ====== */
 function hasRequiredEls() {
   const required = [
-    ['#albumGrid', grid],
-    ['#albumView', albumView],
-    ['#albumHeroImg', heroImg],
-    ['#albumHeroTitle', heroTitle],
-    ['#albumHeroLink', heroLink],
-    ['#albumDesc', descBox],
+    ['#albumGrid', grid], ['#albumView', albumView], ['#albumHeroImg', heroImg],
+    ['#albumHeroTitle', heroTitle], ['#albumHeroLink', heroLink], ['#albumDesc', descBox],
     ['#albumMasonry', masonry],
   ];
   const missing = required.filter(([_, el]) => !el).map(([sel]) => sel);
-  if (missing.length) {
-    console.error('[gallery] Missing required elements in HTML:', missing.join(', '));
-    return false;
-  }
+  if (missing.length) { console.error('[gallery] Missing required elements in HTML:', missing.join(', ')); return false; }
   return true;
 }
 
@@ -267,20 +322,15 @@ function renderGrid(term=""){
   if (!grid) return;
   const t = term.trim().toLowerCase();
   grid.innerHTML = "";
-
-  // include album.tags + AI tags saved for that album
   ALBUMS
     .filter(a => {
       if (!t) return true;
       const base = (a.title + ' ' + a.description + ' ' + (a.tags || []).join(' ')).toLowerCase();
-
       const aiTags = (AITagStore.get(a.id) || []).map(x => String(x).toLowerCase());
       const allTagsJoined = (a.tags || []).concat(aiTags).join(' ').toLowerCase();
-
       return base.includes(t) || allTagsJoined.includes(t);
     })
     .forEach(addCard);
-
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
@@ -312,27 +362,12 @@ function ensureAlbumFooter() {
   if (albumView.querySelector('.site-footer.overlay-footer')) return;
 
   const clone = mainFooter.cloneNode(true);
-  clone.classList.add('overlay-footer');
-  clone.setAttribute('role','contentinfo');
-  clone.querySelectorAll('#year').forEach(el => {
-    el.removeAttribute('id');
-    el.textContent = new Date().getFullYear();
-  });
-  Object.assign(clone.style, {
-    width: 'min(1200px,95vw)',
-    margin: '28px auto 44px',
-    position: 'relative',
-    zIndex: '1',
-    display: 'block'
-  });
+  clone.classList.add('overlay-footer'); clone.setAttribute('role','contentinfo');
+  clone.querySelectorAll('#year').forEach(el => { el.removeAttribute('id'); el.textContent = new Date().getFullYear(); });
+  Object.assign(clone.style, { width: 'min(1200px,95vw)', margin: '28px auto 44px', position: 'relative', zIndex: '1', display: 'block' });
 
-  const insertionPoint = masonry?.parentElement && albumView.contains(masonry.parentElement)
-    ? masonry.parentElement.nextSibling
-    : null;
-
-  if (insertionPoint) albumView.insertBefore(clone, insertionPoint);
-  else albumView.appendChild(clone);
-
+  const insertionPoint = masonry?.parentElement && albumView.contains(masonry.parentElement) ? masonry.parentElement.nextSibling : null;
+  if (insertionPoint) albumView.insertBefore(clone, insertionPoint); else albumView.appendChild(clone);
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
@@ -357,20 +392,16 @@ function openAlbum(id, index=0, push=false){
     const tile=document.createElement('div'); 
     tile.className='m-item';
     const lazyAttr = i < 2 ? "" : ' loading="lazy"';
-    tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>`
-                   + (m.type!=='image'?`<div class="play"><i class="fa-solid fa-play"></i></div>`:"");
+    tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>` + (m.type!=='image'?`<div class="play"><i class="fa-solid fa-play"></i></div>`:"");
     tile.addEventListener('click', ()=> openViewer(i));
     masonry.appendChild(tile);
   });
 
-  albumView.classList.add('active'); 
-  albumView.setAttribute('aria-hidden','false');
+  albumView.classList.add('active'); albumView.setAttribute('aria-hidden','false');
   if (window.gsap) gsap.fromTo('.album-hero',{opacity:.6,y:10},{opacity:1,y:0,duration:.35,ease:'power2.out'});
 
   const tiles = $$('#albumMasonry .m-item');
-  if (tiles.length && window.gsap){
-    gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'});
-  }
+  if (tiles.length && window.gsap){ gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'}); }
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
@@ -382,16 +413,12 @@ function openAlbum(id, index=0, push=false){
     history.pushState({album:id},"",u);
   }
 
-  // kick off AI captions (non-blocking)
-  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{
-    console.warn('[gallery] captionImagesInAlbum error:', err?.message || err);
-  });
+  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{ console.warn('[gallery] captionImagesInAlbum error:', err?.message || err); });
   (window.requestIdleCallback ? requestIdleCallback(doCaptions, { timeout: 2000 }) : setTimeout(doCaptions, 300));
 }
 
 function closeAlbum(){
-  removeAlbumFooter();
-  closeViewer();
+  removeAlbumFooter(); closeViewer();
   if (!albumView) return;
   if (window.gsap) {
     gsap.to('#albumView',{opacity:0,duration:.2,ease:'power2.in',onComplete:()=>{
@@ -399,8 +426,7 @@ function closeAlbum(){
       albumView.setAttribute('aria-hidden','true');
     }});
   } else {
-    albumView.classList.remove('active');
-    albumView.setAttribute('aria-hidden','true');
+    albumView.classList.remove('active'); albumView.setAttribute('aria-hidden','true');
   }
 }
 $('#closeAlbum')?.addEventListener('click', closeAlbum);
@@ -417,10 +443,7 @@ function ytCommand(func){
   if(!ytIframe) return;
   ytIframe.contentWindow?.postMessage(JSON.stringify({event:"command",func, args:[]}),"*");
 }
-function stopYouTube(){
-  if(ytIframe){ try{ ytCommand('stopVideo'); }catch(_){ } ytIframe=null; }
-}
-
+function stopYouTube(){ if(ytIframe){ try{ ytCommand('stopVideo'); }catch(_){ } ytIframe=null; } }
 function previewSrc(m){ return m.type==='image'?m.src:thumbFor(m); }
 
 function loadMedia(){
@@ -430,22 +453,16 @@ function loadMedia(){
 
   let el;
   if(m.type==='image'){
-    el=document.createElement('img');
-    el.src=m.src; el.alt=currentAlbum.title; el.loading='lazy';
+    el=document.createElement('img'); el.src=m.src; el.alt=currentAlbum.title; el.loading='lazy';
   }else if(m.type==='video'){
     el=document.createElement('video');
-    el.src=m.src;
-    el.controls=true; el.playsInline=true; el.muted=true; el.autoplay=true;
+    el.src=m.src; el.controls=true; el.playsInline=true; el.muted=true; el.autoplay=true;
     el.style.width="100%"; el.style.height="100%";
     el.addEventListener('click', ()=> el.paused?el.play():el.pause());
-  }else{ // youtube
+  }else{
     const url=new URL(m.src);
-    url.searchParams.set('enablejsapi','1');
-    url.searchParams.set('rel','0');
-    url.searchParams.set('modestbranding','1');
-    url.searchParams.set('autoplay','1');
-    url.searchParams.set('mute','1');
-    url.searchParams.set('origin', location.origin);
+    url.searchParams.set('enablejsapi','1'); url.searchParams.set('rel','0'); url.searchParams.set('modestbranding','1');
+    url.searchParams.set('autoplay','1'); url.searchParams.set('mute','1'); url.searchParams.set('origin', location.origin);
 
     el=document.createElement('iframe');
     el.src=url.toString();
@@ -453,14 +470,10 @@ function loadMedia(){
     el.allowFullscreen=true; el.title="YouTube video player"; el.id=`yt_${Date.now()}`;
     el.style.width="100%"; el.style.height="100%";
     el.addEventListener('load', ()=> ytIframe=el);
-    el.addEventListener('click', ()=>{
-      ytCommand("playVideo");
-      setTimeout(()=>ytCommand("pauseVideo"),0);
-    });
+    el.addEventListener('click', ()=>{ ytCommand("playVideo"); setTimeout(()=>ytCommand("pauseVideo"),0); });
   }
 
   stage.appendChild(el);
-
   const len=currentAlbum.media.length;
   peekPrev.src=previewSrc(currentAlbum.media[(currentIndex-1+len)%len]);
   peekNext.src=previewSrc(currentAlbum.media[(currentIndex+1)%len]);
@@ -531,128 +544,112 @@ function buildAlbumContext(album){
   ].join('\n');
 }
 
-// (kept for compatibility; not used by UI directly after expert fallback)
-async function askAboutAlbum(question){
-  const input = $('#askInput');
-  const btn   = $('#askBtn');
-  const out   = $('#askResult');
-
-  if (!question || !currentAlbum || !out || !btn) return;
-  const context = buildAlbumContext(currentAlbum);
-
-  btn.disabled = true;
-  out.textContent = 'Thinking…';
-
-  try{
-    const answer = await aiAsk(question, context);
-    out.textContent = answer || 'No answer.';
-  }catch(err){
-    console.error('[gallery] ask error:', err);
-    out.textContent = 'Sorry — the assistant had an issue. Please try again.';
-  }finally{
-    btn.disabled = false;
-  }
-}
-
-/* ====== AI UI (Expert-first with topic focus + clarify) ====== */
-function injectClarifyStylesOnce(){
-  if (document.getElementById('clarify-css')) return;
-  const css = `
-    .clarify { background: rgba(0,0,0,.04); border: 1px solid rgba(0,0,0,.08); padding: .75rem; border-radius: 10px; }
-    .clarify .chip { cursor: pointer; }
-  `;
-  const s = document.createElement('style');
-  s.id = 'clarify-css';
-  s.textContent = css;
-  document.head.appendChild(s);
-}
-
+/* ====== AI UI (Expert-first with topic focus + clarify + chat bubbles) ====== */
 function wireAskUI(){
   const input = $('#askInput');
   const btn   = $('#askBtn');
-  const out   = $('#askResult');
-  if (!input || !btn || !out) return;
+  const resultHost = $('#askResult');
+  if (!input || !btn || !resultHost) return;
 
-  injectClarifyStylesOnce();
+  injectChatStylesOnce();
 
-  out.textContent = '';
-  input.value = '';
-  setTimeout(() => input.focus(), 50);
+  // Build/restore chat log container
+  if (!resultHost.querySelector('.chat-log')){
+    resultHost.innerHTML = '';
+    const log = document.createElement('div');
+    log.className = 'chat-log';
+    resultHost.appendChild(log);
+    const hello = makeBubble('system', 'Ask about <strong>AAVSS</strong> or the <strong>Sri Lankan autonomous driving dataset</strong>. Short questions like <em>“Sensors?”</em> will get crisp bullets.');
+    log.appendChild(hello);
+  }
+  const log = resultHost.querySelector('.chat-log');
 
-  // Helper: render clarification buttons
-  const renderClarify = (choices) => {
-    out.innerHTML = `
-      <div class="clarify">
-        Which one did you mean?
-        <div class="clarify-actions" style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap: wrap;">
-          ${choices.map(c => `<button class="chip" data-id="${c.id}">${c.label}</button>`).join('')}
-        </div>
-      </div>
-    `;
-    out.querySelector('.clarify-actions').onclick = async (e) => {
-      const b = e.target.closest('button[data-id]');
-      if (!b) return;
-      const id = b.dataset.id;
-      // Lock the session topic and re-run with the same text
-      ChatBrain.forceTopic(id);
-      btn.click();
+  // Quick suggestions based on topic
+  function suggestionsFor(topic){
+    if (topic === 'aavss') return ['Sensors', 'Fusion pipeline', 'Safety features', 'Compute budget', 'Latency targets'];
+    if (topic === 'sldataset') return ['Classes', 'Annotations', 'Splits & metrics', 'License', 'Sri Lanka specifics'];
+    return ['AAVSS', 'Sri Lankan dataset', 'Sensors', 'Annotations', 'Fusion'];
+  }
+  function renderSuggestions(topic){
+    const row = document.createElement('div');
+    row.className = 'suggestions';
+    row.innerHTML = suggestionsFor(topic).map(t=>`<button class="chip">${t}</button>`).join('');
+    row.onclick = (e)=>{ const b=e.target.closest('.chip'); if(!b) return; input.value=b.textContent; btn.click(); };
+    return row;
+  }
+
+  // Clarify UI (for ultra-short/ambiguous)
+  function renderClarify(choices){
+    const div = document.createElement('div');
+    div.className = 'bubble ai';
+    div.innerHTML = `<div class="clarify">Which one did you mean?
+      <div class="suggestions" style="margin-top:.5rem">${choices.map(c=>`<button class="chip" data-id="${c.id}">${c.label}</button>`).join('')}</div>
+    </div>`;
+    div.querySelector('.suggestions').onclick = (e)=>{
+      const b = e.target.closest('button[data-id]'); if (!b) return;
+      ChatBrain.forceTopic(b.dataset.id); btn.click();
     };
-  };
+    return div;
+  }
 
-  const ask = async () => {
+  async function ask(){
     const q = (input.value || '').trim();
     if (!q) return;
 
+    // Render my bubble
+    const me = makeBubble('me', mdToHtml(q));
+    log.appendChild(me);
+
+    // Typing placeholder
+    const typing = makeTyping();
+    log.appendChild(typing);
+    scrollToEnd(log);
+
     btn.disabled = true;
-    out.textContent = 'Thinking…';
+    input.value = '';
 
     try {
-      // 1) Topic routing & (optional) clarify
+      // Route by topic + style
       let routed;
       try {
-        routed = await ChatBrain.ask(q);
+        routed = await ChatBrain.route(q);
       } catch (e) {
-        if (e?.type === 'clarify') {
-          btn.disabled = false;
-          renderClarify(e.choices);
-          return;
-        }
+        // Replace typing with clarify chips
+        typing.remove();
+        if (e?.type === 'clarify') { log.appendChild(renderClarify(e.choices)); scrollToEnd(log); return; }
         throw e;
       }
 
-      // Map ChatBrain topic -> backend topicHint
-      let topicHint = 'all';
-      if (routed.topic === ChatBrain.TOPICS.AAVSS)   topicHint = 'aavss';
-      if (routed.topic === ChatBrain.TOPICS.DATASET) topicHint = 'sldataset';
-      if (!topicHint || topicHint === 'all') {
-        // If still unknown, use current album as a strong hint
-        if (currentAlbum?.id === 'aavss')  topicHint = 'aavss';
-        if (currentAlbum?.id === 'dataset') topicHint = 'sldataset';
-      }
-
-      // 2) Try expert first with topicHint (send RAW question for cleaner retrieval)
+      // Expert first
       let answer = '';
       try {
-        const res = await expertAsk(q, topicHint);
+        const res = await expertAsk(routed.guarded);
         answer = res?.answer || '';
       } catch (ex) {
         console.warn('[gallery] expertAsk failed, falling back:', ex?.message || ex);
-      }
-
-      // 3) Fallback to album-scoped AI with context
-      if (!answer) {
         const ctx = buildAlbumContext(currentAlbum || ALBUMS[0]);
         answer = await aiAsk(q, ctx);
       }
 
-      out.textContent = answer || 'No answer.';
+      // Replace typing with AI bubble (formatted)
+      typing.remove();
+      const ai = makeBubble('ai', mdToHtml(answer || 'No answer.'));
+      log.appendChild(ai);
+
+      // Follow-ups
+      log.appendChild(renderSuggestions(ChatBrain.getTopic() || ''));
+
+      scrollToEnd(log);
     } catch (err) {
       console.error('[gallery] ask error:', err);
-      out.textContent = 'Sorry — the assistant had an issue. Please try again.';
+      typing.remove();
+      const errB = makeBubble('ai', mdToHtml('Sorry — the assistant had an issue. Please try again.'));
+      log.appendChild(errB);
+      scrollToEnd(log);
     } finally {
       btn.disabled = false;
     }
-  };
+  }
 
   btn.onclick = ask;
   input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
@@ -704,76 +701,50 @@ async function captionImagesInAlbum(album){
 
 /* ====== Misc UX ====== */
 function updateAllFooterYears() {
-  document.querySelectorAll('.site-footer #year').forEach(el => {
-    el.textContent = new Date().getFullYear();
-  });
+  document.querySelectorAll('.site-footer #year').forEach(el => { el.textContent = new Date().getFullYear(); });
 }
-
 function setupHeroAnimation(){
-  const h2 = document.querySelector('.hero-text h2');
-  if (!h2) return;
-  const words = h2.textContent.split(' ');
-  h2.innerHTML = words.map(w=>`<span class="word">${w}</span>`).join(' ');
-  if (window.gsap) {
-    gsap.fromTo('.hero .word',
-      {y:20, opacity:0},
-      {y:0, opacity:1, duration:.6, stagger:.06, ease:'power2.out', delay:.1}
-    );
-  }
+  const h2 = document.querySelector('.hero-text h2'); if (!h2) return;
+  const words = h2.textContent.split(' '); h2.innerHTML = words.map(w=>`<span class="word">${w}</span>`).join(' ');
+  if (window.gsap) gsap.fromTo('.hero .word',{y:20, opacity:0},{y:0, opacity:1, duration:.6, stagger:.06, ease:'power2.out', delay:.1});
 }
-
 function setupLazyHero(){
   const io = new IntersectionObserver(es=>{
     es.forEach(e=>{
       if (!e.isIntersecting) return;
-      const img = e.target;
-      img.src = img.dataset.src;
-      img.onload = ()=> img.classList.add('is-loaded');
-      io.unobserve(img);
+      const img = e.target; img.src = img.dataset.src; img.onload = ()=> img.classList.add('is-loaded'); io.unobserve(img);
     });
   }, {rootMargin:'150px'});
   document.querySelectorAll('img.lazy-cover').forEach(i=>io.observe(i));
 }
-
 function setupChips(){
   const POPULAR = ['AAVSS','dataset','lidar','night','rain'];
-  const chips = document.getElementById('chips');
-  if (!chips) return;
+  const chips = document.getElementById('chips'); if (!chips) return;
   chips.innerHTML = POPULAR.map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
   chips.addEventListener('click',e=>{
     const b=e.target.closest('.chip'); if(!b) return;
-    const t=b.dataset.t.toLowerCase();
-    $('#searchInput').value = t;
-    renderGrid(t);
+    const t=b.dataset.t.toLowerCase(); $('#searchInput').value = t; renderGrid(t);
   });
 }
-
 function setupSearch(){
-  const search = $('#searchInput');
-  if (!search) return;
+  const search = $('#searchInput'); if (!search) return;
   search.addEventListener('input', debounce(e=>renderGrid(e.target.value), 120));
 }
 
 /* Optional: semantic search (only if transformers loaded) */
 const Emb = { model:null, cache:new Map(), ready:false };
 async function maybeSetupSemantic(){
-  if (!window.transformers) return; // library not loaded
-  try {
-    Emb.model = await window.transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-    Emb.ready = true;
-  } catch { /* ignore */ }
+  if (!window.transformers) return;
+  try { Emb.model = await window.transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2'); Emb.ready = true; }
+  catch { /* ignore */ }
 }
-
 function wireSemanticSearch(){
-  const search = $('#searchInput');
-  if (!search || !Emb.ready) return;
+  const search = $('#searchInput'); if (!search || !Emb.ready) return;
   function cosine(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
   async function embed(text){
     if (Emb.cache.has(text)) return Emb.cache.get(text);
     const out = await Emb.model(text, { pooling: 'mean', normalize: true });
-    const vec = Array.from(out.data);
-    Emb.cache.set(text, vec);
-    return vec;
+    const vec = Array.from(out.data); Emb.cache.set(text, vec); return vec;
   }
   let ALBUM_VECS = null;
   async function ensureVecs(){
@@ -784,8 +755,7 @@ function wireSemanticSearch(){
     }));
   }
   search.addEventListener('input', debounce(async (e)=>{
-    const q = e.target.value.trim();
-    if (!q){ renderGrid(''); return; }
+    const q = e.target.value.trim(); if (!q){ renderGrid(''); return; }
     await ensureVecs();
     const qv = await embed(q);
     const ranked = await Promise.all(ALBUMS.map(async (a, i) => {
@@ -808,24 +778,12 @@ window.addEventListener('popstate', ()=>{
 
 /* ====== Init ====== */
 function init(){
-  if (!hasRequiredEls()) {
-    console.warn('[gallery] Init stopped because required elements are missing on this page.');
-    return;
-  }
+  if (!hasRequiredEls()) { console.warn('[gallery] Init stopped because required elements are missing on this page.'); return; }
 
-  // grid + search
-  renderGrid();
-  setupSearch();
-  setupChips();
-
-  // hero + lazy
-  setupHeroAnimation();
-  setupLazyHero();
-
-  // footer year
+  renderGrid(); setupSearch(); setupChips();
+  setupHeroAnimation(); setupLazyHero();
   updateAllFooterYears();
 
-  // parallax hero (optional)
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
     const heroImgEl = document.querySelector('.hero-media img');
@@ -838,7 +796,6 @@ function init(){
     }
   }
 
-  // card tilt (desktop only)
   const supportsFinePointer = matchMedia('(hover:hover) and (pointer:fine)').matches;
   if (supportsFinePointer && grid) {
     $$('.card').forEach(card => {
@@ -847,10 +804,8 @@ function init(){
         cancelAnimationFrame(rAF);
         rAF = requestAnimationFrame(()=>{
           const b = card.getBoundingClientRect();
-          const cx = e.clientX - b.left;
-          const cy = e.clientY - b.top;
-          const rx = ((cy / b.height) - .5) * -6;
-          const ry = ((cx / b.width)  - .5) *  6;
+          const cx = e.clientX - b.left; const cy = e.clientY - b.top;
+          const rx = ((cy / b.height) - .5) * -6; const ry = ((cx / b.width)  - .5) *  6;
           card.style.transform = `translateY(-6px) rotateX(${rx}deg) rotateY(${ry}deg)`;
         });
       };
@@ -860,32 +815,24 @@ function init(){
     });
   }
 
-  // open deep-linked album (if any)
   const id=new URL(location.href).searchParams.get('album');
   if(id) openAlbum(id,0,false);
 
-  // semantic search (optional)
   maybeSetupSemantic().then(wireSemanticSearch);
+
+  // Backend sanity ping (console only)
+  fetch(`${API_BASE}/api/ai`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
+  })
+  .then(async r => {
+    const t = await r.text();
+    console.log('[gallery] API ping →', t);
+    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
+  })
+  .catch(err => console.error('[gallery] API ping failed:', err));
 }
 
 document.addEventListener('DOMContentLoaded', init);
 console.log('app.js fully initialized');
-
-// Quick backend sanity ping (shows result in console)
-fetch(`${API_BASE}/api/ai`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    mode: 'ask',
-    question: 'Ping from browser',
-    context: 'Test context'
-  })
-})
-  .then(async r => {
-    const t = await r.text();
-    console.log('[gallery] API ping →', t);
-    if (!r.ok) {
-      console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
-    }
-  })
-  .catch(err => console.error('[gallery] API ping failed:', err));

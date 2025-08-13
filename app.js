@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------
-   Album Gallery + Overlay + Viewer + (Expert Chat, Ask & Captions)
+   Album Gallery + Overlay + Viewer + (AI Ask & Captions + Expert Q&A)
    Works on static hosting (GitHub Pages) with a remote API.
    ----------------------------------------------------------- */
 
@@ -20,6 +20,7 @@ const $  = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];
 const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
 const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+const clamp = (v, min, max)=> Math.max(min, Math.min(max, v));
 
 /* ====== Data (sample) ====== */
 const ALBUMS = [
@@ -80,7 +81,10 @@ async function postJSON(url, payload, { retries=0 } = {}) {
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
       return j;
     } catch (err) {
-      if (attempt < retries) { await sleep(400 * (attempt + 1)); continue; }
+      if (attempt < retries) {
+        await sleep(400 * (attempt + 1));
+        continue;
+      }
       console.error('[gallery] postJSON failed:', err);
       throw err;
     }
@@ -90,9 +94,7 @@ async function postJSON(url, payload, { retries=0 } = {}) {
 // Album-scoped Q&A
 async function aiAsk(question, context) {
   const j = await postJSON(`${API_BASE}/api/ai`, {
-    mode: 'ask',
-    question,
-    context
+    mode: 'ask', question, context
   });
   return j?.answer || '';
 }
@@ -100,8 +102,7 @@ async function aiAsk(question, context) {
 // Vision captions + tags
 async function aiCaption(imageUrl) {
   const j = await postJSON(`${API_BASE}/api/ai`, {
-    mode: 'caption',
-    imageUrl
+    mode: 'caption', imageUrl
   });
   return j; // { caption, tags }
 }
@@ -116,166 +117,59 @@ async function expertAsk(question) {
   let j = {};
   try { j = await r.json(); } catch {}
   if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-  return j; // { answer, provider, topic, sources }
+  return j.answer; // optional: j.topic, j.provider, j.sources
 }
 
 /* ====== Conversational Brain (topic routing + human style) ====== */
 const ChatBrain = (() => {
-  const TOPICS = { AAVSS: 'aavss', DATASET: 'sldataset' };
-
+  const TOPICS = { AAVSS:'AAVSS', DATASET:'Sri_Lanka_Dataset' };
   const KEYWORDS = {
-    aavss: ['aavss','vehicle safety','autonomous vehicle safety','jetson','sensor fusion','fusion','lidar','radar','camera','nvidia','adas','tracking','lane','fcw','tensorRT'],
-    sldataset: ['dataset','sri lanka','annotation','labels','split','download','license','classes','lanes','signs','night','rain','fog']
+    AAVSS: ['aavss','vehicle safety','autonomous vehicle safety','jetson','sensor fusion','fusion','lidar','radar','camera','nvidia','driver monitoring','dms','adas','can bus','v2x'],
+    DATASET: ['dataset','sri lanka','colombo','kandy','galle','annotations','segmentation','bounding box','lane','night','rain','fog','traffic signs','autonomous driving dataset']
   };
-
   const store = {
     getTopic(){ try { return sessionStorage.getItem('chat_topic') || ''; } catch { return ''; } },
     setTopic(t){ try { sessionStorage.setItem('chat_topic', t || ''); } catch {} },
   };
-
   function currentAlbumTopic() {
     if (!currentAlbum) return '';
     if (currentAlbum.id === 'aavss')  return TOPICS.AAVSS;
     if (currentAlbum.id === 'dataset') return TOPICS.DATASET;
     return '';
   }
-
   function detectTopic(q) {
-    const t = (q || '').toLowerCase();
-    if (/\baavss\b/.test(t)) return TOPICS.AAVSS;
-    if (/\b(sri\s*lanka|dataset)\b/.test(t)) return TOPICS.DATASET;
-
-    let a=0,d=0; KEYWORDS.aavss.forEach(k=>{ if(t.includes(k)) a++; }); KEYWORDS.sldataset.forEach(k=>{ if(t.includes(k)) d++; });
-    if (a>d) return TOPICS.AAVSS;
-    if (d>a) return TOPICS.DATASET;
+    const txt = (q || '').toLowerCase();
+    if (/\b(aavss)\b/.test(txt)) return TOPICS.AAVSS;
+    if (/\b(sri\s*lanka|dataset)\b/.test(txt)) return TOPICS.DATASET;
+    let a=0,d=0; KEYWORDS.AAVSS.forEach(k=>{ if (txt.includes(k)) a++; }); KEYWORDS.DATASET.forEach(k=>{ if (txt.includes(k)) d++; });
+    if (a>d) return TOPICS.AAVSS; if (d>a) return TOPICS.DATASET;
     return currentAlbumTopic() || store.getTopic() || '';
   }
-
-  function isShort(q) {
-    const words = (q||'').trim().split(/\s+/).filter(Boolean);
-    return words.length <= 3;
+  function isShort(q){
+    const words = (q||'').trim().split(/\s+/).filter(Boolean).length;
+    return words <= 3; // e.g., "Sensors", "Models?", "Size?"
   }
-
-  function toneFrom(q){
-    const s = q.toLowerCase();
-    if (/(why|benefit|value|useful)/.test(s)) return 'executive';
-    if (/(how|steps|guide|setup|configure)/.test(s)) return 'step-by-step';
-    if (/(spec|model|fps|latency|metric|numbers?)/.test(s)) return 'spec-list';
-    return isShort(q) ? 'bullets' : 'balanced';
-  }
-
-  function buildGuardedQuestion(topic, q) {
-    const style = isShort(q) ? 'Style=crisp bullets, 3–6 lines max.' : 'Style=short paragraphs with bullets.';
+  function buildGuardedQuestion(topic, q){
+    const style = isShort(q) ? 'Style=concise bullets, 1–5 lines max.' : 'Style=clear, structured, short paragraphs.';
     const scope =
-      topic === TOPICS.AAVSS
-        ? 'Topic=AAVSS. Answer only about AAVSS unless user asks to compare.'
-        : topic === TOPICS.DATASET
-        ? 'Topic=Sri Lankan Autonomous Driving Dataset. Answer only about the dataset unless user asks to compare.'
-        : 'Topic=Auto-detect. Prefer single-topic answer; do not mix topics unless asked.';
-    const persona = 'Persona=Friendly senior engineer. Human tone. Avoid speculation. Use only KB facts.';
-    const tone = `Tone=${toneFrom(q)} (bold key terms).`;
-
-    return `[${scope}] [${style}] [${persona}] [${tone}] Q: ${q}`;
+      topic === TOPICS.AAVSS ? 'Topic=AAVSS. Only answer about AAVSS unless explicitly asked to compare.'
+      : topic === TOPICS.DATASET ? 'Topic=Sri Lankan Autonomous Driving Dataset. Only answer about the dataset unless explicitly asked to compare.'
+      : 'Topic=Auto-detect. Prefer single-topic answer; do not mix topics unless asked.';
+    const persona = 'Persona=Friendly expert, human tone. Be concrete and practical.';
+    return `[${scope}] [${style}] [${persona}] Q: ${q}`;
   }
-
-  async function route(q){
+  async function ask(q){
     let topic = detectTopic(q);
-    const short = isShort(q);
-
-    if (!topic && short) {
-      throw { type: 'clarify', choices: [
-        { id: 'aavss', label: 'AAVSS' },
-        { id: 'sldataset', label: 'Sri Lankan Dataset' }
-      ]};
+    if (!topic && isShort(q)) {
+      throw { type:'clarify', choices:[{id:TOPICS.AAVSS,label:'AAVSS'},{id:TOPICS.DATASET,label:'Sri Lankan Dataset'}] };
     }
     if (topic) store.setTopic(topic);
-    return { topic, guarded: buildGuardedQuestion(topic, q) };
+    const guarded = buildGuardedQuestion(topic, q);
+    return { topic, guarded };
   }
-
-  function forceTopic(t){ store.setTopic(t); }
-  function getTopic(){ return store.getTopic(); }
-
-  return { route, forceTopic, getTopic, isShort };
+  function forceTopic(topic){ store.setTopic(topic); }
+  return { ask, forceTopic, TOPICS };
 })();
-
-/* ====== Safe Markdown-ish renderer (bold/italic/underline, lists, links) ====== */
-function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function linkify(s){
-  return s.replace(/(https?:\/\/[^\s)]+)|(www\.[^\s)]+)/gi, (m)=>{
-    const url = m.startsWith('http') ? m : 'http://'+m;
-    return `<a href="${url}" target="_blank" rel="noopener">${m}</a>`;
-  });
-}
-function inlineMarkup(s){
-  // **bold**, *italic*, __underline__
-  return s
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/__([^_]+)__/g, '<u>$1</u>');
-}
-function mdToHtml(text){
-  const t = linkify(escapeHtml(text));
-  const lines = t.split('\n');
-  let html = '';
-  let inList = false;
-
-  const flushP = (buf) => { if (buf.trim()) html += `<p>${inlineMarkup(buf.trim())}</p>`; };
-
-  let para = '';
-  for (const raw of lines){
-    const line = raw.trimEnd();
-    if (/^(\*|-)\s+/.test(line)){
-      if (para){ flushP(para); para=''; }
-      if (!inList){ html += '<ul>'; inList=true; }
-      html += `<li>${inlineMarkup(line.replace(/^(\*|-)\s+/, ''))}</li>`;
-    } else if (line === ''){
-      if (inList){ html += '</ul>'; inList=false; }
-      if (para){ flushP(para); para=''; }
-    } else {
-      para += (para ? ' ' : '') + line;
-    }
-  }
-  if (inList) html += '</ul>';
-  if (para) flushP(para);
-  return html || '<p></p>';
-}
-
-/* ====== Chat UI (bubbles + typing + suggestions) ====== */
-function injectChatStylesOnce(){
-  if (document.getElementById('chat-css')) return;
-  const css = `
-  .chat-log { max-width: 1100px; margin: .5rem 0 0; padding:0 0 8px; display:flex; flex-direction:column; gap:.6rem; }
-  .bubble { border-radius: 16px; padding: 12px 14px; line-height: 1.45; max-width: 92%; box-shadow: 0 2px 10px rgba(0,0,0,.15); }
-  .bubble.me { align-self: flex-end; background: #1e293b; color: #e5e7eb; }
-  .bubble.ai { align-self: flex-start; background: #0b1324; color: #e6ecff; border: 1px solid rgba(255,255,255,.08); }
-  .bubble.system { align-self:center; background: #0f172a; color:#cbd5e1; padding:8px 12px; font-size:.9rem; border: 1px dashed rgba(255,255,255,.1); }
-  .bubble p { margin: .35rem 0; }
-  .bubble ul { margin: .35rem 0 .35rem 1.1rem; }
-  .typing { display:inline-block; min-width: 36px; }
-  .dot { height:6px; width:6px; background:#93c5fd; border-radius:50%; display:inline-block; margin-right:4px; animation: blink 1.2s infinite; }
-  .dot:nth-child(2){ animation-delay: .15s; } .dot:nth-child(3){ animation-delay: .3s; }
-  @keyframes blink { 0% {opacity:.2} 20%{opacity:1} 100%{opacity:.2} }
-  .suggestions { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.25rem; }
-  .suggestions .chip { background:#0f172a; color:#cbd5e1; border:1px solid rgba(255,255,255,.08); padding:.35rem .6rem; border-radius:999px; cursor:pointer; }
-  .clarify { background: rgba(0,0,0,.06); border: 1px solid rgba(255,255,255,.08); padding: .75rem; border-radius: 10px; }
-  .clarify .chip { cursor: pointer; }
-  `;
-  const s = document.createElement('style'); s.id='chat-css'; s.textContent = css; document.head.appendChild(s);
-}
-
-function makeBubble(role, html){
-  const div = document.createElement('div');
-  div.className = `bubble ${role}`;
-  div.innerHTML = html;
-  return div;
-}
-function makeTyping(){
-  const b = document.createElement('div');
-  b.className = 'bubble ai';
-  b.innerHTML = `<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`;
-  return b;
-}
-function scrollToEnd(el){ el.scrollTop = el.scrollHeight; }
 
 /* ====== DOM refs ====== */
 const grid       = $('#albumGrid');
@@ -292,12 +186,19 @@ let currentIndex = 0;
 /* ====== safety: required elements check ====== */
 function hasRequiredEls() {
   const required = [
-    ['#albumGrid', grid], ['#albumView', albumView], ['#albumHeroImg', heroImg],
-    ['#albumHeroTitle', heroTitle], ['#albumHeroLink', heroLink], ['#albumDesc', descBox],
+    ['#albumGrid', grid],
+    ['#albumView', albumView],
+    ['#albumHeroImg', heroImg],
+    ['#albumHeroTitle', heroTitle],
+    ['#albumHeroLink', heroLink],
+    ['#albumDesc', descBox],
     ['#albumMasonry', masonry],
   ];
   const missing = required.filter(([_, el]) => !el).map(([sel]) => sel);
-  if (missing.length) { console.error('[gallery] Missing required elements in HTML:', missing.join(', ')); return false; }
+  if (missing.length) {
+    console.error('[gallery] Missing required elements in HTML:', missing.join(', '));
+    return false;
+  }
   return true;
 }
 
@@ -362,12 +263,27 @@ function ensureAlbumFooter() {
   if (albumView.querySelector('.site-footer.overlay-footer')) return;
 
   const clone = mainFooter.cloneNode(true);
-  clone.classList.add('overlay-footer'); clone.setAttribute('role','contentinfo');
-  clone.querySelectorAll('#year').forEach(el => { el.removeAttribute('id'); el.textContent = new Date().getFullYear(); });
-  Object.assign(clone.style, { width: 'min(1200px,95vw)', margin: '28px auto 44px', position: 'relative', zIndex: '1', display: 'block' });
+  clone.classList.add('overlay-footer');
+  clone.setAttribute('role','contentinfo');
+  clone.querySelectorAll('#year').forEach(el => {
+    el.removeAttribute('id');
+    el.textContent = new Date().getFullYear();
+  });
+  Object.assign(clone.style, {
+    width: 'min(1200px,95vw)',
+    margin: '28px auto 44px',
+    position: 'relative',
+    zIndex: '1',
+    display: 'block'
+  });
 
-  const insertionPoint = masonry?.parentElement && albumView.contains(masonry.parentElement) ? masonry.parentElement.nextSibling : null;
-  if (insertionPoint) albumView.insertBefore(clone, insertionPoint); else albumView.appendChild(clone);
+  const insertionPoint = masonry?.parentElement && albumView.contains(masonry.parentElement)
+    ? masonry.parentElement.nextSibling
+    : null;
+
+  if (insertionPoint) albumView.insertBefore(clone, insertionPoint);
+  else albumView.appendChild(clone);
+
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 }
 
@@ -392,16 +308,20 @@ function openAlbum(id, index=0, push=false){
     const tile=document.createElement('div'); 
     tile.className='m-item';
     const lazyAttr = i < 2 ? "" : ' loading="lazy"';
-    tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>` + (m.type!=='image'?`<div class="play"><i class="fa-solid fa-play"></i></div>`:"");
+    tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>`
+                   + (m.type!=='image'?`<div class="play"><i class="fa-solid fa-play"></i></div>`:"");
     tile.addEventListener('click', ()=> openViewer(i));
     masonry.appendChild(tile);
   });
 
-  albumView.classList.add('active'); albumView.setAttribute('aria-hidden','false');
+  albumView.classList.add('active'); 
+  albumView.setAttribute('aria-hidden','false');
   if (window.gsap) gsap.fromTo('.album-hero',{opacity:.6,y:10},{opacity:1,y:0,duration:.35,ease:'power2.out'});
 
   const tiles = $$('#albumMasonry .m-item');
-  if (tiles.length && window.gsap){ gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'}); }
+  if (tiles.length && window.gsap){
+    gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'});
+  }
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
@@ -413,12 +333,16 @@ function openAlbum(id, index=0, push=false){
     history.pushState({album:id},"",u);
   }
 
-  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{ console.warn('[gallery] captionImagesInAlbum error:', err?.message || err); });
+  // kick off AI captions (non-blocking)
+  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{
+    console.warn('[gallery] captionImagesInAlbum error:', err?.message || err);
+  });
   (window.requestIdleCallback ? requestIdleCallback(doCaptions, { timeout: 2000 }) : setTimeout(doCaptions, 300));
 }
 
 function closeAlbum(){
-  removeAlbumFooter(); closeViewer();
+  removeAlbumFooter();
+  closeViewer();
   if (!albumView) return;
   if (window.gsap) {
     gsap.to('#albumView',{opacity:0,duration:.2,ease:'power2.in',onComplete:()=>{
@@ -426,7 +350,8 @@ function closeAlbum(){
       albumView.setAttribute('aria-hidden','true');
     }});
   } else {
-    albumView.classList.remove('active'); albumView.setAttribute('aria-hidden','true');
+    albumView.classList.remove('active');
+    albumView.setAttribute('aria-hidden','true');
   }
 }
 $('#closeAlbum')?.addEventListener('click', closeAlbum);
@@ -443,7 +368,10 @@ function ytCommand(func){
   if(!ytIframe) return;
   ytIframe.contentWindow?.postMessage(JSON.stringify({event:"command",func, args:[]}),"*");
 }
-function stopYouTube(){ if(ytIframe){ try{ ytCommand('stopVideo'); }catch(_){ } ytIframe=null; } }
+function stopYouTube(){
+  if(ytIframe){ try{ ytCommand('stopVideo'); }catch(_){ } ytIframe=null; }
+}
+
 function previewSrc(m){ return m.type==='image'?m.src:thumbFor(m); }
 
 function loadMedia(){
@@ -453,16 +381,22 @@ function loadMedia(){
 
   let el;
   if(m.type==='image'){
-    el=document.createElement('img'); el.src=m.src; el.alt=currentAlbum.title; el.loading='lazy';
+    el=document.createElement('img');
+    el.src=m.src; el.alt=currentAlbum.title; el.loading='lazy';
   }else if(m.type==='video'){
     el=document.createElement('video');
-    el.src=m.src; el.controls=true; el.playsInline=true; el.muted=true; el.autoplay=true;
+    el.src=m.src;
+    el.controls=true; el.playsInline=true; el.muted=true; el.autoplay=true;
     el.style.width="100%"; el.style.height="100%";
     el.addEventListener('click', ()=> el.paused?el.play():el.pause());
-  }else{
+  }else{ // youtube
     const url=new URL(m.src);
-    url.searchParams.set('enablejsapi','1'); url.searchParams.set('rel','0'); url.searchParams.set('modestbranding','1');
-    url.searchParams.set('autoplay','1'); url.searchParams.set('mute','1'); url.searchParams.set('origin', location.origin);
+    url.searchParams.set('enablejsapi','1');
+    url.searchParams.set('rel','0');
+    url.searchParams.set('modestbranding','1');
+    url.searchParams.set('autoplay','1');
+    url.searchParams.set('mute','1');
+    url.searchParams.set('origin', location.origin);
 
     el=document.createElement('iframe');
     el.src=url.toString();
@@ -470,10 +404,14 @@ function loadMedia(){
     el.allowFullscreen=true; el.title="YouTube video player"; el.id=`yt_${Date.now()}`;
     el.style.width="100%"; el.style.height="100%";
     el.addEventListener('load', ()=> ytIframe=el);
-    el.addEventListener('click', ()=>{ ytCommand("playVideo"); setTimeout(()=>ytCommand("pauseVideo"),0); });
+    el.addEventListener('click', ()=>{
+      ytCommand("playVideo");
+      setTimeout(()=>ytCommand("pauseVideo"),0);
+    });
   }
 
   stage.appendChild(el);
+
   const len=currentAlbum.media.length;
   peekPrev.src=previewSrc(currentAlbum.media[(currentIndex-1+len)%len]);
   peekNext.src=previewSrc(currentAlbum.media[(currentIndex+1)%len]);
@@ -544,112 +482,205 @@ function buildAlbumContext(album){
   ].join('\n');
 }
 
-/* ====== AI UI (Expert-first with topic focus + clarify + chat bubbles) ====== */
+// kept for compatibility (not used now that expert-first is default)
+async function askAboutAlbum(question){
+  const input = $('#askInput');
+  const btn   = $('#askBtn');
+  const out   = $('#askResult');
+  if (!question || !currentAlbum || !out || !btn) return;
+  const context = buildAlbumContext(currentAlbum);
+  btn.disabled = true; out.textContent = 'Thinking…';
+  try{
+    const answer = await aiAsk(question, context);
+    out.textContent = answer || 'No answer.';
+  }catch(err){
+    console.error('[gallery] ask error:', err);
+    out.textContent = 'Sorry — the assistant had an issue. Please try again.';
+  }finally{ btn.disabled = false; }
+}
+
+/* ====== Chat UI Enhancements (single-turn, typing, markdown, controls) ====== */
+function injectChatStylesOnce(){
+  if (document.getElementById('chatfx-css')) return;
+  const css = `
+  /* container */
+  #askResult{ position:relative; margin-top:10px; }
+  .chat-bubble{ background:#0e1a24; color:#e9f2f9; border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:16px 18px; line-height:1.55; box-shadow: 0 6px 22px rgba(0,0,0,.25); }
+  .chat-bubble.enter{ animation: bubbleIn .22s ease-out both; }
+  @keyframes bubbleIn{ from{ transform:translateY(6px); opacity:.0 } to{ transform:translateY(0); opacity:1 } }
+  .chat-toolbar{ display:flex; gap:10px; margin-top:8px; }
+  .chat-toolbar button{ border:1px solid rgba(255,255,255,.15); background:#0b1218; color:#dbe6ef;
+    padding:6px 10px; border-radius:10px; font-size:12px; cursor:pointer; }
+  .chat-toolbar button:hover{ background:#0f1720; }
+  .topic-chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.16); background:#0b141d; color:#cfe3ff; font-size:12px; margin-bottom:8px }
+  .typing-dot{ display:inline-block; width:6px; height:6px; border-radius:999px; background:#9cc3ff; margin-right:4px;
+    animation: blink 1s infinite ease-in-out; }
+  .typing-dot:nth-child(2){ animation-delay:.2s } .typing-dot:nth-child(3){ animation-delay:.4s }
+  @keyframes blink{ 0%{ opacity:.2 } 50%{ opacity:1 } 100%{ opacity:.2 } }
+  /* markdown-ish */
+  .msg h1,.msg h2,.msg h3{ margin:.4em 0; }
+  .msg p{ margin:.45em 0; }
+  .msg ul{ padding-left:1.2em; margin:.35em 0; }
+  .msg li{ margin:.2em 0; }
+  .msg strong{ font-weight:700; }
+  .msg em{ font-style:italic; }
+  .msg code{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.95em; padding:.1em .3em;
+    background:#0a1118; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
+  /* keep gallery from being pushed by long responses: cap height */
+  .chat-bubble .msg-scroll{ max-height: min(42vh, 520px); overflow:auto; scrollbar-width: thin; }
+  `;
+  const s = document.createElement('style');
+  s.id='chatfx-css'; s.textContent = css; document.head.appendChild(s);
+}
+
+// ultra-light markdown to HTML (safe subset)
+function mdToHtml(md){
+  let t = (md || '').trim();
+  // escape basic HTML
+  t = t.replace(/[&<>]/g, s=> ({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]));
+  // bold **text**
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // italic *text*
+  t = t.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
+  // inline code `code`
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // bullets
+  t = t.replace(/^(?:\s*[-*]\s.+(?:\n|$))+?/gm, (block)=>{
+    const items = block.trim().split('\n').map(l=> l.replace(/^\s*[-*]\s/,'').trim());
+    return `<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  });
+  // paragraphs
+  t = t.split(/\n{2,}/).map(p=> p.startsWith('<ul>') ? p : `<p>${p.replace(/\n/g,'<br>')}</p>`).join('\n');
+  return t;
+}
+
+// typing animation (adds characters progressively)
+async function typeWrite(el, text, { cps=45, minDelay=8, maxDelay=28 } = {}){
+  const safe = text || '';
+  let buf = '';
+  const target = el;
+  const total = safe.length;
+  for (let i=0;i<total;i++){
+    buf += safe[i];
+    target.innerHTML = mdToHtml(buf);
+    const jitter = clamp(Math.random()* (maxDelay-minDelay) + minDelay, minDelay, maxDelay);
+    await sleep(jitter * (60/cps));
+  }
+}
+
+// Build single-turn bubble with toolbar
+function renderChat(answerText, topicLabel){
+  const out = $('#askResult'); if (!out) return;
+  out.innerHTML = ''; // SINGLE TURN: replace old content
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-bubble enter';
+
+  const topic = document.createElement('div');
+  topic.className = 'topic-chip';
+  topic.innerHTML = `<span class="typing-dot"></span><span>${topicLabel || 'Assistant'}</span>`;
+
+  const msg = document.createElement('div');
+  msg.className = 'msg msg-scroll';
+  // start with typing dots while we animate text in
+  msg.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+
+  const tools = document.createElement('div');
+  tools.className = 'chat-toolbar';
+  tools.innerHTML = `
+    <button id="copyAns" title="Copy">Copy</button>
+    <button id="regenAns" title="Regenerate">Regenerate</button>
+  `;
+
+  wrap.appendChild(topic);
+  wrap.appendChild(msg);
+  wrap.appendChild(tools);
+  out.appendChild(wrap);
+
+  // animate typewriting
+  typeWrite(msg, answerText, { cps: 55 }).catch(()=> { msg.innerHTML = mdToHtml(answerText); });
+
+  // copy
+  tools.querySelector('#copyAns').onclick = async ()=>{
+    try{ await navigator.clipboard.writeText(answerText); tools.querySelector('#copyAns').textContent='Copied'; setTimeout(()=>tools.querySelector('#copyAns').textContent='Copy', 1200);}catch{}
+  };
+  // regenerate (re-click Ask)
+  tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
+}
+
+/* ====== AI UI (Expert-first with topic focus + clarify) ====== */
 function wireAskUI(){
   const input = $('#askInput');
   const btn   = $('#askBtn');
-  const resultHost = $('#askResult');
-  if (!input || !btn || !resultHost) return;
+  const out   = $('#askResult');
+  if (!input || !btn || !out) return;
 
   injectChatStylesOnce();
 
-  // Build/restore chat log container
-  if (!resultHost.querySelector('.chat-log')){
-    resultHost.innerHTML = '';
-    const log = document.createElement('div');
-    log.className = 'chat-log';
-    resultHost.appendChild(log);
-    const hello = makeBubble('system', 'Ask about <strong>AAVSS</strong> or the <strong>Sri Lankan autonomous driving dataset</strong>. Short questions like <em>“Sensors?”</em> will get crisp bullets.');
-    log.appendChild(hello);
-  }
-  const log = resultHost.querySelector('.chat-log');
+  out.textContent = '';
+  input.value = '';
+  setTimeout(() => input.focus(), 50);
 
-  // Quick suggestions based on topic
-  function suggestionsFor(topic){
-    if (topic === 'aavss') return ['Sensors', 'Fusion pipeline', 'Safety features', 'Compute budget', 'Latency targets'];
-    if (topic === 'sldataset') return ['Classes', 'Annotations', 'Splits & metrics', 'License', 'Sri Lanka specifics'];
-    return ['AAVSS', 'Sri Lankan dataset', 'Sensors', 'Annotations', 'Fusion'];
-  }
-  function renderSuggestions(topic){
-    const row = document.createElement('div');
-    row.className = 'suggestions';
-    row.innerHTML = suggestionsFor(topic).map(t=>`<button class="chip">${t}</button>`).join('');
-    row.onclick = (e)=>{ const b=e.target.closest('.chip'); if(!b) return; input.value=b.textContent; btn.click(); };
-    return row;
-  }
-
-  // Clarify UI (for ultra-short/ambiguous)
-  function renderClarify(choices){
-    const div = document.createElement('div');
-    div.className = 'bubble ai';
-    div.innerHTML = `<div class="clarify">Which one did you mean?
-      <div class="suggestions" style="margin-top:.5rem">${choices.map(c=>`<button class="chip" data-id="${c.id}">${c.label}</button>`).join('')}</div>
-    </div>`;
-    div.querySelector('.suggestions').onclick = (e)=>{
-      const b = e.target.closest('button[data-id]'); if (!b) return;
-      ChatBrain.forceTopic(b.dataset.id); btn.click();
+  // helper: clarification chips (short question like "sensors?")
+  const renderClarify = (choices) => {
+    out.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-bubble enter';
+    wrap.innerHTML = `
+      <div class="topic-chip"><span class="typing-dot"></span><span>What did you mean?</span></div>
+      <div class="msg">
+        <p>Please pick a topic so I can answer precisely:</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem">
+          ${choices.map(c => `<button class="chip" data-id="${c.id}">${c.label}</button>`).join('')}
+        </div>
+      </div>
+    `;
+    out.appendChild(wrap);
+    wrap.querySelector('.msg').onclick = (e)=>{
+      const b=e.target.closest('button[data-id]'); if(!b) return;
+      ChatBrain.forceTopic(b.dataset.id);
+      btn.click(); // re-run with same text
     };
-    return div;
-  }
+  };
 
-  async function ask(){
+  const ask = async () => {
     const q = (input.value || '').trim();
     if (!q) return;
 
-    // Render my bubble
-    const me = makeBubble('me', mdToHtml(q));
-    log.appendChild(me);
-
-    // Typing placeholder
-    const typing = makeTyping();
-    log.appendChild(typing);
-    scrollToEnd(log);
-
     btn.disabled = true;
-    input.value = '';
+    // show lightweight typing bubble immediately (single-turn)
+    renderChat('_Thinking…_', 'Assistant');
 
     try {
-      // Route by topic + style
+      // 1) Topic routing
       let routed;
       try {
-        routed = await ChatBrain.route(q);
+        routed = await ChatBrain.ask(q);
       } catch (e) {
-        // Replace typing with clarify chips
-        typing.remove();
-        if (e?.type === 'clarify') { log.appendChild(renderClarify(e.choices)); scrollToEnd(log); return; }
+        if (e?.type === 'clarify') { btn.disabled = false; renderClarify(e.choices); return; }
         throw e;
       }
 
-      // Expert first
+      // 2) Expert first (guarded), fallback to album AI
       let answer = '';
       try {
-        const res = await expertAsk(routed.guarded);
-        answer = res?.answer || '';
+        answer = await expertAsk(routed.guarded);
       } catch (ex) {
         console.warn('[gallery] expertAsk failed, falling back:', ex?.message || ex);
         const ctx = buildAlbumContext(currentAlbum || ALBUMS[0]);
         answer = await aiAsk(q, ctx);
       }
 
-      // Replace typing with AI bubble (formatted)
-      typing.remove();
-      const ai = makeBubble('ai', mdToHtml(answer || 'No answer.'));
-      log.appendChild(ai);
-
-      // Follow-ups
-      log.appendChild(renderSuggestions(ChatBrain.getTopic() || ''));
-
-      scrollToEnd(log);
+      // 3) Present answer nicely (single-turn bubble)
+      renderChat(answer || 'No answer.', routed.topic || 'Assistant');
     } catch (err) {
       console.error('[gallery] ask error:', err);
-      typing.remove();
-      const errB = makeBubble('ai', mdToHtml('Sorry — the assistant had an issue. Please try again.'));
-      log.appendChild(errB);
-      scrollToEnd(log);
+      renderChat('Sorry — the assistant had an issue. Please try again.', 'Assistant');
     } finally {
       btn.disabled = false;
     }
-  }
+  };
 
   btn.onclick = ask;
   input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
@@ -701,50 +732,76 @@ async function captionImagesInAlbum(album){
 
 /* ====== Misc UX ====== */
 function updateAllFooterYears() {
-  document.querySelectorAll('.site-footer #year').forEach(el => { el.textContent = new Date().getFullYear(); });
+  document.querySelectorAll('.site-footer #year').forEach(el => {
+    el.textContent = new Date().getFullYear();
+  });
 }
+
 function setupHeroAnimation(){
-  const h2 = document.querySelector('.hero-text h2'); if (!h2) return;
-  const words = h2.textContent.split(' '); h2.innerHTML = words.map(w=>`<span class="word">${w}</span>`).join(' ');
-  if (window.gsap) gsap.fromTo('.hero .word',{y:20, opacity:0},{y:0, opacity:1, duration:.6, stagger:.06, ease:'power2.out', delay:.1});
+  const h2 = document.querySelector('.hero-text h2');
+  if (!h2) return;
+  const words = h2.textContent.split(' ');
+  h2.innerHTML = words.map(w=>`<span class="word">${w}</span>`).join(' ');
+  if (window.gsap) {
+    gsap.fromTo('.hero .word',
+      {y:20, opacity:0},
+      {y:0, opacity:1, duration:.6, stagger:.06, ease:'power2.out', delay:.1}
+    );
+  }
 }
+
 function setupLazyHero(){
   const io = new IntersectionObserver(es=>{
     es.forEach(e=>{
       if (!e.isIntersecting) return;
-      const img = e.target; img.src = img.dataset.src; img.onload = ()=> img.classList.add('is-loaded'); io.unobserve(img);
+      const img = e.target;
+      img.src = img.dataset.src;
+      img.onload = ()=> img.classList.add('is-loaded');
+      io.unobserve(img);
     });
   }, {rootMargin:'150px'});
   document.querySelectorAll('img.lazy-cover').forEach(i=>io.observe(i));
 }
+
 function setupChips(){
   const POPULAR = ['AAVSS','dataset','lidar','night','rain'];
-  const chips = document.getElementById('chips'); if (!chips) return;
+  const chips = document.getElementById('chips');
+  if (!chips) return;
   chips.innerHTML = POPULAR.map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
   chips.addEventListener('click',e=>{
     const b=e.target.closest('.chip'); if(!b) return;
-    const t=b.dataset.t.toLowerCase(); $('#searchInput').value = t; renderGrid(t);
+    const t=b.dataset.t.toLowerCase();
+    $('#searchInput').value = t;
+    renderGrid(t);
   });
 }
+
 function setupSearch(){
-  const search = $('#searchInput'); if (!search) return;
+  const search = $('#searchInput');
+  if (!search) return;
   search.addEventListener('input', debounce(e=>renderGrid(e.target.value), 120));
 }
 
 /* Optional: semantic search (only if transformers loaded) */
 const Emb = { model:null, cache:new Map(), ready:false };
 async function maybeSetupSemantic(){
-  if (!window.transformers) return;
-  try { Emb.model = await window.transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2'); Emb.ready = true; }
-  catch { /* ignore */ }
+  if (!window.transformers) return; // library not loaded
+  try {
+    Emb.model = await window.transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    Emb.ready = true;
+  } catch { /* ignore */ }
 }
+
 function wireSemanticSearch(){
-  const search = $('#searchInput'); if (!search || !Emb.ready) return;
+  const search = $('#searchInput');
+  if (!search || !Emb.ready) return;
   function cosine(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
   async function embed(text){
     if (Emb.cache.has(text)) return Emb.cache.get(text);
     const out = await Emb.model(text, { pooling: 'mean', normalize: true });
-    const vec = Array.from(out.data); Emb.cache.set(text, vec); return vec;
+    const vec = Array.from(out.data);
+    Emb.cache.set(text, vec);
+    return vec;
   }
   let ALBUM_VECS = null;
   async function ensureVecs(){
@@ -755,7 +812,8 @@ function wireSemanticSearch(){
     }));
   }
   search.addEventListener('input', debounce(async (e)=>{
-    const q = e.target.value.trim(); if (!q){ renderGrid(''); return; }
+    const q = e.target.value.trim();
+    if (!q){ renderGrid(''); return; }
     await ensureVecs();
     const qv = await embed(q);
     const ranked = await Promise.all(ALBUMS.map(async (a, i) => {
@@ -778,12 +836,24 @@ window.addEventListener('popstate', ()=>{
 
 /* ====== Init ====== */
 function init(){
-  if (!hasRequiredEls()) { console.warn('[gallery] Init stopped because required elements are missing on this page.'); return; }
+  if (!hasRequiredEls()) {
+    console.warn('[gallery] Init stopped because required elements are missing on this page.');
+    return;
+  }
 
-  renderGrid(); setupSearch(); setupChips();
-  setupHeroAnimation(); setupLazyHero();
+  // grid + search
+  renderGrid();
+  setupSearch();
+  setupChips();
+
+  // hero + lazy
+  setupHeroAnimation();
+  setupLazyHero();
+
+  // footer year
   updateAllFooterYears();
 
+  // parallax hero (optional)
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
     const heroImgEl = document.querySelector('.hero-media img');
@@ -796,6 +866,7 @@ function init(){
     }
   }
 
+  // card tilt (desktop only)
   const supportsFinePointer = matchMedia('(hover:hover) and (pointer:fine)').matches;
   if (supportsFinePointer && grid) {
     $$('.card').forEach(card => {
@@ -804,8 +875,10 @@ function init(){
         cancelAnimationFrame(rAF);
         rAF = requestAnimationFrame(()=>{
           const b = card.getBoundingClientRect();
-          const cx = e.clientX - b.left; const cy = e.clientY - b.top;
-          const rx = ((cy / b.height) - .5) * -6; const ry = ((cx / b.width)  - .5) *  6;
+          const cx = e.clientX - b.left;
+          const cy = e.clientY - b.top;
+          const rx = ((cy / b.height) - .5) * -6;
+          const ry = ((cx / b.width)  - .5) *  6;
           card.style.transform = `translateY(-6px) rotateX(${rx}deg) rotateY(${ry}deg)`;
         });
       };
@@ -815,24 +888,32 @@ function init(){
     });
   }
 
+  // open deep-linked album (if any)
   const id=new URL(location.href).searchParams.get('album');
   if(id) openAlbum(id,0,false);
 
+  // semantic search (optional)
   maybeSetupSemantic().then(wireSemanticSearch);
-
-  // Backend sanity ping (console only)
-  fetch(`${API_BASE}/api/ai`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
-  })
-  .then(async r => {
-    const t = await r.text();
-    console.log('[gallery] API ping →', t);
-    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
-  })
-  .catch(err => console.error('[gallery] API ping failed:', err));
 }
 
 document.addEventListener('DOMContentLoaded', init);
 console.log('app.js fully initialized');
+
+// Quick backend sanity ping (shows result in console)
+fetch(`${API_BASE}/api/ai`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    mode: 'ask',
+    question: 'Ping from browser',
+    context: 'Test context'
+  })
+})
+  .then(async r => {
+    const t = await r.text();
+    console.log('[gallery] API ping →', t);
+    if (!r.ok) {
+      console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
+    }
+  })
+  .catch(err => console.error('[gallery] API ping failed:', err));

@@ -981,14 +981,47 @@ fetch(`${API_BASE}/api/ai`, {
 
 
 
+// --- one-time styles for the hint ---
+function injectAskHintStylesOnce(){
+  if (document.getElementById('ask-hint-css')) return;
+  const s = document.createElement('style');
+  s.id = 'ask-hint-css';
+  s.textContent = `
+    .ask-hint{
+      margin:.65rem 0 0;
+      font-size:.95rem;
+      color:rgba(255,255,255,.9);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      padding:.6rem .75rem;
+      line-height:1.45;
+    }
+    .ask-hint .spark{ margin-right:.35rem }
+    .ask-hint em{ font-style: italic; opacity:.95; }
+  `;
+  document.head.appendChild(s);
+}
 
-  // Build/restore chat log container
-  if (!resultHost.querySelector('.chat-log')){
-    resultHost.innerHTML = '';
-    const log = document.createElement('div');
-    log.className = 'chat-log';
-    resultHost.appendChild(log);
-    const hello = makeBubble('system', 'Ask about <strong>AAVSS</strong> or the <strong>Sri Lankan autonomous driving dataset</strong>. Short questions like <em>“Sensors?”</em> will get crisp bullets.');
-    log.appendChild(hello);
+// --- place hint directly below the chat output area inside album ---
+function insertAlbumAskHintBelowChat(){
+  const out = document.getElementById('askResult');
+  if (!out) return;
+  injectAskHintStylesOnce();
+
+  // avoid duplicates per album open
+  let hint = document.getElementById('album-ask-hint');
+  if (!hint){
+    hint = document.createElement('div');
+    hint.id = 'album-ask-hint';
+    hint.className = 'ask-hint';
+    hint.innerHTML = `
+      <span class="spark">✨</span>
+      <strong>Tip:</strong> Ask short or detailed questions about this album.<br>
+      Try <em>“Sensors?”</em>, <em>“What’s the pipeline?”</em>, <em>“Annotation policy?”</em>,
+      or <em>“Download & license?”</em>. You’ll get crisp, focused answers for the topic you’re viewing.
+    `;
+    // insert just after the chat output container
+    out.insertAdjacentElement('afterend', hint);
   }
-  const log = resultHost.querySelector('.chat-log');
+}

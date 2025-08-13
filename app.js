@@ -982,4 +982,13 @@ fetch(`${API_BASE}/api/ai`, {
 
 
 
-
+  // Build/restore chat log container
+  if (!resultHost.querySelector('.chat-log')){
+    resultHost.innerHTML = '';
+    const log = document.createElement('div');
+    log.className = 'chat-log';
+    resultHost.appendChild(log);
+    const hello = makeBubble('system', 'Ask about <strong>AAVSS</strong> or the <strong>Sri Lankan autonomous driving dataset</strong>. Short questions like <em>“Sensors?”</em> will get crisp bullets.');
+    log.appendChild(hello);
+  }
+  const log = resultHost.querySelector('.chat-log');

@@ -647,7 +647,7 @@ function renderChat(answerText, topicLabel){
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-/* ====== NEW: Tip pill (short, attractive) ====== */
+
 /* ====== NEW: Tip pill (short, centered, light-blue) ====== */
 function insertAskHint(where = 'album') {
   // avoid duplicates

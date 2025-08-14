@@ -945,7 +945,7 @@ function init(){
 
   renderGrid();
   setupSearch();
-  setupResponsiveChips();
+  setupChips();
   setupResponsiveToolbar(); 
   setupHeroAnimation();
   setupLazyHero();

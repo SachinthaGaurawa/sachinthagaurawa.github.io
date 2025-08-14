@@ -448,3 +448,40 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   #ask-hint-row{ display:none !important; }
 }
 
+
+
+
+
+
+/* --- FIX: phone landscape clipping of right column in album --- */
+
+/* 1) keep the overlay from creating horizontal scroll that can hide the 2nd column */
+#albumView{
+  overflow-x: hidden;            /* vertical scroll still allowed */
+}
+
+/* 2) constrain & center the media block so columns never render off-canvas */
+.album-media{
+  width: min(1100px, 96vw);
+  margin: 0 auto;                /* center inside overlay */
+}
+
+/* 3) make column layout more robust on WebKit */
+.masonry{
+  -webkit-column-gap: 16px;
+  column-gap: 16px;
+  -webkit-column-fill: balance;
+  column-fill: balance;
+}
+
+/* Phones in landscape (short height): force a reliable 2-column layout */
+@media (max-height: 500px) and (max-width: 900px) and (orientation: landscape){
+  .album-media{ width: min(1000px, 94vw); }
+  .masonry{ column-count: 2; }   /* ensure the second column renders */
+}
+
+/* Very short landscape (e.g., iPhone mini / split UI): fall back to one column
+   instead of letting WebKit clip the right column */
+@media (max-height: 420px) and (orientation: landscape){
+  .masonry{ column-count: 1; }
+}

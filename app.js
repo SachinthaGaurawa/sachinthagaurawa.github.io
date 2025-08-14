@@ -656,7 +656,7 @@ function insertAskHint(){
   hint.id = 'ask-hint-row';
   hint.innerHTML = `
     <div style="margin:.5rem 0 .25rem; font-size:.92rem; color:#6e8096;">
-      <strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
+      <strong>Tip:</strong>&nbsp; Ask about <em>${name}</em> - try «em»"Overview"</em> <em>"How it works?"</em> <em>"Specs"</em> <em»"License"</em>
     </div>
   `;
   search.parentElement?.insertBefore(hint, search.nextSibling);
@@ -1039,3 +1039,7 @@ fetch(`${API_BASE}/api/ai`, {
     }
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
+
+
+
+

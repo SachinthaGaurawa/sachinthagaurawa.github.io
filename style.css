@@ -388,58 +388,6 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 
 
 
-
-/* ───────────────── Mobile/Tablet toolbar layout ───────────────── */
-@media (max-width: 1024px){
-  .album-toolbar{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-  }
-
-  /* chips: one-line horizontal scroller with soft edge fade */
-  .chips-scroll{
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;           /* Firefox */
-    padding-bottom: 4px;             /* room for hidden scrollbar */
-    flex: 1 1 44%;
-    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
-  }
-  .chips-scroll::-webkit-scrollbar{ display: none; } /* WebKit */
-
-  /* search on the right */
-  .search-slot{
-    flex: 0 1 56%;
-    min-width: 180px;
-    display: flex;
-  }
-  .search-slot input{
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 14px;
-    padding: 9px 12px;
-    border-radius: 10px;
-  }
-}
-
-/* tighter phones */
-@media (max-width: 480px){
-  .chips-scroll{ flex-basis: 42%; }
-  .search-slot{ flex-basis: 58%; }
-  .search-slot input{ font-size: 13.5px; padding: 8px 11px; }
-}
-
-
-
-
-
-
-
-
 /* ─────────── Mobile/Tablet toolbar layout (chips left, search right) ─────────── */
 @media (max-width: 1024px){
   .album-toolbar{
@@ -509,3 +457,4 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   .search-slot input{ font-size:13px; padding:7.5px 10px; }
   #ask-hint-row.ask-hint-compact{ font-size:12.5px; padding:7px 10px; }
 }
+

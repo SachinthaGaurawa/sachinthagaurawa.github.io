@@ -705,12 +705,12 @@ function insertAlbumAskHintBelowChat(){
     pill.innerHTML = `
       <span class="spark">✨</span>
       <strong>Tip:</strong>
-      <span>Ask this album —</span>
+      <span>Ask about —</span>
       <span class="examples">
-        <em>“Sensors?”</em>
-        <em>“Pipeline?”</em>
-        <em>“Labels?”</em>
-        <em>“License?”</em>
+        <em>“Overview?”</em>
+        <em>“How it works?”</em>
+        <em>“Specs”</em>
+        <em>“License”</em>
       </span>
     `;
     row.appendChild(pill);

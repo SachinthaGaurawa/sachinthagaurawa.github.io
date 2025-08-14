@@ -21,7 +21,6 @@ const $$ = (s, p=document) => [...p.querySelectorAll(s)];
 const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
 const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 const clamp = (v, min, max)=> Math.max(min, Math.min(max, v));
-const esc = (str)=> String(str ?? '').replace(/[&<>"]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
 
 /* ====== Data (sample) ====== */
 const ALBUMS = [
@@ -58,6 +57,7 @@ const CaptionStore = {
 };
 
 const AITagStore = {
+  // per-album AI tag list
   get(albumId){ try { return JSON.parse(localStorage.getItem('ai-tags:'+albumId)) || []; } catch { return []; } },
   set(albumId, tags){
     try {
@@ -286,81 +286,11 @@ function removeAlbumFooter() {
   if (f) f.remove();
 }
 
-/* ====== TIP PILL (centered, between chat and grid) ====== */
-function injectPillStylesOnce(){
-  if (document.getElementById('ask-hint-pill-css')) return;
-  const s = document.createElement('style');
-  s.id = 'ask-hint-pill-css';
-  s.textContent = `
-    #ask-hint-pill{ width:min(1100px,96%); margin:10px auto 16px; }
-    .ask-hint-pill{
-      display:flex; justify-content:center; align-items:center; gap:.6rem;
-      text-align:center;
-      padding:10px 14px;
-      border-radius:26px;
-      font-size:.92rem; line-height:1.35;
-      color:#deebff;
-      background: linear-gradient(180deg, rgba(90,150,255,.16), rgba(90,150,255,.10));
-      border:2px dashed rgba(150,190,255,.85);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
-      backdrop-filter: blur(2px);
-    }
-    .ask-hint-pill strong{ color:#f2f6ff }
-    .ask-hint-pill em{ font-style:italic; font-weight:600; opacity:.98; padding:0 .12rem; white-space:nowrap; }
-    .ask-hint-pill .sep{ opacity:.8; padding:0 .1rem }
-    @media (max-width: 820px){
-      .ask-hint-pill{ font-size:.88rem; padding:9px 12px; border-radius:22px; }
-      .ask-hint-pill em{ white-space:normal }
-    }
-    @media (max-width: 480px){
-      .ask-hint-pill{ font-size:.86rem; padding:8px 11px; }
-    }
-  `;
-  document.head.appendChild(s);
-}
-
-/** Place (or move) the pill after the Ask UI and before the gallery grid. */
-function ensureAskPill(){
-  injectPillStylesOnce();
-  const container = albumView;
-  if (!container) return;
-
-  const afterEl  = $('#askResult', container) || $('#askInput', container);
-  const beforeEl = $('#albumMasonry', container);
-  if (!afterEl || !beforeEl) return;
-
-  // Build pill if needed
-  let pill = document.getElementById('ask-hint-pill');
-  const name = esc((currentAlbum && currentAlbum.title) || 'this project');
-
-  if (!pill){
-    pill = document.createElement('div');
-    pill.id = 'ask-hint-pill';
-    pill.className = 'ask-hint-pill';
-    pill.setAttribute('role','note');
-    pill.setAttribute('aria-label','Tip for asking the assistant');
-  }
-
-  // Short, professional copy
-  pill.innerHTML = `
-    <span class="spark">✨</span>
-    <strong>Tip:</strong>&nbsp; Ask about <em>${name}</em> —
-    try <em>Overview</em><span class="sep">·</span><em>How it works?</em><span class="sep">·</span><em>Specs</em><span class="sep">·</span><em>License</em>
-  `;
-
-  // Ensure correct position: right before the grid (but after chat)
-  if (pill.parentElement !== container || pill.nextElementSibling !== beforeEl){
-    container.insertBefore(pill, beforeEl);
-  }
-}
-
-/* ====== Album open/close ====== */
 function openAlbum(id, index=0, push=false){
   const a=findAlbum(id); if(!a) return;
   if (!albumView || !heroImg || !heroTitle || !heroLink || !descBox || !masonry) return;
 
-  currentAlbum=a; window.currentAlbum = a; // expose for any external usage
-  currentIndex=index;
+  currentAlbum=a; currentIndex=index;
 
   heroImg.src=a.cover; heroImg.alt=`${a.title} cover`;
   heroTitle.textContent=a.title; heroLink.href=a.cover;
@@ -388,8 +318,8 @@ function openAlbum(id, index=0, push=false){
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
-  wireAskUI();        // (re)wire chat
-  ensureAskPill();    // place the tip pill between chat and grid
+  wireAskUI();                 // ensure AI input is wired on open
+  insertAlbumAskHintBelowChat(); // place the centered pill between chat and gallery
 
   if(push){
     const u=new URL(location.href);
@@ -625,7 +555,7 @@ function mdToHtml(md){
   t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   t = t.replace(/__([^_]+)__/g, '<strong>$1</strong>');
 
-  // italic *text* or _text_ (safe, not inside words)
+  // italic *text* or _text_
   t = t.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
   t = t.replace(/(^|[\s(])_([^_\n]+)_(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
 
@@ -638,20 +568,20 @@ function mdToHtml(md){
   // inline code `code`
   t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-  // ordered lists
+  // ordered list blocks
   t = t.replace(/^(?:\s*\d+\.\s.+(?:\n|$))+?/gm, (block)=>{
     const items = block.trim().split('\n').map(l=> l.replace(/^\s*\d+\.\s/,'').trim());
     return `<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
   });
 
-  // unordered lists (- or *)
+  // unordered list blocks (- or *)
   t = t.replace(/^(?:\s*[-*]\s.+(?:\n|$))+?/gm, (block)=>{
     const items = block.trim().split('\n').map(l=> l.replace(/^\s*[-*]\s/,'').trim());
     return `<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
   });
 
-  // heuristics: "Label: value" inside list → bold label
-  t = t.replace(/(<li>)([^:<]+?):\s*/g, (_m, li, label)=> `${li}<strong>${esc(label)}:</strong> `);
+  // heuristic: in bullet/list lines like "Sensors: LiDAR, Radar" → bold the label
+  t = t.replace(/(<li>)([^:<]+?):\s*/g, (_m, li, label)=> `${li}<strong>${label}:</strong> `);
 
   // paragraphs (don’t wrap lists or headings)
   t = t.split(/\n{2,}/).map(chunk=>{
@@ -679,7 +609,7 @@ async function typeWrite(el, text, { cps=48, minDelay=8, maxDelay=26 } = {}){
 // Build single-turn bubble with toolbar
 function renderChat(answerText, topicLabel){
   const out = $('#askResult'); if (!out) return;
-  out.innerHTML = ''; // SINGLE TURN
+  out.innerHTML = ''; // SINGLE TURN: replace old content
   const wrap = document.createElement('div');
   wrap.className = 'chat-bubble enter';
 
@@ -703,19 +633,22 @@ function renderChat(answerText, topicLabel){
   wrap.appendChild(tools);
   out.appendChild(wrap);
 
+  // animate typewriting
   typeWrite(msg, answerText, { cps: 56 }).catch(()=> { msg.innerHTML = mdToHtml(answerText); });
 
+  // copy
   tools.querySelector('#copyAns').onclick = async ()=>{
     try{
       await navigator.clipboard.writeText(answerText);
       const b = tools.querySelector('#copyAns'); b.textContent='Copied'; setTimeout(()=>b.textContent='Copy', 1200);
     }catch{}
   };
+  // regenerate (re-click Ask)
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-/* ====== OPTIONAL (legacy): small hint under the search bar ====== */
-function insertSearchAskHint(){
+/* ====== Ask hint under the search bar (generic for all albums) ====== */
+function insertAskHint(){
   if (document.getElementById('ask-hint-row')) return;
   const search = $('#searchInput');
   if (!search) return;
@@ -729,10 +662,72 @@ function insertSearchAskHint(){
   search.parentElement?.insertBefore(hint, search.nextSibling);
 }
 
-/* Back-compat wrapper (kept so you don’t lose a name you used before) */
-function insertAskHint(where='album'){
-  if (where === 'album') ensureAskPill();
-  else insertSearchAskHint();
+/* ====== TIP: pill centered between chatbot and gallery (responsive) ====== */
+function injectAskPillStylesOnce(){
+  if (document.getElementById('ask-hint-pill-css')) return;
+  const s = document.createElement('style');
+  s.id = 'ask-hint-pill-css';
+  s.textContent = `
+    #album-ask-hint-row{
+      display:flex; justify-content:center; align-items:center;
+      width:100%;
+      margin:10px 0 14px;
+    }
+    .ask-hint-pill{
+      max-width:min(1080px, 92vw);
+      display:flex; justify-content:center; align-items:center; gap:.6rem;
+      padding:10px 16px;
+      border-radius:999px;
+      font-size:.9rem; line-height:1.35;
+      text-align:center;
+      color:#e8f1ff;
+      background:linear-gradient(180deg, rgba(120,170,255,.18), rgba(120,170,255,.10));
+      border:2px dashed rgba(150,190,255,.95);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
+      backdrop-filter: blur(2px);
+    }
+    .ask-hint-pill .spark{ filter:drop-shadow(0 0 6px rgba(150,190,255,.75)); }
+    .ask-hint-pill strong{ font-weight:700; color:#f3f7ff; }
+    .ask-hint-pill em{ font-style:italic; font-weight:600; opacity:.98; padding:0 .1rem; white-space:nowrap; }
+    @media (max-width: 900px){
+      .ask-hint-pill{ font-size:.85rem; padding:9px 14px; max-width:94vw; }
+    }
+    @media (max-width: 520px){
+      .ask-hint-pill{ font-size:.82rem; padding:8px 12px; }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+function insertAlbumAskHintBelowChat(){
+  const out = document.getElementById('askResult');
+  const masonry = document.getElementById('albumMasonry');
+  if (!out || !masonry) return;
+
+  injectAskPillStylesOnce();
+
+  // If it exists, reuse; else create
+  let row = document.getElementById('album-ask-hint-row');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'album-ask-hint-row';
+    const pill = document.createElement('div');
+    pill.className = 'ask-hint-pill';
+    pill.setAttribute('role','note');
+    pill.innerHTML = `
+      <span class="spark">✨</span>
+      <strong>Tip:</strong>&nbsp; Ask this album —
+      <em>“Sensors?”</em> <em>“Pipeline?”</em> <em>“Labels?”</em> <em>“License?”</em>
+    `;
+    row.appendChild(pill);
+  }
+
+  // Ensure pill is positioned BETWEEN chatbot and gallery
+  if (masonry.parentElement && row.parentElement !== masonry.parentElement) {
+    masonry.parentElement.insertBefore(row, masonry);
+  } else if (row.nextSibling !== masonry) {
+    masonry.parentElement.insertBefore(row, masonry);
+  }
 }
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
@@ -743,6 +738,7 @@ function wireAskUI(){
   if (!input || !btn || !out) return;
 
   injectChatStylesOnce();
+  insertAskHint();
 
   out.textContent = '';
   input.value = '';
@@ -766,7 +762,7 @@ function wireAskUI(){
     wrap.querySelector('.msg').onclick = (e)=>{
       const b=e.target.closest('button[data-id]'); if(!b) return;
       ChatBrain.forceTopic(b.dataset.id);
-      btn.click();
+      btn.click(); // re-run with same text
     };
   };
 
@@ -775,6 +771,7 @@ function wireAskUI(){
     if (!q) return;
 
     btn.disabled = true;
+    // show lightweight typing bubble immediately (single-turn)
     renderChat('_Thinking…_', 'Assistant');
 
     try {
@@ -797,22 +794,18 @@ function wireAskUI(){
         answer = await aiAsk(q, ctx);
       }
 
-      // 3) Present answer
+      // 3) Present answer (rich, single-turn bubble)
       renderChat(answer || 'No answer.', routed.topic || 'Assistant');
     } catch (err) {
       console.error('[gallery] ask error:', err);
       renderChat('Sorry — the assistant had an issue. Please try again.', 'Assistant');
     } finally {
       btn.disabled = false;
-      ensureAskPill(); // make sure pill remains placed after chat updates
     }
   };
 
   btn.onclick = ask;
   input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
-
-  // Place pill immediately when Ask UI is wired
-  ensureAskPill();
 }
 
 /* ====== AI: Smart image captions ====== */
@@ -844,7 +837,7 @@ async function captionImagesInAlbum(album){
   // Save album-level AI tags for global search
   AITagStore.set(album.id, [...allTags]);
 
-  // surface album-level tags below description
+  // surface album-level AI tags below description
   const desc = document.querySelector('.album-desc-inner');
   if (desc) {
     let row = document.getElementById('album-ai-tags');
@@ -1023,9 +1016,6 @@ function init(){
 
   // semantic search (optional)
   maybeSetupSemantic().then(wireSemanticSearch);
-
-  // Optional legacy hint under search:
-  // insertSearchAskHint();
 }
 
 document.addEventListener('DOMContentLoaded', init);

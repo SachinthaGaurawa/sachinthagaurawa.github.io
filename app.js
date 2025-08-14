@@ -640,7 +640,7 @@ function injectAskPillStylesOnce(){
       max-width:min(1080px, 94vw);
       width:auto;
       display:flex; justify-content:center; align-items:center; gap:.6rem;
-      flex-wrap:wrap; /* allow wrapping on small screens */
+      flex-wrap:wrap;
       padding:10px 16px;
       border-radius:999px;
       font-size:.9rem; line-height:1.35;
@@ -655,33 +655,23 @@ function injectAskPillStylesOnce(){
     .ask-hint-pill .spark{ filter:drop-shadow(0 0 6px rgba(150,190,255,.75)); }
     .ask-hint-pill strong{ font-weight:700; color:#f3f7ff; }
     .ask-hint-pill .examples{ display:flex; gap:.9rem; flex-wrap:wrap; }
-    .ask-hint-pill .examples em{
-      font-style:italic; font-weight:600; opacity:.98; padding:0 .05rem; white-space:nowrap;
-    }
-
-    /* Tablets */
+    .ask-hint-pill .examples em{ font-style:italic; font-weight:600; opacity:.98; padding:0 .05rem; white-space:nowrap; }
     @media (max-width: 900px){
       .ask-hint-pill{ font-size:.86rem; padding:9px 14px; max-width:94vw; }
       .ask-hint-pill .examples{ gap:.6rem; }
     }
-
-    /* Phones */
     @media (max-width: 520px){
       .ask-hint-pill{ font-size:.82rem; padding:8px 12px; border-width:1.8px; }
       .ask-hint-pill .examples{ gap:.5rem; }
     }
-
-    /* Narrow phones: hide later examples to keep it tidy */
     @media (max-width: 380px){
       .ask-hint-pill{ font-size:.8rem; }
       .ask-hint-pill .examples em:nth-child(3),
       .ask-hint-pill .examples em:nth-child(4){ display:none; }
     }
-
-    /* Very narrow */
     @media (max-width: 320px){
       .ask-hint-pill{ font-size:.78rem; padding:7px 10px; }
-      .ask-hint-pill .examples em:nth-child(2){ display:none; } /* keep only the first example */
+      .ask-hint-pill .examples em:nth-child(2){ display:none; }
     }
   `;
   document.head.appendChild(s);
@@ -716,10 +706,13 @@ function insertAlbumAskHintBelowChat(){
     row.appendChild(pill);
   }
 
-  // Place the pill between chat and gallery
+  // Place the pill between chat and gallery (with guard)
   const parent = masonry.parentElement;
-  if (parent && row.parentElement !== parent) parent.insertBefore(row, masonry);
-  else if (row.nextSibling !== masonry) parent.insertBefore(row, masonry);
+  if (parent) {
+    if (row.parentElement !== parent || row.nextSibling !== masonry) {
+      parent.insertBefore(row, masonry);
+    }
+  }
 }
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
@@ -946,7 +939,7 @@ function init(){
   renderGrid();
   setupSearch();
   setupChips();
-  setupResponsiveToolbar();
+  setupResponsiveToolbar();   // phones/tablets layout
   setupHeroAnimation();
   setupLazyHero();
   updateAllFooterYears();
@@ -1007,16 +1000,50 @@ fetch(`${API_BASE}/api/ai`, {
   .catch(err => console.error('[gallery] API ping failed:', err));
 
 
-
-
-
-
-
 /* ====== Mobile/Tablet toolbar: chips (left) + search (right) + tip below ====== */
 let __toolbarState = {
   applied:false, row:null, chipsParent:null, searchParent:null,
   tipNode:null, tipParent:null, tipWasAfterSearch:false
 };
+
+function injectResponsiveToolbarStylesOnce(){
+  if (document.getElementById('toolbar-mobile-css')) return;
+  const s = document.createElement('style');
+  s.id = 'toolbar-mobile-css';
+  s.textContent = `
+    @media (max-width: 1024px){
+      .album-toolbar{ display:flex; align-items:center; gap:10px; width:100%; }
+      .chips-scroll{
+        display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+        padding-bottom:4px; flex:1 1 50%;
+        mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+      }
+      .chips-scroll::-webkit-scrollbar{ display:none; }
+      .search-slot{ flex:0 1 50%; min-width:180px; display:flex; }
+      .search-slot input{ width:100%; box-sizing:border-box; font-size:14px; padding:9px 12px; border-radius:10px; }
+      /* compact generic tip moved below toolbar */
+      #ask-hint-row.ask-hint-compact{
+        display:flex; justify-content:center; margin:8px auto 2px; max-width: min(840px, 96%);
+        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+        border:1px dashed rgba(158,193,255,.55); border-radius:999px; padding:8px 12px;
+        font-size:13px; color:rgba(230,240,255,.92); backdrop-filter: blur(4px);
+      }
+      #ask-hint-row.ask-hint-compact em{ font-style: italic; opacity:.95; white-space: nowrap; }
+    }
+    @media (max-width: 600px){
+      .chips-scroll{ flex-basis:46%; }
+      .search-slot{ flex-basis:54%; min-width:160px; }
+      .search-slot input{ font-size:13.5px; padding:8px 11px; }
+    }
+    @media (max-width: 420px){
+      .chips-scroll{ flex-basis:42%; }
+      .search-slot{ flex-basis:58%; min-width:150px; }
+      .search-slot input{ font-size:13px; padding:7.5px 10px; }
+      #ask-hint-row.ask-hint-compact{ font-size:12.5px; padding:7px 10px; }
+    }
+  `;
+  document.head.appendChild(s);
+}
 
 function applyMobileToolbar(){
   if (__toolbarState.applied) return;
@@ -1024,6 +1051,8 @@ function applyMobileToolbar(){
   const chips = document.getElementById('chips');
   const input = document.getElementById('searchInput');
   if (!chips || !input) return;
+
+  injectResponsiveToolbarStylesOnce();
 
   // capture the (long) generic tip that sits near the search bar
   const tip = document.getElementById('ask-hint-row'); // created by insertAskHint()
@@ -1041,7 +1070,6 @@ function applyMobileToolbar(){
   const row = document.createElement('div');
   row.id = 'albumToolbarRow';
   row.className = 'album-toolbar';
-  // put the row right where chips currently are
   __toolbarState.chipsParent.insertBefore(row, chips);
 
   // left: chips (horizontal scroll)
@@ -1054,7 +1082,7 @@ function applyMobileToolbar(){
   row.appendChild(slot);
   slot.appendChild(input);
 
-  // compact tip: move below the row (and shrink it on mobile with CSS)
+  // compact tip: move below the row (and shrink on mobile with CSS)
   if (tip) {
     tip.classList.add('ask-hint-compact');
     row.insertAdjacentElement('afterend', tip);
@@ -1073,16 +1101,16 @@ function removeMobileToolbar(){
 
   if (chips && chipsParent) {
     chips.classList.remove('chips-scroll');
-    chipsParent.insertBefore(chips, row); // back to original spot
+    chipsParent.insertBefore(chips, row);
   }
   if (input && searchParent) {
-    searchParent.appendChild(input);      // back to original spot
+    searchParent.appendChild(input);
   }
 
   // return the tip to where it was on desktop
   if (tipNode && tipParent) {
     tipNode.classList.remove('ask-hint-compact');
-    if (tipWasAfterSearch && input.parentElement) {
+    if (tipWasAfterSearch && input?.parentElement) {
       input.parentElement.insertAdjacentElement('afterend', tipNode);
     } else {
       tipParent.appendChild(tipNode);
@@ -1103,4 +1131,3 @@ function setupResponsiveToolbar(){
   if (mq.addEventListener) mq.addEventListener('change', update);
   else mq.addListener(update); // Safari < 14
 }
-

@@ -707,7 +707,7 @@ function insertAlbumAskHintBelowChat(){
       <strong>Tip:</strong>
       <span>Ask about —</span>
       <span class="examples">
-        <em>“Overview?”</em>
+        <em>“Overview”</em>
         <em>“How it works?”</em>
         <em>“Specs”</em>
         <em>“License”</em>

@@ -432,3 +432,80 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   .search-slot{ flex-basis: 58%; }
   .search-slot input{ font-size: 13.5px; padding: 8px 11px; }
 }
+
+
+
+
+
+
+
+
+/* ─────────── Mobile/Tablet toolbar layout (chips left, search right) ─────────── */
+@media (max-width: 1024px){
+  .album-toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+  }
+
+  /* one-line, swipeable chip row with soft edge fade */
+  .chips-scroll{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-bottom:4px;
+    flex:1 1 50%;
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  }
+  .chips-scroll::-webkit-scrollbar{ display:none; }
+
+  /* search on the right with sensible min width */
+  .search-slot{
+    flex:0 1 50%;
+    min-width: 180px;
+    display:flex;
+  }
+  .search-slot input{
+    width:100%;
+    box-sizing:border-box;
+    font-size:14px;
+    padding:9px 12px;
+    border-radius:10px;
+  }
+
+  /* compact pill-style tip moved below the toolbar */
+  #ask-hint-row.ask-hint-compact{
+    display:flex;
+    justify-content:center;
+    margin:8px auto 2px;
+    max-width: min(840px, 96%);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    border:1px dashed rgba(158,193,255,.55);
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:13px;
+    color:rgba(230,240,255,.92);
+    backdrop-filter: blur(4px);
+  }
+  #ask-hint-row.ask-hint-compact em{
+    font-style: italic;
+    opacity:.95;
+    white-space: nowrap;
+  }
+}
+
+/* tighter phones: give search a bit more room */
+@media (max-width: 600px){
+  .chips-scroll{ flex-basis: 46%; }
+  .search-slot{ flex-basis: 54%; min-width: 160px; }
+  .search-slot input{ font-size:13.5px; padding:8px 11px; }
+}
+@media (max-width: 420px){
+  .chips-scroll{ flex-basis: 42%; }
+  .search-slot{ flex-basis: 58%; min-width: 150px; }
+  .search-slot input{ font-size:13px; padding:7.5px 10px; }
+  #ask-hint-row.ask-hint-compact{ font-size:12.5px; padding:7px 10px; }
+}

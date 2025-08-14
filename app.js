@@ -57,7 +57,6 @@ const CaptionStore = {
 };
 
 const AITagStore = {
-  // per-album AI tag list
   get(albumId){ try { return JSON.parse(localStorage.getItem('ai-tags:'+albumId)) || []; } catch { return []; } },
   set(albumId, tags){
     try {
@@ -100,7 +99,7 @@ async function aiCaption(imageUrl) {
   return j; // { caption, tags }
 }
 
-// Expert deep Q&A (AAVSS + Sri Lankan dataset, or future albums via KB)
+// Expert deep Q&A
 async function expertAsk(question) {
   const r = await fetch(`${API_BASE}/api/ai-expert`, {
     method: 'POST',
@@ -110,10 +109,10 @@ async function expertAsk(question) {
   let j = {};
   try { j = await r.json(); } catch {}
   if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
-  return j.answer; // optional: j.topic, j.provider, j.sources
+  return j.answer;
 }
 
-/* ====== Conversational Brain (topic routing + human style) ====== */
+/* ====== Conversational Brain ====== */
 const ChatBrain = (() => {
   const TOPICS = { AAVSS:'AAVSS', DATASET:'Sri_Lanka_Dataset' };
   const KEYWORDS = {
@@ -138,10 +137,7 @@ const ChatBrain = (() => {
     if (a>d) return TOPICS.AAVSS; if (d>a) return TOPICS.DATASET;
     return currentAlbumTopic() || store.getTopic() || '';
   }
-  function isShort(q){
-    const words = (q||'').trim().split(/\s+/).filter(Boolean).length;
-    return words <= 3; // e.g., "Sensors", "Models?", "Size?"
-  }
+  function isShort(q){ return (q||'').trim().split(/\s+/).filter(Boolean).length <= 3; }
   function buildGuardedQuestion(topic, q){
     const style = isShort(q) ? 'Style=concise bullets, 1–5 lines max.' : 'Style=clear, structured, short paragraphs.';
     const scope =
@@ -319,7 +315,7 @@ function openAlbum(id, index=0, push=false){
 
   ensureAlbumFooter();
   wireAskUI();                 // ensure AI input is wired on open
-  insertAlbumAskHintBelowChat(); // place the centered pill between chat and gallery
+  insertAlbumAskHintBelowChat(); // centered responsive pill
 
   if(push){
     const u=new URL(location.href);
@@ -476,7 +472,7 @@ function buildAlbumContext(album){
   ].join('\n');
 }
 
-// kept for compatibility (not used now that expert-first is default)
+// kept for compatibility
 async function askAboutAlbum(question){
   const input = $('#askInput');
   const btn   = $('#askBtn');
@@ -493,11 +489,10 @@ async function askAboutAlbum(question){
   }finally{ btn.disabled = false; }
 }
 
-/* ====== Chat UI Enhancements (single-turn, typing, rich markdown, controls) ====== */
+/* ====== Chat UI Enhancements ====== */
 function injectChatStylesOnce(){
   if (document.getElementById('chatfx-css')) return;
   const css = `
-  /* container */
   #askResult{ position:relative; margin-top:10px; }
   .chat-bubble{ background:#0e1a24; color:#e9f2f9; border:1px solid rgba(255,255,255,.08);
     border-radius:16px; padding:16px 18px; line-height:1.55; box-shadow: 0 6px 22px rgba(0,0,0,.25); }
@@ -513,7 +508,6 @@ function injectChatStylesOnce(){
     animation: blink 1s infinite ease-in-out; }
   .typing-dot:nth-child(2){ animation-delay:.2s } .typing-dot:nth-child(3){ animation-delay:.4s }
   @keyframes blink{ 0%{ opacity:.2 } 50%{ opacity:1 } 100%{ opacity:.2 } }
-  /* rich content */
   .msg h1,.msg h2,.msg h3{ margin:.5em 0 .3em; line-height:1.2; }
   .msg h1{ font-size:1.2rem } .msg h2{ font-size:1.1rem } .msg h3{ font-size:1.05rem }
   .msg p{ margin:.45em 0; }
@@ -527,89 +521,61 @@ function injectChatStylesOnce(){
   .msg a{ color:#9cc3ff; text-decoration: underline; text-underline-offset:3px; }
   .msg code{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.95em; padding:.12em .3em;
     background:#0a1118; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
-  /* cap height so gallery isn’t pushed too far */
   .chat-bubble .msg-scroll{ max-height: min(42vh, 520px); overflow:auto; scrollbar-width: thin; }
   `;
   const s = document.createElement('style');
   s.id='chatfx-css'; s.textContent = css; document.head.appendChild(s);
 }
 
-/* --- Ultra-light Markdown → HTML with underline/OL, bullets, links, code --- */
+/* --- Ultra-light Markdown → HTML --- */
 function mdToHtml(md){
   if (!md) return '';
   let t = md;
-
-  // normalize smart quotes
   t = t.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
-  // escape HTML
   t = t.replace(/[&<>]/g, s=> ({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]));
-
-  // autolink URLs
   t = t.replace(/(https?:\/\/[^\s)]+)(?=\)|\s|$)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-
-  // headings ###, ##, #
   t = t.replace(/^[ \t]*###?[ \t]+(.+)$/gm, (m, h)=>m.startsWith('###')?`<h3>${h}</h3>`:`<h2>${h}</h2>`);
   t = t.replace(/^[ \t]*#[ \t]+(.+)$/gm, (_m, h)=>`<h1>${h}</h1>`);
-
-  // strong **text** or __text__
   t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   t = t.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-
-  // italic *text* or _text_
   t = t.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
   t = t.replace(/(^|[\s(])_([^_\n]+)_(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
-
-  // underline ++text++
   t = t.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
-
-  // strikethrough ~~text~~
   t = t.replace(/~~([^~\n]+)~~/g, '<del>$1</del>');
-
-  // inline code `code`
   t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-  // ordered list blocks
   t = t.replace(/^(?:\s*\d+\.\s.+(?:\n|$))+?/gm, (block)=>{
     const items = block.trim().split('\n').map(l=> l.replace(/^\s*\d+\.\s/,'').trim());
     return `<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
   });
-
-  // unordered list blocks (- or *)
   t = t.replace(/^(?:\s*[-*]\s.+(?:\n|$))+?/gm, (block)=>{
     const items = block.trim().split('\n').map(l=> l.replace(/^\s*[-*]\s/,'').trim());
     return `<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
   });
-
-  // heuristic: in bullet/list lines like "Sensors: LiDAR, Radar" → bold the label
   t = t.replace(/(<li>)([^:<]+?):\s*/g, (_m, li, label)=> `${li}<strong>${label}:</strong> `);
-
-  // paragraphs (don’t wrap lists or headings)
   t = t.split(/\n{2,}/).map(chunk=>{
     if (/^<(ul|ol|h1|h2|h3)/.test(chunk)) return chunk;
     return `<p>${chunk.replace(/\n/g,'<br>')}</p>`;
   }).join('\n');
-
   return t;
 }
 
-// typing animation (adds characters progressively)
+// typing animation
 async function typeWrite(el, text, { cps=48, minDelay=8, maxDelay=26 } = {}){
   const safe = text || '';
   let buf = '';
-  const target = el;
   const total = safe.length;
   for (let i=0;i<total;i++){
     buf += safe[i];
-    target.innerHTML = mdToHtml(buf);
+    el.innerHTML = mdToHtml(buf);
     const jitter = clamp(Math.random()* (maxDelay-minDelay) + minDelay, minDelay, maxDelay);
     await sleep(jitter * (60/cps));
   }
 }
 
-// Build single-turn bubble with toolbar
+// single-turn bubble
 function renderChat(answerText, topicLabel){
   const out = $('#askResult'); if (!out) return;
-  out.innerHTML = ''; // SINGLE TURN: replace old content
+  out.innerHTML = '';
   const wrap = document.createElement('div');
   wrap.className = 'chat-bubble enter';
 
@@ -633,21 +599,18 @@ function renderChat(answerText, topicLabel){
   wrap.appendChild(tools);
   out.appendChild(wrap);
 
-  // animate typewriting
   typeWrite(msg, answerText, { cps: 56 }).catch(()=> { msg.innerHTML = mdToHtml(answerText); });
 
-  // copy
   tools.querySelector('#copyAns').onclick = async ()=>{
     try{
       await navigator.clipboard.writeText(answerText);
       const b = tools.querySelector('#copyAns'); b.textContent='Copied'; setTimeout(()=>b.textContent='Copy', 1200);
     }catch{}
   };
-  // regenerate (re-click Ask)
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-/* ====== Ask hint under the search bar (generic for all albums) ====== */
+/* ====== Hint under search (generic) ====== */
 function insertAskHint(){
   if (document.getElementById('ask-hint-row')) return;
   const search = $('#searchInput');
@@ -656,13 +619,13 @@ function insertAskHint(){
   hint.id = 'ask-hint-row';
   hint.innerHTML = `
     <div style="margin:.5rem 0 .25rem; font-size:.92rem; color:#6e8096;">
-      <strong>Tip:</strong>&nbsp; Ask about <em>${name}</em> - try «em»"Overview"</em> <em>"How it works?"</em> <em>"Specs"</em> <em»"License"</em>
+      <strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
     </div>
   `;
   search.parentElement?.insertBefore(hint, search.nextSibling);
 }
 
-/* ====== TIP: pill centered between chatbot and gallery (responsive) ====== */
+/* ====== Responsive center pill between chat & gallery ====== */
 function injectAskPillStylesOnce(){
   if (document.getElementById('ask-hint-pill-css')) return;
   const s = document.createElement('style');
@@ -674,8 +637,10 @@ function injectAskPillStylesOnce(){
       margin:10px 0 14px;
     }
     .ask-hint-pill{
-      max-width:min(1080px, 92vw);
+      max-width:min(1080px, 94vw);
+      width:auto;
       display:flex; justify-content:center; align-items:center; gap:.6rem;
+      flex-wrap:wrap; /* allow wrapping on small screens */
       padding:10px 16px;
       border-radius:999px;
       font-size:.9rem; line-height:1.35;
@@ -685,15 +650,38 @@ function injectAskPillStylesOnce(){
       border:2px dashed rgba(150,190,255,.95);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
       backdrop-filter: blur(2px);
+      word-break: keep-all;
     }
     .ask-hint-pill .spark{ filter:drop-shadow(0 0 6px rgba(150,190,255,.75)); }
     .ask-hint-pill strong{ font-weight:700; color:#f3f7ff; }
-    .ask-hint-pill em{ font-style:italic; font-weight:600; opacity:.98; padding:0 .1rem; white-space:nowrap; }
-    @media (max-width: 900px){
-      .ask-hint-pill{ font-size:.85rem; padding:9px 14px; max-width:94vw; }
+    .ask-hint-pill .examples{ display:flex; gap:.9rem; flex-wrap:wrap; }
+    .ask-hint-pill .examples em{
+      font-style:italic; font-weight:600; opacity:.98; padding:0 .05rem; white-space:nowrap;
     }
+
+    /* Tablets */
+    @media (max-width: 900px){
+      .ask-hint-pill{ font-size:.86rem; padding:9px 14px; max-width:94vw; }
+      .ask-hint-pill .examples{ gap:.6rem; }
+    }
+
+    /* Phones */
     @media (max-width: 520px){
-      .ask-hint-pill{ font-size:.82rem; padding:8px 12px; }
+      .ask-hint-pill{ font-size:.82rem; padding:8px 12px; border-width:1.8px; }
+      .ask-hint-pill .examples{ gap:.5rem; }
+    }
+
+    /* Narrow phones: hide later examples to keep it tidy */
+    @media (max-width: 380px){
+      .ask-hint-pill{ font-size:.8rem; }
+      .ask-hint-pill .examples em:nth-child(3),
+      .ask-hint-pill .examples em:nth-child(4){ display:none; }
+    }
+
+    /* Very narrow */
+    @media (max-width: 320px){
+      .ask-hint-pill{ font-size:.78rem; padding:7px 10px; }
+      .ask-hint-pill .examples em:nth-child(2){ display:none; } /* keep only the first example */
     }
   `;
   document.head.appendChild(s);
@@ -706,28 +694,32 @@ function insertAlbumAskHintBelowChat(){
 
   injectAskPillStylesOnce();
 
-  // If it exists, reuse; else create
   let row = document.getElementById('album-ask-hint-row');
   if (!row) {
     row = document.createElement('div');
     row.id = 'album-ask-hint-row';
+
     const pill = document.createElement('div');
     pill.className = 'ask-hint-pill';
     pill.setAttribute('role','note');
     pill.innerHTML = `
       <span class="spark">✨</span>
-      <strong>Tip:</strong>&nbsp; Ask this album —
-      <em>“Sensors?”</em> <em>“Pipeline?”</em> <em>“Labels?”</em> <em>“License?”</em>
+      <strong>Tip:</strong>
+      <span>Ask this album —</span>
+      <span class="examples">
+        <em>“Sensors?”</em>
+        <em>“Pipeline?”</em>
+        <em>“Labels?”</em>
+        <em>“License?”</em>
+      </span>
     `;
     row.appendChild(pill);
   }
 
-  // Ensure pill is positioned BETWEEN chatbot and gallery
-  if (masonry.parentElement && row.parentElement !== masonry.parentElement) {
-    masonry.parentElement.insertBefore(row, masonry);
-  } else if (row.nextSibling !== masonry) {
-    masonry.parentElement.insertBefore(row, masonry);
-  }
+  // Place the pill between chat and gallery
+  const parent = masonry.parentElement;
+  if (parent && row.parentElement !== parent) parent.insertBefore(row, masonry);
+  else if (row.nextSibling !== masonry) parent.insertBefore(row, masonry);
 }
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
@@ -744,7 +736,6 @@ function wireAskUI(){
   input.value = '';
   setTimeout(() => input.focus(), 50);
 
-  // helper: clarification chips (short question like "sensors?")
   const renderClarify = (choices) => {
     out.innerHTML = '';
     const wrap = document.createElement('div');
@@ -762,7 +753,7 @@ function wireAskUI(){
     wrap.querySelector('.msg').onclick = (e)=>{
       const b=e.target.closest('button[data-id]'); if(!b) return;
       ChatBrain.forceTopic(b.dataset.id);
-      btn.click(); // re-run with same text
+      btn.click();
     };
   };
 
@@ -771,11 +762,9 @@ function wireAskUI(){
     if (!q) return;
 
     btn.disabled = true;
-    // show lightweight typing bubble immediately (single-turn)
     renderChat('_Thinking…_', 'Assistant');
 
     try {
-      // 1) Topic routing
       let routed;
       try {
         routed = await ChatBrain.ask(q);
@@ -784,7 +773,6 @@ function wireAskUI(){
         throw e;
       }
 
-      // 2) Expert first (guarded), fallback to album AI
       let answer = '';
       try {
         answer = await expertAsk(routed.guarded);
@@ -794,7 +782,6 @@ function wireAskUI(){
         answer = await aiAsk(q, ctx);
       }
 
-      // 3) Present answer (rich, single-turn bubble)
       renderChat(answer || 'No answer.', routed.topic || 'Assistant');
     } catch (err) {
       console.error('[gallery] ask error:', err);
@@ -820,7 +807,6 @@ async function captionImagesInAlbum(album){
       const data = cached || await aiCaption(m.src);
       if (!cached) CaptionStore.set(m.src, data);
 
-      // annotate tile if present
       const tile = $$('#albumMasonry .m-item')[m.index];
       if (tile) {
         tile.setAttribute('title', data.caption || '');
@@ -834,10 +820,8 @@ async function captionImagesInAlbum(album){
     }
   }
 
-  // Save album-level AI tags for global search
   AITagStore.set(album.id, [...allTags]);
 
-  // surface album-level AI tags below description
   const desc = document.querySelector('.album-desc-inner');
   if (desc) {
     let row = document.getElementById('album-ai-tags');
@@ -865,10 +849,7 @@ function setupHeroAnimation(){
   const words = h2.textContent.split(' ');
   h2.innerHTML = words.map(w=>`<span class="word">${w}</span>`).join(' ');
   if (window.gsap) {
-    gsap.fromTo('.hero .word',
-      {y:20, opacity:0},
-      {y:0, opacity:1, duration:.6, stagger:.06, ease:'power2.out', delay:.1}
-    );
+    gsap.fromTo('.hero .word', {y:20, opacity:0}, {y:0, opacity:1, duration:.6, stagger:.06, ease:'power2.out', delay:.1});
   }
 }
 
@@ -904,16 +885,15 @@ function setupSearch(){
   search.addEventListener('input', debounce(e=>renderGrid(e.target.value), 120));
 }
 
-/* Optional: semantic search (only if transformers loaded) */
+/* Optional: semantic search */
 const Emb = { model:null, cache:new Map(), ready:false };
 async function maybeSetupSemantic(){
-  if (!window.transformers) return; // library not loaded
+  if (!window.transformers) return;
   try {
     Emb.model = await window.transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     Emb.ready = true;
-  } catch { /* ignore */ }
+  } catch {}
 }
-
 function wireSemanticSearch(){
   const search = $('#searchInput');
   if (!search || !Emb.ready) return;
@@ -963,19 +943,13 @@ function init(){
     return;
   }
 
-  // grid + search
   renderGrid();
   setupSearch();
   setupChips();
-
-  // hero + lazy
   setupHeroAnimation();
   setupLazyHero();
-
-  // footer year
   updateAllFooterYears();
 
-  // parallax hero (optional)
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
     const heroImgEl = document.querySelector('.hero-media img');
@@ -988,7 +962,6 @@ function init(){
     }
   }
 
-  // card tilt (desktop only)
   const supportsFinePointer = matchMedia('(hover:hover) and (pointer:fine)').matches;
   if (supportsFinePointer && grid) {
     $$('.card').forEach(card => {
@@ -1010,11 +983,9 @@ function init(){
     });
   }
 
-  // open deep-linked album (if any)
   const id=new URL(location.href).searchParams.get('album');
   if(id) openAlbum(id,0,false);
 
-  // semantic search (optional)
   maybeSetupSemantic().then(wireSemanticSearch);
 }
 
@@ -1025,21 +996,11 @@ console.log('app.js fully initialized');
 fetch(`${API_BASE}/api/ai`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    mode: 'ask',
-    question: 'Ping from browser',
-    context: 'Test context'
-  })
+  body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
 })
   .then(async r => {
     const t = await r.text();
     console.log('[gallery] API ping →', t);
-    if (!r.ok) {
-      console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
-    }
+    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
-
-
-
-

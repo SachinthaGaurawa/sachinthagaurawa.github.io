@@ -1012,7 +1012,6 @@ fetch(`${API_BASE}/api/ai`, {
 
 
 
-
 /* ====== Mobile/Tablet toolbar: chips (left, horizontal) + search (right) ====== */
 let __toolbarState = { applied:false, row:null, chipsParent:null, searchParent:null };
 

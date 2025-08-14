@@ -1244,3 +1244,57 @@ ul.nav.nav-pills > li:last-child > .nav-link.active {
   }
 }
 
+
+
+
+
+
+
+
+/* ===== Footer Centering — phones & tablets (portrait only) =====
+   Paste this at the very end of your CSS. Desktop/laptop unaffected.
+----------------------------------------------------------------- */
+@media (max-width: 1024px) and (orientation: portrait){
+
+  /* Target common footer wrappers without assuming a single class name */
+  footer,
+  .site-footer,
+  .page-footer,
+  .app-footer,
+  .main-footer {
+    display: flex !important;
+    flex-direction: column !important;     /* stack lines vertically */
+    align-items: center !important;        /* center horizontally */
+    justify-content: center !important;    /* center vertically within bar */
+    text-align: center !important;         /* center text */
+    gap: 10px;                              /* a little breathing room */
+  }
+
+  /* If your footer has "left/right" areas, center them too */
+  footer .footer-left,
+  footer .footer-right,
+  .site-footer .footer-left,
+  .site-footer .footer-right,
+  .page-footer .footer-left,
+  .page-footer .footer-right,
+  .app-footer .footer-left,
+  .app-footer .footer-right,
+  .main-footer .footer-left,
+  .main-footer .footer-right {
+    width: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    text-align: center !important;
+  }
+
+  /* Remove auto-push that forces right block to the edge on desktop */
+  .site-footer .footer-right,
+  .page-footer .footer-right,
+  .app-footer .footer-right,
+  .main-footer .footer-right,
+  footer .footer-right {
+    margin-left: 0 !important;
+  }
+}

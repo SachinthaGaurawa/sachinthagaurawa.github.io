@@ -286,69 +286,8 @@ function removeAlbumFooter() {
   if (f) f.remove();
 }
 
-function openAlbum(id, index=0, push=false){
-  const a=findAlbum(id); if(!a) return;
-  if (!albumView || !heroImg || !heroTitle || !heroLink || !descBox || !masonry) return;
-
-  currentAlbum=a; currentIndex=index;
-
-  heroImg.src=a.cover; heroImg.alt=`${a.title} cover`;
-  heroTitle.textContent=a.title; heroLink.href=a.cover;
-  descBox.textContent=a.description;
-
-  masonry.innerHTML="";
-  a.media.forEach((m,i)=>{
-    const tile=document.createElement('div');
-    tile.className='m-item';
-    const lazyAttr = i < 2 ? "" : ' loading="lazy"';
-    tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>`
-                   + (m.type!=='image'?`<div class="play"><i class="fa-solid fa-play"></i></div>`:"");
-    tile.addEventListener('click', ()=> openViewer(i));
-    masonry.appendChild(tile);
-  });
-
-  albumView.classList.add('active');
-  albumView.setAttribute('aria-hidden','false');
-  if (window.gsap) gsap.fromTo('.album-hero',{opacity:.6,y:10},{opacity:1,y:0,duration:.35,ease:'power2.out'});
-
-  const tiles = $$('#albumMasonry .m-item');
-  if (tiles.length && window.gsap){
-    gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'});
-  }
-  if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
-
-  ensureAlbumFooter();
-  wireAskUI();                 // ensure AI input is wired on open
-  insertAskHint('album');      // NEW: beautiful pill tip right under chatbot
-
-  if(push){
-    const u=new URL(location.href);
-    u.searchParams.set('album',id);
-    history.pushState({album:id},"",u);
-  }
-
-  // kick off AI captions (non-blocking)
-  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{
-    console.warn('[gallery] captionImagesInAlbum error:', err?.message || err);
-  });
-  (window.requestIdleCallback ? requestIdleCallback(doCaptions, { timeout: 2000 }) : setTimeout(doCaptions, 300));
-}
-
-function closeAlbum(){
-  removeAlbumFooter();
-  closeViewer();
-  if (!albumView) return;
-  if (window.gsap) {
-    gsap.to('#albumView',{opacity:0,duration:.2,ease:'power2.in',onComplete:()=>{
-      albumView.classList.remove('active'); albumView.style.opacity="";
-      albumView.setAttribute('aria-hidden','true');
-    }});
-  } else {
-    albumView.classList.remove('active');
-    albumView.setAttribute('aria-hidden','true');
-  }
-}
-$('#closeAlbum')?.addEventListener('click', closeAlbum);
+/* ====== Viewer helpers ====== */
+function previewSrc(m){ return m.type==='image'?m.src:thumbFor(m); }
 
 /* ====== Viewer ====== */
 const viewer   = $('#viewerOverlay');
@@ -365,8 +304,6 @@ function ytCommand(func){
 function stopYouTube(){
   if(ytIframe){ try{ ytCommand('stopVideo'); }catch(_){ } ytIframe=null; }
 }
-
-function previewSrc(m){ return m.type==='image'?m.src:thumbFor(m); }
 
 function loadMedia(){
   if (!currentAlbum || !stage || !peekPrev || !peekNext) return;
@@ -647,79 +584,85 @@ function renderChat(answerText, topicLabel){
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-
-/* ====== NEW: Tip pill (short, centered, light-blue) ====== */
-function insertAskHint(where = 'album') {
-  // avoid duplicates
-  const EXISTING = document.getElementById('ask-hint-pill');
-  if (EXISTING) {
-    // keep the pill positioned right after the Ask UI if we re-open albums
-    const anchorNow = (where === 'album')
-      ? document.getElementById('askInput')
-      : document.getElementById('searchInput');
-    if (anchorNow && EXISTING.previousElementSibling !== anchorNow) {
-      anchorNow.insertAdjacentElement('afterend', EXISTING);
+/* ====== TIP PILL (centered, light-blue) UNDER CHATBOT ====== */
+function injectAskPillStylesOnce(){
+  if (document.getElementById('ask-hint-pill-css')) return;
+  const s = document.createElement('style');
+  s.id = 'ask-hint-pill-css';
+  s.textContent = `
+    #album-ask-hint-row{
+      display:flex; justify-content:center; align-items:center;
+      width:100%;
+      margin:10px 0 14px;
     }
-    return;
-  }
-
-  // anchor: directly under the Ask input (so it visually belongs to the chatbot)
-  const inputEl = (where === 'album')
-    ? document.getElementById('askInput')
-    : document.getElementById('searchInput');
-  if (!inputEl) return;
-
-const pill = document.createElement('div');
-pill.id = 'ask-hint-pill';
-pill.setAttribute('role', 'note');
-pill.setAttribute('aria-label', 'Tip for asking the assistant');
-
-const name = (window.currentAlbum?.title || 'this project');
-
-pill.innerHTML = `
-  <span class="spark">✨</span>
-  <strong>Tip:</strong>&nbsp; Ask about <em>${name}</em> — 
-  try <em>“Overview”</em> <em>“How it works?”</em> <em>“Specs”</em> <em>“License”</em>
-`;
-
-document.body.appendChild(pill);
-
-  inputEl.insertAdjacentElement('afterend', pill);
-
-  // styles (only once)
-  if (!document.getElementById('ask-hint-pill-css')) {
-    const s = document.createElement('style');
-    s.id = 'ask-hint-pill-css';
-    s.textContent = `
-      #ask-hint-pill{ margin:8px 0 12px; }
-      .ask-hint-pill{
-        display:flex; justify-content:center; align-items:center; gap:10px;
-        text-align:center;
-        padding:10px 14px;
-        border-radius:24px;
-        font-size:.9rem; line-height:1.4;
-        color:#dbe8ff;
-        background: linear-gradient(180deg, rgba(90,150,255,.16), rgba(90,150,255,.10));
-        border: 2px dashed rgba(150,190,255,.9);
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,.06),
-          0 6px 18px rgba(0,0,0,.22);
-        backdrop-filter: blur(2px);
-      }
-      .ask-hint-pill .spark{ filter: drop-shadow(0 0 6px rgba(150,190,255,.75)); }
-      .ask-hint-pill strong{ font-weight:700; color:#eef4ff; }
-      .ask-hint-pill em{
-        font-style: italic; font-weight:600; opacity:.98;
-        padding:0 .15rem;
-      }
-      @media (max-width: 720px){
-        .ask-hint-pill{ font-size:.85rem; padding:9px 12px; }
-      }
-    `;
-    document.head.appendChild(s);
-  }
+    .ask-hint-pill{
+      max-width:min(1080px, 92vw);
+      display:flex; justify-content:center; align-items:center; gap:.6rem;
+      padding:10px 16px;
+      border-radius:999px;
+      font-size:.9rem; line-height:1.35;
+      text-align:center;
+      color:#e8f1ff;
+      background:linear-gradient(180deg, rgba(120,170,255,.18), rgba(120,170,255,.10));
+      border:2px dashed rgba(150,190,255,.95);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.06),
+        0 6px 18px rgba(0,0,0,.22);
+      backdrop-filter: blur(2px);
+    }
+    .ask-hint-pill .spark{ filter:drop-shadow(0 0 6px rgba(150,190,255,.75)); }
+    .ask-hint-pill strong{ font-weight:700; color:#f3f7ff; }
+    .ask-hint-pill em{
+      font-style:italic; font-weight:600; opacity:.98;
+      padding:0 .1rem; white-space:nowrap;
+    }
+    @media (max-width: 900px){
+      .ask-hint-pill{ font-size:.85rem; padding:9px 14px; max-width:94vw; }
+    }
+    @media (max-width: 520px){
+      .ask-hint-pill{ font-size:.82rem; padding:8px 12px; }
+    }
+  `;
+  document.head.appendChild(s);
 }
 
+function insertAlbumAskHintBelowChat(){
+  const out = document.getElementById('askResult');
+  const masonry = document.getElementById('albumMasonry');
+  if (!out || !masonry) return;
+
+  injectAskPillStylesOnce();
+
+  // Create once; then reuse/reposition.
+  let row = document.getElementById('album-ask-hint-row');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'album-ask-hint-row';
+
+    const pill = document.createElement('div');
+    pill.className = 'ask-hint-pill';
+    pill.setAttribute('role','note');
+    pill.setAttribute('aria-label','Tip for asking the assistant');
+
+    const name = (window.currentAlbum?.title || 'this project');
+    pill.innerHTML = `
+      <span class="spark">✨</span>
+      <strong>Tip:</strong>&nbsp; Ask about <em>${name}</em> —
+      try <em>“Overview”</em> <em>“How it works?”</em> <em>“Specs”</em> <em>“License”</em>
+    `;
+
+    row.appendChild(pill);
+  }
+
+  // Ensure it sits BETWEEN chatbot (#askResult) and gallery (#albumMasonry)
+  const parent = out.parentElement;
+  if (!parent) return;
+
+  // If row not already in right place, insert it just before the masonry grid
+  if (row.parentElement !== parent || row.nextElementSibling !== masonry) {
+    parent.insertBefore(row, masonry);
+  }
+}
 
 /* ====== AI UI (Expert-first with topic focus + clarify) ====== */
 function wireAskUI(){
@@ -729,7 +672,6 @@ function wireAskUI(){
   if (!input || !btn || !out) return;
 
   injectChatStylesOnce();
-  insertAskHint('album');        // <<< show the pill right under the chatbot
 
   out.textContent = '';
   input.value = '';
@@ -787,6 +729,9 @@ function wireAskUI(){
 
       // 3) Present answer (rich, single-turn bubble)
       renderChat(answer || 'No answer.', routed.topic || 'Assistant');
+
+      // after every answer, ensure the hint is correctly placed (in case DOM moved)
+      insertAlbumAskHintBelowChat();
     } catch (err) {
       console.error('[gallery] ask error:', err);
       renderChat('Sorry — the assistant had an issue. Please try again.', 'Assistant');
@@ -947,6 +892,72 @@ window.addEventListener('popstate', ()=>{
   if(id) openAlbum(id,0,false); else closeAlbum();
 });
 
+/* ====== Album open/close ====== */
+function openAlbum(id, index=0, push=false){
+  const a=findAlbum(id); if(!a) return;
+  if (!albumView || !heroImg || !heroTitle || !heroLink || !descBox || !masonry) return;
+
+  currentAlbum=a; window.currentAlbum = currentAlbum; // expose for pill title
+  currentIndex=index;
+
+  heroImg.src=a.cover; heroImg.alt=`${a.title} cover`;
+  heroTitle.textContent=a.title; heroLink.href=a.cover;
+  descBox.textContent=a.description;
+
+  masonry.innerHTML="";
+  a.media.forEach((m,i)=>{
+    const tile=document.createElement('div');
+    tile.className='m-item';
+    const lazyAttr = i < 2 ? "" : ' loading="lazy"';
+    tile.innerHTML = `<img src="${thumbFor(m)}" alt="${a.title} ${i+1}"${lazyAttr}>`
+                   + (m.type!=='image'?`<div class="play"><i class="fa-solid fa-play"></i></div>`:"");
+    tile.addEventListener('click', ()=> openViewer(i));
+    masonry.appendChild(tile);
+  });
+
+  albumView.classList.add('active');
+  albumView.setAttribute('aria-hidden','false');
+  if (window.gsap) gsap.fromTo('.album-hero',{opacity:.6,y:10},{opacity:1,y:0,duration:.35,ease:'power2.out'});
+
+  const tiles = $$('#albumMasonry .m-item');
+  if (tiles.length && window.gsap){
+    gsap.from(tiles, {opacity:0, y:16, duration:.35, ease:'power2.out', stagger:0.05, clearProps:'all'});
+  }
+  if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
+
+  ensureAlbumFooter();
+  wireAskUI();                 // ensure AI input is wired on open
+  insertAlbumAskHintBelowChat(); // centered pill exactly under chatbot, above gallery
+
+  if(push){
+    const u=new URL(location.href);
+    u.searchParams.set('album',id);
+    history.pushState({album:id},"",u);
+  }
+
+  // kick off AI captions (non-blocking)
+  const doCaptions = ()=> captionImagesInAlbum(currentAlbum).catch(err=>{
+    console.warn('[gallery] captionImagesInAlbum error:', err?.message || err);
+  });
+  (window.requestIdleCallback ? requestIdleCallback(doCaptions, { timeout: 2000 }) : setTimeout(doCaptions, 300));
+}
+
+function closeAlbum(){
+  removeAlbumFooter();
+  closeViewer();
+  if (!albumView) return;
+  if (window.gsap) {
+    gsap.to('#albumView',{opacity:0,duration:.2,ease:'power2.in',onComplete:()=>{
+      albumView.classList.remove('active'); albumView.style.opacity="";
+      albumView.setAttribute('aria-hidden','true');
+    }});
+  } else {
+    albumView.classList.remove('active');
+    albumView.setAttribute('aria-hidden','true');
+  }
+}
+$('#closeAlbum')?.addEventListener('click', closeAlbum);
+
 /* ====== Init ====== */
 function init(){
   if (!hasRequiredEls()) {
@@ -1008,8 +1019,9 @@ function init(){
   // semantic search (optional)
   maybeSetupSemantic().then(wireSemanticSearch);
 
-  // Optional global pill under search on grid:
-  // insertAskHint('search');
+  // If you ever want a global pill under the main search on grid page:
+  // (kept as a feature toggle; currently the album-level pill is the active one)
+  // insertAlbumAskHintBelowChat(); // not used on grid; only inside albums
 }
 
 document.addEventListener('DOMContentLoaded', init);

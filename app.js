@@ -1012,8 +1012,11 @@ fetch(`${API_BASE}/api/ai`, {
 
 
 
-/* ====== Mobile/Tablet toolbar: chips (left, horizontal) + search (right) ====== */
-let __toolbarState = { applied:false, row:null, chipsParent:null, searchParent:null };
+/* ====== Mobile/Tablet toolbar: chips (left) + search (right) + tip below ====== */
+let __toolbarState = {
+  applied:false, row:null, chipsParent:null, searchParent:null,
+  tipNode:null, tipParent:null, tipWasAfterSearch:false
+};
 
 function applyMobileToolbar(){
   if (__toolbarState.applied) return;
@@ -1022,7 +1025,15 @@ function applyMobileToolbar(){
   const input = document.getElementById('searchInput');
   if (!chips || !input) return;
 
-  // remember original parents to restore on desktop
+  // capture the (long) generic tip that sits near the search bar
+  const tip = document.getElementById('ask-hint-row'); // created by insertAskHint()
+  if (tip) {
+    __toolbarState.tipNode   = tip;
+    __toolbarState.tipParent = tip.parentElement;
+    __toolbarState.tipWasAfterSearch = (tip.previousElementSibling === input) || (tip.nextElementSibling === input);
+  }
+
+  // remember original parents
   __toolbarState.chipsParent  = chips.parentElement;
   __toolbarState.searchParent = input.parentElement;
 
@@ -1030,18 +1041,24 @@ function applyMobileToolbar(){
   const row = document.createElement('div');
   row.id = 'albumToolbarRow';
   row.className = 'album-toolbar';
-  // insert before the chips so order stays logical
+  // put the row right where chips currently are
   __toolbarState.chipsParent.insertBefore(row, chips);
 
-  // left: chips
+  // left: chips (horizontal scroll)
   chips.classList.add('chips-scroll');
   row.appendChild(chips);
 
-  // right: wrap search input so we can size it neatly
+  // right: search
   const slot = document.createElement('div');
   slot.className = 'search-slot';
   row.appendChild(slot);
   slot.appendChild(input);
+
+  // compact tip: move below the row (and shrink it on mobile with CSS)
+  if (tip) {
+    tip.classList.add('ask-hint-compact');
+    row.insertAdjacentElement('afterend', tip);
+  }
 
   __toolbarState.row = row;
   __toolbarState.applied = true;
@@ -1050,32 +1067,40 @@ function applyMobileToolbar(){
 function removeMobileToolbar(){
   if (!__toolbarState.applied) return;
 
-  const { row, chipsParent, searchParent } = __toolbarState;
-  const chips  = document.getElementById('chips');
-  const input  = document.getElementById('searchInput');
+  const { row, chipsParent, searchParent, tipNode, tipParent, tipWasAfterSearch } = __toolbarState;
+  const chips = document.getElementById('chips');
+  const input = document.getElementById('searchInput');
 
   if (chips && chipsParent) {
     chips.classList.remove('chips-scroll');
-    chipsParent.insertBefore(chips, row);  // put chips back where they were
+    chipsParent.insertBefore(chips, row); // back to original spot
   }
   if (input && searchParent) {
-    searchParent.appendChild(input);       // return input to original container
+    searchParent.appendChild(input);      // back to original spot
   }
-  row?.remove();
 
-  __toolbarState = { applied:false, row:null, chipsParent:null, searchParent:null };
+  // return the tip to where it was on desktop
+  if (tipNode && tipParent) {
+    tipNode.classList.remove('ask-hint-compact');
+    if (tipWasAfterSearch && input.parentElement) {
+      input.parentElement.insertAdjacentElement('afterend', tipNode);
+    } else {
+      tipParent.appendChild(tipNode);
+    }
+  }
+
+  row?.remove();
+  __toolbarState = {
+    applied:false, row:null, chipsParent:null, searchParent:null,
+    tipNode:null, tipParent:null, tipWasAfterSearch:false
+  };
 }
 
 function setupResponsiveToolbar(){
   const mq = window.matchMedia('(max-width: 1024px)');
-
-  const update = () => {
-    if (mq.matches) applyMobileToolbar();
-    else            removeMobileToolbar();
-  };
-
-  // first run + listen for resizes/orientation changes
+  const update = () => (mq.matches ? applyMobileToolbar() : removeMobileToolbar());
   update();
   if (mq.addEventListener) mq.addEventListener('change', update);
-  else mq.addListener(update); // Safari old
+  else mq.addListener(update); // Safari < 14
 }
+

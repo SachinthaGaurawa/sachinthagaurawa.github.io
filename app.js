@@ -1004,3 +1004,49 @@ fetch(`${API_BASE}/api/ai`, {
     if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
   })
   .catch(err => console.error('[gallery] API ping failed:', err));
+
+
+
+
+
+
+
+
+
+/* ====== Mobile toolbar layout: chips (left, horizontal) + search (right) ====== */
+function ensureSearchRowLayout(){
+  const chips = document.getElementById('chips');
+  const input = document.getElementById('searchInput');
+  if (!chips || !input) return;
+
+  // create a single flex row only once
+  let row = document.getElementById('albumSearchRow');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'albumSearchRow';
+    row.className = 'album-toolbar';
+    // insert before chips (both are already inside the white panel)
+    const panel = chips.parentElement || document.body;
+    panel.insertBefore(row, chips);
+
+    // left: chips scroller
+    chips.classList.add('chips-scroll');
+    row.appendChild(chips);
+
+    // right: search slot (wrap input so CSS can size it)
+    const slot = document.createElement('div');
+    slot.className = 'search-slot';
+    if (input.parentElement) {
+      input.parentElement.insertBefore(slot, input);
+    }
+    slot.appendChild(input);
+    row.appendChild(slot);
+  }
+}
+
+// in your init():
+// ...
+setupSearch();
+setupChips();
+ensureSearchRowLayout();   // <— add this line
+// ...

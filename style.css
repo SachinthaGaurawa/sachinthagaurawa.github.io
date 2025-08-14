@@ -243,7 +243,7 @@ body.noscroll{overflow:hidden}
   width:min(1200px,95vw);
   margin:28px auto 44px;
   position:relative;
-  z-index:1;
+  zIndex:1;
   border-radius:10px;
 }
 
@@ -259,8 +259,6 @@ body.noscroll{overflow:hidden}
     text-align:center;  /* ✅ center when stacked */
   }
 }
-
-
 
 /* ===== FINAL footer override (forces right item to the edge) ===== */
 .site-footer{
@@ -292,26 +290,18 @@ body.noscroll{overflow:hidden}
   border-radius:0 !important;
 }
 
-
-
 .hero .word{ display:inline-block; will-change:transform }
-
 
 .lazy-cover{ filter:blur(14px); transform:scale(1.02); transition:filter .35s, transform .35s }
 .lazy-cover.is-loaded{ filter:blur(0); transform:scale(1) }
-
 
 .tag-chips{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0 }
 .chip{ border:1px solid #e9eef5; background:#fff; border-radius:999px; padding:6px 10px; cursor:pointer }
 .chip:hover{ background:#f5f7fb }
 
-
-
 @media (prefers-reduced-motion: reduce){
   * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
-
-
 
 .album-ask { margin-top: 8px; }
 .album-ask .ask-row{
@@ -332,15 +322,7 @@ body.noscroll{overflow:hidden}
   margin-top:10px; color:#d6d6d6; line-height:1.5; white-space:pre-wrap;
 }
 
-
 button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
-
-
-
-
-
-
-
 
 .mini-tags{
   position:absolute; left:8px; bottom:8px;
@@ -354,39 +336,29 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   backdrop-filter: blur(2px);
 }
 
-
-
-
-/* Mobile search bar fix */
+/* Mobile search bar fix (kept; harmless if container unused) */
 @media (max-width: 768px) {
   .search-bar-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 10px; /* space from sides */
+    padding: 0 10px;
   }
-
-  .search-bar-container input[type="text"] {
-    width: 90% !important; /* keep proportional on mobile */
-    max-width: 350px; /* limit width for small screens */
+  .search-bar-container input[type="text"],
+  .search-slot input#searchInput{           /* ✅ ensure actual search input also benefits */
+    width: 90% !important;
+    max-width: 350px;
     font-size: 14px;
     border-radius: 8px;
     padding: 8px 12px;
     box-sizing: border-box;
   }
-
   .search-bar-container button {
     margin-top: 8px;
     width: auto;
     max-width: 120px;
   }
 }
-
-
-
-
-
-
 
 /* ─────────── Mobile/Tablet toolbar layout (chips left, search right) ─────────── */
 @media (max-width: 1024px){
@@ -395,6 +367,7 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
     align-items:center;
     gap:10px;
     width:100%;
+    min-height:44px; /* keeps row stable */
   }
 
   /* one-line, swipeable chip row with soft edge fade */
@@ -407,7 +380,10 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
     padding-bottom:4px;
     flex:1 1 50%;
     mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent); /* ✅ iOS */
+    scroll-snap-type:x proximity;
   }
+  .chips-scroll > *{ scroll-snap-align:center; }
   .chips-scroll::-webkit-scrollbar{ display:none; }
 
   /* search on the right with sensible min width */
@@ -457,4 +433,3 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   .search-slot input{ font-size:13px; padding:7.5px 10px; }
   #ask-hint-row.ask-hint-compact{ font-size:12.5px; padding:7px 10px; }
 }
-

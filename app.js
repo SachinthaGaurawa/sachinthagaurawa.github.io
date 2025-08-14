@@ -1012,41 +1012,70 @@ fetch(`${API_BASE}/api/ai`, {
 
 
 
+/* ====== Mobile/Tablet toolbar: chips (left, horizontal) + search (right) ====== */
+let __toolbarState = { applied:false, row:null, chipsParent:null, searchParent:null };
 
-/* ====== Mobile toolbar layout: chips (left, horizontal) + search (right) ====== */
-function ensureSearchRowLayout(){
+function applyMobileToolbar(){
+  if (__toolbarState.applied) return;
+
   const chips = document.getElementById('chips');
   const input = document.getElementById('searchInput');
   if (!chips || !input) return;
 
-  // create a single flex row only once
-  let row = document.getElementById('albumSearchRow');
-  if (!row) {
-    row = document.createElement('div');
-    row.id = 'albumSearchRow';
-    row.className = 'album-toolbar';
-    // insert before chips (both are already inside the white panel)
-    const panel = chips.parentElement || document.body;
-    panel.insertBefore(row, chips);
+  // remember original parents to restore on desktop
+  __toolbarState.chipsParent  = chips.parentElement;
+  __toolbarState.searchParent = input.parentElement;
 
-    // left: chips scroller
-    chips.classList.add('chips-scroll');
-    row.appendChild(chips);
+  // row container
+  const row = document.createElement('div');
+  row.id = 'albumToolbarRow';
+  row.className = 'album-toolbar';
+  // insert before the chips so order stays logical
+  __toolbarState.chipsParent.insertBefore(row, chips);
 
-    // right: search slot (wrap input so CSS can size it)
-    const slot = document.createElement('div');
-    slot.className = 'search-slot';
-    if (input.parentElement) {
-      input.parentElement.insertBefore(slot, input);
-    }
-    slot.appendChild(input);
-    row.appendChild(slot);
-  }
+  // left: chips
+  chips.classList.add('chips-scroll');
+  row.appendChild(chips);
+
+  // right: wrap search input so we can size it neatly
+  const slot = document.createElement('div');
+  slot.className = 'search-slot';
+  row.appendChild(slot);
+  slot.appendChild(input);
+
+  __toolbarState.row = row;
+  __toolbarState.applied = true;
 }
 
-// in your init():
-// ...
-setupSearch();
-setupChips();
-ensureSearchRowLayout();   // <— add this line
-// ...
+function removeMobileToolbar(){
+  if (!__toolbarState.applied) return;
+
+  const { row, chipsParent, searchParent } = __toolbarState;
+  const chips  = document.getElementById('chips');
+  const input  = document.getElementById('searchInput');
+
+  if (chips && chipsParent) {
+    chips.classList.remove('chips-scroll');
+    chipsParent.insertBefore(chips, row);  // put chips back where they were
+  }
+  if (input && searchParent) {
+    searchParent.appendChild(input);       // return input to original container
+  }
+  row?.remove();
+
+  __toolbarState = { applied:false, row:null, chipsParent:null, searchParent:null };
+}
+
+function setupResponsiveToolbar(){
+  const mq = window.matchMedia('(max-width: 1024px)');
+
+  const update = () => {
+    if (mq.matches) applyMobileToolbar();
+    else            removeMobileToolbar();
+  };
+
+  // first run + listen for resizes/orientation changes
+  update();
+  if (mq.addEventListener) mq.addEventListener('change', update);
+  else mq.addListener(update); // Safari old
+}

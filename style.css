@@ -354,3 +354,32 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   backdrop-filter: blur(2px);
 }
 
+
+
+
+/* Mobile search bar fix */
+@media (max-width: 768px) {
+  .search-bar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 10px; /* space from sides */
+  }
+
+  .search-bar-container input[type="text"] {
+    width: 90% !important; /* keep proportional on mobile */
+    max-width: 350px; /* limit width for small screens */
+    font-size: 14px;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+  }
+
+  .search-bar-container button {
+    margin-top: 8px;
+    width: auto;
+    max-width: 120px;
+  }
+}
+
+

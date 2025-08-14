@@ -389,7 +389,6 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 
 
 
-
 /* ───────────────── Mobile/Tablet toolbar layout ───────────────── */
 @media (max-width: 1024px){
   .album-toolbar{

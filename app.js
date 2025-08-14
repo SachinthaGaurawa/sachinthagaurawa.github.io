@@ -946,7 +946,7 @@ function init(){
   renderGrid();
   setupSearch();
   setupChips();
-  setupResponsiveToolbar(); 
+  setupResponsiveToolbar();
   setupHeroAnimation();
   setupLazyHero();
   updateAllFooterYears();

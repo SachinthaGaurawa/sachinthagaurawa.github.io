@@ -485,3 +485,59 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 @media (max-height: 420px) and (orientation: landscape){
   .masonry{ column-count: 1; }
 }
+
+
+
+
+
+/* ===== Fix: Center footer on phones & tablets (portrait only) ===== */
+/* Works even if a later rule forces justify-content:space-between */
+@media (max-width: 1024px) and (orientation: portrait) {
+
+  /* Main footer */
+  body .site-footer.site-footer.site-footer,
+  body footer.site-footer.site-footer,
+  body footer.page-footer.page-footer,
+  body footer.app-footer.app-footer,
+  body footer.main-footer.main-footer {
+    display: flex !important;
+    flex-direction: column !important;     /* stack the two lines */
+    align-items: center !important;        /* center horizontally */
+    justify-content: center !important;    /* center within the bar */
+    text-align: center !important;
+    gap: 10px !important;
+  }
+
+  /* Left/right groups inside footer */
+  body .site-footer.site-footer.site-footer .footer-left,
+  body .site-footer.site-footer.site-footer .footer-right,
+  body footer .footer-left,
+  body footer .footer-right {
+    width: 100% !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Album overlay footer clone */
+  body #albumView .site-footer.site-footer.site-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+  body #albumView .site-footer.site-footer.site-footer .footer-left,
+  body #albumView .site-footer.site-footer.site-footer .footer-right {
+    width: 100% !important;
+    margin: 0 !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Neutralize any “push right” left from desktop */
+  body .site-footer .footer-right { margin-left: 0 !important; }
+}

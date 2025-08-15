@@ -290,38 +290,61 @@ body {
 
 /* Contact Section */
 /* Contact Section */
-.contact-info { 
-    background: #fff; 
-    border-radius: 20px; 
-    padding: 40px; 
-    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.1); 
+.contact-info {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.1);
 }
 
 .contact-item {
-    display: flex; 
-    align-items: center; 
-    margin-bottom: 30px; 
-    padding: 20px 0; 
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 30px;
+    padding: 20px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .contact-item:last-child { border-bottom: none; }
 
-/* ICON BOX — robust centring with CSS Grid */
-.contact-icon {
-    width: 60px;
-    height: 60px;
-    background: var(--gradient-primary);
-    border-radius: 15px;
-    margin-right: 20px;
-    flex-shrink: 0;
-
-    display: grid;                 /* more reliable across icon types */
-    place-items: center;           /* perfect centre both axes */
-    line-height: 0;                /* kill baseline offset */
-    overflow: hidden;              /* keep rounded edges clean */
+/* ---------- ICON BOX: perfect centring on all devices ---------- */
+:root {
+    --icon-box: 60px;   /* mobile default */
+    --icon-size: 28px;  /* mobile default */
 }
 
-/* HARD RESET for any legacy rules that push icons off-centre */
+/* Tablet bump */
+@media (min-width: 576px) {
+    :root {
+        --icon-box: 64px;
+        --icon-size: 30px;
+    }
+}
+
+/* Laptop/Desktop */
+@media (min-width: 992px) {
+    :root {
+        --icon-box: 72px;
+        --icon-size: 36px;
+    }
+}
+
+.contact-icon {
+    width: var(--icon-box);
+    height: var(--icon-box);
+    background: var(--gradient-primary);
+    border-radius: 15px;
+    flex-shrink: 0;
+
+    /* Rock-solid centring */
+    display: grid;
+    place-items: center;
+
+    line-height: 0;       /* remove baseline shifts */
+    overflow: hidden;     /* keep rounded corners clean */
+}
+
+/* ---------- HARD RESET for any legacy pos/transform ---------- */
 .contact-icon > svg,
 .contact-icon > img,
 .contact-icon > i {
@@ -331,59 +354,50 @@ body {
     right: auto !important;
     bottom: auto !important;
     transform: none !important;
+
     margin: 0 !important;
     padding: 0 !important;
     display: block !important;
     vertical-align: middle !important;
     object-fit: contain;
+
+    /* Unified sizing */
+    width: var(--icon-size);
+    height: var(--icon-size);
 }
 
-/* Default (mobile/tablet) icon size */
-.contact-icon > svg,
-.contact-icon > img,
-.contact-icon > i {
-    width: 28px;
-    height: 28px;
-}
-
-/* Make icons white */
+/* SVGs stay white */
 .contact-icon svg,
-.contact-icon svg path { fill: #fff !important; }
-.contact-icon i { color: #fff !important; line-height: 1 !important; }
-.contact-icon img { filter: brightness(0) invert(1); }
-
-/* Tablet bump (optional but helps) */
-@media (min-width: 576px) {
-    .contact-icon { width: 64px; height: 64px; }
-    .contact-icon > svg,
-    .contact-icon > img,
-    .contact-icon > i { width: 30px; height: 30px; }
+.contact-icon svg path {
+    fill: #fff !important;
 }
 
-/* Laptop/Desktop */
-@media (min-width: 992px) {
-    .contact-icon { width: 70px; height: 70px; }
-    .contact-icon > svg,
-    .contact-icon > img,
-    .contact-icon > i { width: 36px; height: 36px; }
+/* Font icons (e.g., Font Awesome) — use font-size, not width/height */
+.contact-icon i {
+    color: #fff !important;
+    font-size: var(--icon-size) !important;
+    line-height: 1 !important;
 }
 
-/* Text beside icons */
-.contact-details h6 { 
-    color: var(--primary-color); 
-    font-weight: 600; 
-    margin-bottom: 5px; 
-}
-.contact-details a { 
-    color: var(--dark-color); 
-    text-decoration: none; 
-    transition: color 0.3s ease; 
-}
-.contact-details a:hover { 
-    color: var(--primary-color); 
+/* Image icons to white */
+.contact-icon img {
+    filter: brightness(0) invert(1);
 }
 
-
+/* ---------- Text beside icons ---------- */
+.contact-details h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+.contact-details a {
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.contact-details a:hover {
+    color: var(--primary-color);
+}
 
 
 

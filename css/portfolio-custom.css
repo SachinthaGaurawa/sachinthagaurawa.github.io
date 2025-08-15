@@ -289,6 +289,7 @@ body {
 }
 
 /* Contact Section */
+/* Contact Section */
 .contact-info { 
     background: white; 
     border-radius: 20px; 
@@ -306,29 +307,62 @@ body {
 .contact-item:last-child { border-bottom: none; }
 
 .contact-icon {
-    position: relative; 
     width: 60px; 
     height: 60px; 
     background: var(--gradient-primary); 
     border-radius: 15px;
     margin-right: 20px; 
     flex-shrink: 0;
+
+    /* Perfect centring */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Center icon */
+/* Icon sizes */
 .contact-icon svg,
 .contact-icon img,
 .contact-icon i {
-    position: absolute; 
-    top: 50%; 
-    left: 50%; 
-    transform: translate(-50%, -50%);
-    width: 32px; 
-    height: 32px; 
-    margin: 0; 
-    padding: 0; 
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
     display: block;
 }
+
+/* Make SVG icons white */
+.contact-icon svg path,
+.contact-icon svg {
+    fill: #fff !important;
+}
+
+/* Make font icons white */
+.contact-icon i {
+    color: #fff !important;
+}
+
+/* Make PNG/SVG images white */
+.contact-icon img {
+    filter: brightness(0) invert(1);
+}
+
+.contact-details h6 { 
+    color: var(--primary-color); 
+    font-weight: 600; 
+    margin-bottom: 5px; 
+}
+
+.contact-details a { 
+    color: var(--dark-color); 
+    text-decoration: none; 
+    transition: color 0.3s ease; 
+}
+
+.contact-details a:hover { 
+    color: var(--primary-color); 
+}
+
 
 /* Make SVG icons white */
 .contact-icon svg path,

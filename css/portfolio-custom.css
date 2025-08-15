@@ -398,7 +398,7 @@ body {
 
 /* Raise ONLY the Address icon box (first contact-item) */
 .contact-item:first-child .contact-icon {
-    margin-top: -10px; /* adjust this value until it aligns perfectly */
+    margin-top: -20px; /* adjust this value until it aligns perfectly */
 }
 
 

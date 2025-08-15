@@ -550,3 +550,331 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 
 
 
+
+
+
+
+
+
+/* ---------- Small bug fix (typo) ---------- */
+#albumView .site-footer{
+  z-index: 1; /* was zIndex */
+}
+
+/* ==========================================================
+   THEME TOKENS (non-breaking)
+   - Default variables already exist in your CSS.
+   - We scope new palettes to body.home.is-dark / .is-light (Home only)
+   ========================================================== */
+
+/* LIGHT (Home) — applied when <body class="home is-light"> */
+body.home.is-light{
+  --bg: #f7f9fc;
+  --ink: #0e0f11;
+  --muted: #6e7481;
+  --ring: rgba(4,112,255,.22);
+  --card: #ffffff;
+  --card-2: #f3f6fb;
+  --hair: #e7ecf4;
+}
+
+/* DARK (Home) — applied when <body class="home is-dark"> */
+body.home.is-dark{
+  --bg: #0b0d12;
+  --ink: #eaf0ff;
+  --muted: #a9b4c7;
+  --ring: rgba(120,170,255,.35);
+  --card: #0f141c;
+  --card-2: #0c1118;
+  --hair: rgba(255,255,255,.08);
+  color-scheme: dark;
+}
+
+/* Base apply for Home (both themes) */
+body.home.is-dark, body.home.is-light{
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* ==========================================================
+   TOPBAR (Home)
+   ========================================================== */
+body.home.is-dark .topbar{
+  background: rgba(10,12,18,.72);
+  border-bottom: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+}
+body.home.is-light .topbar{
+  background: rgba(255,255,255,.85);
+  border-bottom: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+}
+
+/* Theme toggle button (created by HTML/JS below) */
+.theme-toggle{
+  appearance: none;
+  border: 1px solid var(--hair);
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-family: 'Orbitron', system-ui, sans-serif;
+  letter-spacing: .2px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.theme-toggle:hover{ transform: translateY(-1px); box-shadow:0 12px 30px rgba(0,0,0,.12); }
+.theme-toggle:active{ transform: translateY(0); }
+.theme-toggle i{ margin-right: 6px; }
+
+/* ==========================================================
+   HERO (Home) – image fade & legibility
+   ========================================================== */
+body.home.is-dark .hero,
+body.home.is-light .hero{
+  background: transparent;
+}
+body.home.is-dark .hero-media,
+body.home.is-light .hero-media{
+  border: 1px solid var(--hair);
+  box-shadow: 0 14px 44px rgba(0,0,0,.25);
+  overflow: hidden;
+  position: relative;
+}
+body.home.is-dark .hero-media::after,
+body.home.is-light .hero-media::after{
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+/* Subtle vignette tuned per theme */
+body.home.is-dark .hero-media::after{
+  background:
+    radial-gradient(1200px 60% at 50% 100%, rgba(0,0,0,.55), transparent 70%),
+    linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.55));
+}
+body.home.is-light .hero-media::after{
+  background:
+    radial-gradient(1200px 60% at 50% 100%, rgba(255,255,255,.6), transparent 70%),
+    linear-gradient(180deg, rgba(255,255,255,0) 55%, rgba(255,255,255,.85));
+}
+
+body.home.is-dark .hero-text h2,
+body.home.is-dark .hero-name{ color:#f7faff; }
+body.home.is-light .hero-text h2,
+body.home.is-light .hero-name{ color:#101319; }
+
+body.home.is-dark .hero-text p{ color:var(--muted); }
+body.home.is-light .hero-text p{ color:#58606d; }
+
+/* ==========================================================
+   SEARCH (Home & Album) – glass + contrast
+   ========================================================== */
+.controls .search{
+  background: var(--card);
+  border: 1px solid var(--hair);
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+.controls .search input{
+  color: var(--ink);
+}
+.controls .search i{
+  color: #9aa3b2;
+}
+.controls .search:focus-within{
+  border-color:#78aaff;
+  box-shadow: 0 0 0 4px rgba(120,170,255,.18), 0 12px 40px rgba(0,0,0,.14);
+}
+
+/* Mobile search sizing (already present, keep enhanced specificity) */
+@media (max-width: 768px){
+  .search-bar-container input[type="text"],
+  .search-slot input#searchInput{
+    width: 90% !important; max-width: 360px;
+    font-size: 14px; border-radius: 10px; padding: 10px 12px;
+    background: var(--card); color: var(--ink); border: 1px solid var(--hair);
+  }
+}
+
+/* Chips/pills – theme aware */
+.chip{
+  background: var(--card);
+  border: 1px solid var(--hair);
+  color: var(--ink);
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+}
+.chip:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+  background: var(--card-2);
+}
+
+/* ==========================================================
+   CARD SURFACES (Home sections)
+   ========================================================== */
+body.home.is-dark .tool-card,
+body.home.is-dark .spec-card,
+body.home.is-dark .stats-container,
+body.home.is-dark .experience-card,
+body.home.is-dark .project-card,
+body.home.is-dark .research-card,
+body.home.is-dark .membership-card,
+body.home.is-dark .contact-info,
+body.home.is-dark .contact-form-container{
+  background: var(--card);
+  border: 1px solid var(--hair);
+  box-shadow: 0 18px 50px rgba(0,0,0,.28);
+  color: var(--ink);
+}
+
+body.home.is-light .tool-card,
+body.home.is-light .spec-card,
+body.home.is-light .stats-container,
+body.home.is-light .experience-card,
+body.home.is-light .project-card,
+body.home.is-light .research-card,
+body.home.is-light .membership-card,
+body.home.is-light .contact-info,
+body.home.is-light .contact-form-container{
+  background: #fff;
+  border: 1px solid var(--hair);
+  box-shadow: 0 18px 50px rgba(36,48,76,.08);
+  color: var(--ink);
+}
+
+/* Project overlays stay poppy */
+body.home.is-dark .project-overlay{ background: rgba(44,113,255,.9); }
+body.home.is-light .project-overlay{ background: rgba(13,110,253,.9); }
+
+/* Diplomas / badges */
+body.home.is-dark .diploma-badge{
+  background: rgba(255,255,255,.06);
+  color:#cfe0ff; border:1px solid rgba(128,168,255,.35);
+}
+body.home.is-light .diploma-badge{
+  background: #f3f7ff; color:#1f3f8f; border:1px solid #b9cdf9;
+}
+
+/* Forms */
+body.home.is-dark .form-floating > .form-control{
+  background:#0c1118; color:var(--ink); border:2px solid var(--hair);
+}
+body.home.is-dark .form-floating > .form-control:focus{
+  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.18);
+}
+body.home.is-light .form-floating > .form-control{
+  background:#fff; color:var(--ink); border:2px solid #e7ecf4;
+}
+body.home.is-light .form-floating > .form-control:focus{
+  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.14);
+}
+
+/* Contact icon block */
+body.home.is-dark .contact-icon{
+  background: linear-gradient(135deg,#1a60ff 0%, #6a3bff 100%);
+}
+body.home.is-light .contact-icon{
+  background: linear-gradient(135deg,#5a9bff 0%, #7ca6ff 100%);
+}
+
+/* Nav pills */
+body.home.is-dark .nav-pills .nav-link{
+  background:#0f141d; color:#cfe0ff; border:1px solid var(--hair);
+}
+body.home.is-dark .nav-pills .nav-link.active{
+  background:#2c71ff !important; color:#fff !important; border-color:transparent !important;
+}
+body.home.is-light .nav-pills .nav-link{
+  background:#f6f8fc; color:#2a3140; border:1px solid var(--hair);
+}
+body.home.is-light .nav-pills .nav-link.active{
+  background:#0d6efd !important; color:#fff !important; border-color:transparent !important;
+}
+
+/* Back-to-top visibility on both */
+body.home.is-dark .back-to-top{ background:#2c71ff; color:#fff; }
+body.home.is-light .back-to-top{ background:#0d6efd; color:#fff; }
+
+/* ==========================================================
+   FOOTER – award-grade, centered on mobile portrait (keep behavior)
+   ========================================================== */
+body.home.is-dark .site-footer{
+  background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
+  border-top:1px solid var(--hair);
+  color:#eaf0ff;
+}
+body.home.is-light .site-footer{
+  background: linear-gradient(180deg,#ffffff 0%, #f7f9fc 100%);
+  border-top:1px solid var(--hair);
+  color:#20242c;
+}
+body.home.is-dark .site-footer .footer-name,
+body.home.is-dark .site-footer a{ color:#f4c34f; }
+body.home.is-light .site-footer .footer-name,
+body.home.is-light .site-footer a{ color:#d0981a; }
+
+@media (max-width: 1024px) and (orientation: portrait) {
+  body .site-footer.site-footer.site-footer,
+  body footer.site-footer.site-footer{
+    display:flex !important; flex-direction:column !important;
+    align-items:center !important; justify-content:center !important;
+    text-align:center !important; gap:10px !important;
+  }
+  body .site-footer .footer-left,
+  body .site-footer .footer-right{
+    width:100% !important; margin:0 !important;
+    display:inline-flex !important; align-items:center !important; justify-content:center !important;
+    text-align:center !important;
+  }
+  body .site-footer .footer-right{ margin-left:0 !important; }
+}
+
+/* ==========================================================
+   ALBUM: right-column visibility on phone landscape (KEEP)
+   ========================================================== */
+#albumView{ overflow-x: hidden; } /* vertical scroll ok */
+.album-media{ width: min(1100px, 96vw); margin: 0 auto; }
+.masonry{ -webkit-column-gap:16px; column-gap:16px; -webkit-column-fill:balance; column-fill:balance; }
+@media (max-height:500px) and (max-width:900px) and (orientation: landscape){
+  .album-media{ width: min(1000px, 94vw); }
+  .masonry{ column-count:2; }
+}
+@media (max-height:420px) and (orientation: landscape){
+  .masonry{ column-count:1; }
+}
+
+/* ==========================================================
+   ASK TIP: hide on tablets/phones (KEEP)
+   ========================================================== */
+@media (max-width: 1024px){
+  #ask-hint-row{ display:none !important; }
+}
+
+/* ==========================================================
+   BONUS: tasteful depth micro-interactions (safe)
+   ========================================================== */
+.card, .tool-card, .spec-card, .project-card, .research-card, .membership-card{
+  transition: transform .18s ease, box-shadow .22s ease, border-color .2s ease;
+}
+.card:hover, .tool-card:hover, .spec-card:hover, .project-card:hover, .research-card:hover, .membership-card:hover{
+  transform: translateY(-6px);
+  box-shadow: 0 24px 60px rgba(0,0,0,.18);
+  border-color: rgba(120,170,255,.35);
+}
+
+/* Button ripple (CSS-only, non-invasive) */
+.btn, .theme-toggle{
+  position: relative; overflow: hidden;
+}
+.btn::after, .theme-toggle::after{
+  content:""; position:absolute; inset:auto; left:50%; top:50%;
+  width:0; height:0; border-radius:999px; background: rgba(255,255,255,.25);
+  transform: translate(-50%,-50%); pointer-events:none; transition: width .35s ease, height .35s ease, opacity .4s ease;
+  opacity:0;
+}
+.btn:active::after, .theme-toggle:active::after{
+  width:180%; height:180%; opacity:.0;
+}
+

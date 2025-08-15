@@ -339,8 +339,8 @@ body {
 .contact-icon svg,
 .contact-icon img,
 .contact-icon i {
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
 }
 
 /* White SVG fill */
@@ -369,8 +369,8 @@ body {
     .contact-icon svg,
     .contact-icon img,
     .contact-icon i {
-        width: 72px;
-        height: 72px;
+        width: 100px;
+        height: 100px;
     }
 }
 

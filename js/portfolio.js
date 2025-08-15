@@ -7,7 +7,7 @@
 */
 const API_BASE = (window.__API_BASE__ || 'https://sachinthagaurawa-github-io.vercel.app').replace(/\/+$/, '');
 
-console.log('[portfolio] app.js loaded, API_BASE =', API_BASE);
+console.log('[portfolio].js loaded, API_BASE =', API_BASE);
 
 // Show any uncaught errors so we don’t silently fail
 window.addEventListener('error', (e) => {

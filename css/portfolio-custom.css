@@ -306,92 +306,65 @@ body {
 }
 .contact-item:last-child { border-bottom: none; }
 
+/* Icon container */
 .contact-icon {
-    width: 60px; 
-    height: 60px; 
-    background: var(--gradient-primary); 
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-primary);
     border-radius: 15px;
-    margin-right: 20px; 
+    margin-right: 20px;
     flex-shrink: 0;
-
-    /* Perfect centring */
     display: flex;
     align-items: center;
     justify-content: center;
+    line-height: 0;               /* avoid baseline wiggle */
+    overflow: hidden;             /* crisp rounded corners */
 }
 
-/* Icon sizes */
+/* --- HARD RESET: clear any old absolute/translate rules --- */
 .contact-icon svg,
 .contact-icon img,
 .contact-icon i {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin: 0;
     width: 32px;
     height: 32px;
-    margin: 0;
-    padding: 0;
     display: block;
 }
 
-/* Make SVG icons white */
-.contact-icon svg path,
-.contact-icon svg {
+/* White SVGs */
+.contact-icon svg,
+.contact-icon svg path {
     fill: #fff !important;
 }
 
-/* Make font icons white */
+/* White font icons (e.g., Font Awesome) */
 .contact-icon i {
     color: #fff !important;
+    font-size: 28px;              /* visual balance inside 32px box */
+    line-height: 1;
 }
 
-/* Make PNG/SVG images white */
+/* White image icons */
 .contact-icon img {
     filter: brightness(0) invert(1);
+    object-fit: contain;
 }
 
+/* Text */
 .contact-details h6 { 
     color: var(--primary-color); 
     font-weight: 600; 
     margin-bottom: 5px; 
 }
-
 .contact-details a { 
     color: var(--dark-color); 
     text-decoration: none; 
     transition: color 0.3s ease; 
 }
-
-.contact-details a:hover { 
-    color: var(--primary-color); 
-}
-
-
-/* Make SVG icons white */
-.contact-icon svg path,
-.contact-icon svg {
-    fill: #fff !important;
-}
-
-/* Make font icons white */
-.contact-icon i {
-    color: #fff !important;
-}
-
-/* If using PNG/SVG image icons, apply white filter */
-.contact-icon img {
-    filter: brightness(0) invert(1);
-}
-
-.contact-details h6 { 
-    color: var(--primary-color); 
-    font-weight: 600; 
-    margin-bottom: 5px; 
-}
-
-.contact-details a { 
-    color: var(--dark-color); 
-    text-decoration: none; 
-    transition: color 0.3s ease; 
-}
-
 .contact-details a:hover { 
     color: var(--primary-color); 
 }

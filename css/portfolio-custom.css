@@ -411,6 +411,12 @@ body {
 
 
 
+/* Raise ONLY the Address icon box (first contact-item) */
+.contact-item:first-child .contact-icon {
+    margin-top: -6px; /* adjust this value until it aligns perfectly */
+}
+
+
 
 
 

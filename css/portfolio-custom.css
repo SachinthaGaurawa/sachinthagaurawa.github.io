@@ -310,14 +310,14 @@ body {
 /* ---------- ICON BOX: perfect centring on all devices ---------- */
 :root {
     --icon-box: 60px;   /* mobile default */
-    --icon-size: 20px;  /* mobile default */
+    --icon-size: 10px;  /* mobile default */
 }
 
 /* Tablet bump */
 @media (min-width: 576px) {
     :root {
         --icon-box: 64px;
-        --icon-size: 20px;
+        --icon-size: 10px;
     }
 }
 

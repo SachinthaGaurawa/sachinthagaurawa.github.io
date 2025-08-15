@@ -27,7 +27,7 @@ const ALBUMS = [
   {
     id: "aavss",
     title: "Advanced Autonomous Vehicle Safety System",
-    cover: "https://images.unsplash.com/photo-1519751138087-5a2c6aa5a315?q=80&w=1600&auto=format&fit=crop",
+    cover: "https://res.cloudinary.com/dzrfpc9be/image/upload/v1755231573/IMG_8893_1_wtmgsn.jpg",
     description: "Patent-pending AAVSS — multi-sensor fusion (LiDAR, radar, camera), embedded AI on Jetson Nano, and real-time driver safety analytics.",
     tags: ["AAVSS","autonomous","safety","jetson","embedded","fusion"],
     media: [

@@ -302,6 +302,7 @@ body {
   padding:40px;
   box-shadow:0 15px 35px rgba(255,255,255,0.1);
 }
+
 .contact-item{
   display:flex;
   align-items:center;
@@ -314,19 +315,17 @@ body {
 
 /* ---------- Responsive tokens ---------- */
 :root{
-  --icon-box:60px;   /* mobile */
-  --icon-size:28px;  /* mobile Font Awesome glyph size */
+  --icon-box:60px;   /* phones */
+  --icon-size:28px;  /* phones */
 }
-/* Tablet */
-@media (min-width:576px){
+@media (min-width:576px){           /* tablets */
   :root{ --icon-box:64px; --icon-size:30px; }
 }
-/* Laptop / Desktop */
-@media (min-width:992px){
+@media (min-width:992px){           /* laptops/desktops */
   :root{ --icon-box:72px; --icon-size:36px; }
 }
 
-/* ---------- Icon box (perfectly centred) ---------- */
+/* ---------- Icon box: true centring for ALL types ---------- */
 .contact-icon{
   width:var(--icon-box);
   height:var(--icon-box);
@@ -334,54 +333,61 @@ body {
   border-radius:15px;
   flex-shrink:0;
 
-  display:grid;             /* robust for all icon types */
-  place-items:center;       /* centre both axes */
-  overflow:hidden;          /* crisp rounded corners */
-  line-height:0;            /* prevent baseline shift */
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  line-height:0;
+
+  /* key: let the box define icon font size */
+  font-size:var(--icon-size);
 }
 
-/* ---------- Font Awesome icons ---------- */
-/* The <i> element itself */
+/* ===== Font Awesome (text glyph) ===== */
+/* Make the <i> a perfect 1em square and centre its ::before glyph */
 .contact-icon i{
-  display:block;            /* avoid inline baseline behaviour */
-  font-size:var(--icon-size);
-  color:#fff;               /* white icon */
-  line-height:1;            /* natural glyph box */
+  display:grid;            /* ensures reliable centring in iOS Safari */
+  place-items:center;
+  width:1em;               /* 1em == font-size from .contact-icon */
+  height:1em;
+  line-height:1;
+  color:#fff;
   margin:0; padding:0;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  font-variant-ligatures:none;
 }
-
-/* FA draws the glyph in ::before — centre THAT too */
 .contact-icon i::before{
   display:block;
-  line-height:1;            /* no extra vertical space */
-  width:auto; height:auto;  /* let the glyph size control it */
+  line-height:1;
   margin:0; padding:0;
+  transform:none !important; /* wipe any old transforms */
 }
 
-/* ---------- If you use inline SVGs or <img> for icons ---------- */
+/* ===== Inline SVG / IMG (if you use them anywhere) ===== */
 .contact-icon svg,
 .contact-icon img{
   display:block;
-  width:calc(var(--icon-size) + 0px); /* keep same scale as FA */
-  height:calc(var(--icon-size) + 0px);
+  width:1em;               /* match FA size for consistency */
+  height:1em;
   object-fit:contain;
   margin:0; padding:0;
 }
-.contact-icon svg, .contact-icon svg path{ fill:#fff; }
+
+/* Force white */
+.contact-icon svg, .contact-icon svg path{ fill:#fff !important; }
 .contact-icon img{ filter:brightness(0) invert(1); }
 
-/* ---------- Optional: per-icon optical nudge ----------
-   Add a class on the icon box, e.g.
-   <div class="contact-icon nudge-phone"><i class="fas fa-phone"></i></div>
-   Negative = up, Positive = down
+/* ---------- Optional tiny optical nudges (use only if needed) ----------
+   Add a class on the icon box: .icon--address / .icon--phone / .icon--email / .icon--linkedin
+   Negative value moves UP; positive moves DOWN.
 */
-.nudge-address i::before{ transform:translateY(-1px); }
-.nudge-phone   i::before{ transform:translateY( 1px); }
-.nudge-email   i::before{ transform:translateY(-1px); }
-.nudge-linkedin i::before{transform:translateY(-1px); }
+.contact-icon > i,
+.contact-icon > svg,
+.contact-icon > img{ transform:translateY(var(--nudge-y,0)); }
+
+.contact-icon.icon--address { --nudge-y: -1px; }   /* tweak as desired */
+.contact-icon.icon--phone   { --nudge-y:  0px; }
+.contact-icon.icon--email   { --nudge-y: -1px; }
+.contact-icon.icon--linkedin{ --nudge-y: -1px; }
 
 /* ---------- Text beside icons ---------- */
 .contact-details h6{
@@ -396,93 +402,7 @@ body {
 }
 .contact-details a:hover{ color:var(--primary-color); }
 
-/* Raise ONLY the Address icon box (first contact-item) */
-.contact-item:first-child .contact-icon {
-    margin-top: -20px; /* adjust this value until it aligns perfectly */
-}
 
-
-/* ---------- Contact list ---------- */
-.contact-item{
-  display:flex;
-  align-items:center;
-  gap:16px;
-  margin-bottom:30px;
-  padding:20px 0;
-  border-bottom:1px solid rgba(255,255,255,0.1);
-}
-.contact-item:last-child{ border-bottom:none; }
-
-/* Responsive tokens */
-:root{
-  --icon-box:60px;   /* phone */
-  --icon-size:28px;  /* phone */
-}
-@media (min-width:576px){           /* tablet */
-  :root{ --icon-box:64px; --icon-size:30px; }
-}
-@media (min-width:992px){           /* laptop/desktop */
-  :root{ --icon-box:72px; --icon-size:36px; }
-}
-
-/* Icon box */
-.contact-icon{
-  width:var(--icon-box);
-  height:var(--icon-box);
-  background:var(--gradient-primary);
-  border-radius:15px;
-  flex-shrink:0;
-
-  display:grid;               /* true centring */
-  place-items:center;
-  overflow:hidden;
-  line-height:0;
-}
-
-/* Font Awesome glyph centring */
-.contact-icon i{
-  display:block;
-  font-size:var(--icon-size);
-  color:#fff;
-  line-height:1;              /* kill baseline drift */
-  margin:0; padding:0;
-}
-.contact-icon i::before{
-  display:block;
-  line-height:1;
-  margin:0; padding:0;
-  /* if any stray transforms existed earlier, wipe them */
-  transform:none !important;
-}
-
-/* If you also use inline SVG/img somewhere, keep them white & centred */
-.contact-icon svg, .contact-icon img{
-  display:block;
-  width:var(--icon-size);
-  height:var(--icon-size);
-  object-fit:contain;
-  margin:0; padding:0;
-}
-.contact-icon svg, .contact-icon svg path{ fill:#fff; }
-.contact-icon img{ filter:brightness(0) invert(1); }
-
-/* ---------- ONLY move the Address box up on larger screens ---------- */
-/* Reset on phones (so glyph stays perfectly centred) */
-.contact-item:first-child .contact-icon{ margin-top:0; }
-
-/* Tablet & up: raise the Address square a touch to align with heading */
-@media (min-width:576px){
-  .contact-item:first-child .contact-icon{ margin-top:-2px; }
-}
-@media (min-width:992px){
-  .contact-item:first-child .contact-icon{ margin-top:-3px; }
-}
-
-/* Optional: if the map-marker still looks 1px high on some phones,
-   nudge the glyph itself DOWN only for phones */
-@media (max-width:575.98px){
-  .contact-item:first-child .contact-icon i::before{ transform:translateY(1px); }
-}
 
 
 

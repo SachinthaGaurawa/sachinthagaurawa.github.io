@@ -878,3 +878,46 @@ body.home.is-light .site-footer a{ color:#d0981a; }
   width:180%; height:180%; opacity:.0;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* === Dark-mode fix for album cards (title strip & borders) === */
+html[data-theme="dark"] .card{
+  background: #0f1621 !important;      /* dark surface */
+  border-color: #1b2532 !important;     /* dark border */
+  box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
+}
+
+html[data-theme="dark"] .card .label{
+  background: transparent !important;   /* no white band */
+}
+
+html[data-theme="dark"] .card .title{
+  color: #e9f2f9 !important;            /* high-contrast title */
+}
+
+/* optional: tone down the video badge ring in dark */
+html[data-theme="dark"] .badge-video{
+  background: rgba(0,0,0,.55) !important;
+  border-color: rgba(120,170,255,.28) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.35) !important;
+}
+
+/* keep tags readable on dark */
+html[data-theme="dark"] .chip{
+  background: #0b1218 !important;
+  color: #dbe6ef !important;
+  border-color: #1b2532 !important;
+}
+

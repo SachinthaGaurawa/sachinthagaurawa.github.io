@@ -405,6 +405,13 @@ body {
 
 
 
+@media (min-width:992px){
+  .contact-item:first-child .contact-icon{ margin-top:-2px; }
+}
+
+
+
+
 
 
 

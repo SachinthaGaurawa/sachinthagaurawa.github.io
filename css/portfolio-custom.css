@@ -396,6 +396,16 @@ body {
 }
 .contact-details a:hover{ color:var(--primary-color); }
 
+/* Raise the whole icon box up by 2px */
+.contact-item {
+    display: flex;
+    align-items: flex-start; /* align top instead of centre */
+}
+
+.contact-icon {
+    margin-top: 2px; /* adjust this value until it visually aligns */
+}
+
 
 
 

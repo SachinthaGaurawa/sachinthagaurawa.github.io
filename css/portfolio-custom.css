@@ -288,13 +288,19 @@ body {
     background: var(--gradient-primary); color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; position: relative; z-index: 2;
 }
 
+
+
+
+
+
+
 /* Contact Section */
-/* Contact Section UI */
+/* Contact Section */
 .contact-info{
   background:#fff;
   border-radius:20px;
   padding:40px;
-  box-shadow:0 15px 35px rgba(255,255,255,.1);
+  box-shadow:0 15px 35px rgba(255,255,255,0.1);
 }
 .contact-item{
   display:flex;
@@ -302,73 +308,82 @@ body {
   gap:16px;
   margin-bottom:30px;
   padding:20px 0;
-  border-bottom:1px solid rgba(255,255,255,.1);
+  border-bottom:1px solid rgba(255,255,255,0.1);
 }
 .contact-item:last-child{ border-bottom:none; }
 
-/* ------- Responsive tokens ------- */
+/* ---------- Responsive tokens ---------- */
 :root{
-  --icon-box:60px;    /* phone default box */
-  --icon-size:28px;   /* phone default glyph size */
+  --icon-box:60px;   /* mobile */
+  --icon-size:28px;  /* mobile Font Awesome glyph size */
 }
-@media (min-width:576px){        /* tablet */
+/* Tablet */
+@media (min-width:576px){
   :root{ --icon-box:64px; --icon-size:30px; }
 }
-@media (min-width:992px){        /* laptop/desktop */
+/* Laptop / Desktop */
+@media (min-width:992px){
   :root{ --icon-box:72px; --icon-size:36px; }
 }
 
-/* ------- Icon box ------- */
+/* ---------- Icon box (perfectly centred) ---------- */
 .contact-icon{
   width:var(--icon-box);
   height:var(--icon-box);
   background:var(--gradient-primary);
   border-radius:15px;
   flex-shrink:0;
-  display:grid;
-  place-items:center;
-  position:relative;
-  overflow:hidden;
-  line-height:0;
+
+  display:grid;             /* robust for all icon types */
+  place-items:center;       /* centre both axes */
+  overflow:hidden;          /* crisp rounded corners */
+  line-height:0;            /* prevent baseline shift */
 }
 
-/* Hide any legacy inline icons if they still exist */
-.contact-icon > svg,
-.contact-icon > img,
-.contact-icon > i{ display:none !important; }
-
-/* ------- Draw the icon via pseudo-element (perfect centre) ------- */
-/* Provide the icon file through the CSS var --icon (SVG recommended) */
-.contact-icon::before{
-  content:"";
-  width:var(--icon-size);
-  height:var(--icon-size);
-  /* Primary method: mask paints the icon solid white, perfectly centred */
-  background:#fff;
-
-  /* WebKit & standard masks */
-  -webkit-mask: var(--icon) center / contain no-repeat;
-          mask: var(--icon) center / contain no-repeat;
-
-  /* Fallback for browsers without mask: still centred, tries to white it */
-  background-image: var(--icon);
-  background-repeat:no-repeat;
-  background-position:center;
-  background-size:contain;
-  filter: brightness(0) invert(1);
+/* ---------- Font Awesome icons ---------- */
+/* The <i> element itself */
+.contact-icon i{
+  display:block;            /* avoid inline baseline behaviour */
+  font-size:var(--icon-size);
+  color:#fff;               /* white icon */
+  line-height:1;            /* natural glyph box */
+  margin:0; padding:0;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-variant-ligatures:none;
 }
 
-/* ------- Optional micro-nudges (if a shape is optically off) ------- */
-.contact-icon{ --nudge-y:0px; }
-.contact-icon::before{ transform: translateY(var(--nudge-y)); }
+/* FA draws the glyph in ::before — centre THAT too */
+.contact-icon i::before{
+  display:block;
+  line-height:1;            /* no extra vertical space */
+  width:auto; height:auto;  /* let the glyph size control it */
+  margin:0; padding:0;
+}
 
-/* Example tiny optical adjustments per icon (tweak ±1–2px if needed) */
-.icon--address { --nudge-y:-1px; }   /* map pin sits a touch low */
-.icon--phone   { --nudge-y: 1px; }   /* handset appears slightly high */
-.icon--email   { --nudge-y:-1px; }   /* envelope looks low */
-.icon--linkedin{ --nudge-y:-1px; }   /* "in" glyph sits low */
+/* ---------- If you use inline SVGs or <img> for icons ---------- */
+.contact-icon svg,
+.contact-icon img{
+  display:block;
+  width:calc(var(--icon-size) + 0px); /* keep same scale as FA */
+  height:calc(var(--icon-size) + 0px);
+  object-fit:contain;
+  margin:0; padding:0;
+}
+.contact-icon svg, .contact-icon svg path{ fill:#fff; }
+.contact-icon img{ filter:brightness(0) invert(1); }
 
-/* ------- Text beside icons ------- */
+/* ---------- Optional: per-icon optical nudge ----------
+   Add a class on the icon box, e.g.
+   <div class="contact-icon nudge-phone"><i class="fas fa-phone"></i></div>
+   Negative = up, Positive = down
+*/
+.nudge-address i::before{ transform:translateY(-1px); }
+.nudge-phone   i::before{ transform:translateY( 1px); }
+.nudge-email   i::before{ transform:translateY(-1px); }
+.nudge-linkedin i::before{transform:translateY(-1px); }
+
+/* ---------- Text beside icons ---------- */
 .contact-details h6{
   color:var(--primary-color);
   font-weight:600;

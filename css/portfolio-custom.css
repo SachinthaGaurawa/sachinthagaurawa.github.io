@@ -295,7 +295,7 @@ body {
 
 
 /* Contact Section */
-/* Contact Section */
+
 .contact-info{
   background:#fff;
   border-radius:20px;
@@ -322,7 +322,7 @@ body {
   :root{ --icon-box:64px; --icon-size:30px; }
 }
 @media (min-width:992px){           /* laptops/desktops */
-  :root{ --icon-box:72px; --icon-size:36px; }
+  :root{ --icon-box:72px; --icon-size:30px; }
 }
 
 /* ---------- Icon square (centering container) ---------- */

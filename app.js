@@ -1131,3 +1131,74 @@ function setupResponsiveToolbar(){
   if (mq.addEventListener) mq.addEventListener('change', update);
   else mq.addListener(update); // Safari < 14
 }
+
+
+
+
+
+
+
+
+
+
+
+// Paste the theme toggle script here at the end of your main JS file
+(function(){
+    if (!document.body.classList.contains('home')) return;
+
+    const KEY = 'site_theme_home';
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    function applyTheme(mode){
+        document.body.classList.remove('is-dark','is-light');
+        document.body.classList.add(mode === 'dark' ? 'is-dark' : 'is-light');
+        localStorage.setItem(KEY, mode);
+        updateToggle(mode);
+    }
+
+    function currentTheme(){
+        if (document.body.classList.contains('is-dark')) return 'dark';
+        if (document.body.classList.contains('is-light')) return 'light';
+        return prefersDark ? 'dark' : 'light';
+    }
+
+    function ensureToggle(){
+        let btn = document.getElementById('themeToggle');
+        if (!btn){
+            btn = document.createElement('button');
+            btn.id = 'themeToggle';
+            btn.className = 'theme-toggle';
+            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
+            btn.setAttribute('aria-pressed', 'false');
+            const topbar = document.querySelector('.topbar');
+            if (topbar){
+                topbar.appendChild(btn);
+            } else {
+                document.body.appendChild(btn);
+                btn.style.position = 'fixed';
+                btn.style.right = '16px';
+                btn.style.top = '16px';
+                btn.style.zIndex = '1000';
+            }
+        }
+        return btn;
+    }
+
+    function updateToggle(mode){
+        const btn = ensureToggle();
+        const span = btn.querySelector('span');
+        const dark = (mode === 'dark');
+        btn.setAttribute('aria-pressed', String(dark));
+        if (span) span.textContent = dark ? 'Light' : 'Dark';
+        btn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    }
+
+    const saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') applyTheme(saved);
+    else updateToggle(currentTheme());
+
+    ensureToggle().addEventListener('click', function(){
+        const next = currentTheme() === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+    });
+})();

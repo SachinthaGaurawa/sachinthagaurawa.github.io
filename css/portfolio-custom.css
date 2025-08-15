@@ -325,75 +325,72 @@ body {
   :root{ --icon-box:72px; --icon-size:36px; }
 }
 
-/* ---------- Icon box ---------- */
+/* ---------- Icon square (centering container) ---------- */
 .contact-icon{
   width:var(--icon-box);
   height:var(--icon-box);
   background:var(--gradient-primary);
   border-radius:15px;
   flex-shrink:0;
-  position:relative;          /* anchor for absolute centring */
+
+  /* robust centering for any child */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
   overflow:hidden;
   line-height:0;
 }
 
-/* ---------- ABSOLUTE, PIXEL-ACCURATE CENTRING ---------- */
-/* Font Awesome */
-.contact-icon > i{
-  position:absolute !important;
-  top:50% !important;
-  left:50% !important;
-  transform:translate(-50%,-50%) !important;
-
-  /* size FA by font-size; make it a 1em square for consistency */
-  font-size:var(--icon-size) !important;
-  width:1em !important;
-  height:1em !important;
-
-  display:block !important;
-  line-height:1 !important;
-  color:#fff !important;
+/* Wipe any legacy positioning that might fight centering */
+.contact-icon > *{
+  position:static !important;
+  top:auto !important;
+  left:auto !important;
+  transform:none !important;
   margin:0 !important;
   padding:0 !important;
+}
+
+/* ---------- Font Awesome (text glyph) ---------- */
+/* Treat <i> as a 1em x 1em box and center the glyph */
+.contact-icon i{
+  display:flex;                 /* center the ::before glyph */
+  align-items:center;
+  justify-content:center;
+
+  font-size:var(--icon-size);   /* sizing comes from the square */
+  width:1em; height:1em;        /* avoid font baseline weirdness */
+  line-height:1;
+  color:#fff;
 
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
-/* Some FA sets the glyph in ::before — keep it clean */
-.contact-icon > i::before{
-  line-height:1 !important;
-  margin:0 !important;
-  padding:0 !important;
+/* FA draws the pictogram in ::before; keep it tight */
+.contact-icon i::before{
+  display:block;
+  line-height:1;
 }
 
-/* Inline SVG or IMG icons (if you use them) */
-.contact-icon > svg,
-.contact-icon > img{
-  position:absolute !important;
-  top:50% !important;
-  left:50% !important;
-  transform:translate(-50%,-50%) !important;
-
-  width:var(--icon-size) !important;
-  height:var(--icon-size) !important;
-  display:block !important;
-  margin:0 !important;
-  padding:0 !important;
+/* ---------- Inline SVG/IMG (if you use any) ---------- */
+.contact-icon svg,
+.contact-icon img{
+  display:block;
+  width:1em; height:1em;        /* same visual scale as FA */
   object-fit:contain;
 }
+.contact-icon svg,
+.contact-icon svg path{ fill:#fff !important; }
+.contact-icon img{ filter:brightness(0) invert(1); }
 
-/* Force white for SVG/IMG */
-.contact-icon > svg,
-.contact-icon > svg path{ fill:#fff !important; }
-.contact-icon > img{ filter:brightness(0) invert(1); }
-
-/* ---------- Optional tiny optical nudges (per icon box) ----------
-   Add a class on the box: .icon--address / .icon--phone / .icon--email / .icon--linkedin
-   Negative = up, Positive = down. Tweak only if you still want micro-adjustments. */
-.contact-icon.icon--address > * { transform:translate(-50%,-50%) translateY(-1px) !important; }
-.contact-icon.icon--phone   > * { transform:translate(-50%,-50%) translateY( 0px) !important; }
-.contact-icon.icon--email   > * { transform:translate(-50%,-50%) translateY(-1px) !important; }
-.contact-icon.icon--linkedin> * { transform:translate(-50%,-50%) translateY(-1px) !important; }
+/* ---------- Optional tiny optical nudges (per icon) ----------
+   Add on the SQUARE: .icon--address / .icon--phone / .icon--email / .icon--linkedin
+   Negative = up, Positive = down. Tweak only if you want micro-adjust. */
+.contact-icon.icon--address  i{ transform:translateY(-1px); }
+.contact-icon.icon--phone    i{ transform:translateY( 0px); }
+.contact-icon.icon--email    i{ transform:translateY(-1px); }
+.contact-icon.icon--linkedin i{ transform:translateY(-1px); }
 
 /* ---------- Text beside icons ---------- */
 .contact-details h6{
@@ -407,6 +404,7 @@ body {
   transition:color .3s ease;
 }
 .contact-details a:hover{ color:var(--primary-color); }
+
 
 
 

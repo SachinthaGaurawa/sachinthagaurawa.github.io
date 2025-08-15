@@ -1,6 +1,22 @@
 /* Next-Level Portfolio JavaScript */
 
-const API_BASE = (window.__API_BASE__ || 'https://sachinthagaurawa-github-io.vercel.app').replace(/\/+$/, '');
+
+
+/* ====== CONFIG (ONE LINE only) ======
+   For local dev (running server.js locally): 'http://localhost:8787'
+*/
+const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
+
+console.log('[portfolio] app.js loaded, API_BASE =', API_BASE);
+
+// Show any uncaught errors so we don’t silently fail
+window.addEventListener('error', (e) => {
+  console.error('[portfolio] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
+});
+
+
+
+
 // Initialize EmailJS SDK
 emailjs.init("Xl7XarHSSsPc7uaCF");
 

@@ -5,18 +5,15 @@
   <title>Album — Sachintha Gaurawa</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-
-   <!-- Favicon -->
+  <!-- Favicon -->
   <link rel="icon" href="img/sg_logo.ico" type="image/x-icon">
   <link rel="shortcut icon" href="img/sg_logo.ico" type="image/x-icon">
-
   <link rel="icon" type="image/png" sizes="32x32" href="img/sg_logo.png">
   <link rel="icon" type="image/png" sizes="64x64" href="img/sg_logo.png">
-  
+
   <!-- Live Preview -->
   <link rel="stylesheet" href="css/site.css?v=2025-08-15-1">
   <script src="js/app.js?v=2025-08-15-1"></script>
-
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,12 +34,7 @@
   <script>
     window.addEventListener('load', () => {
       if (window.AOS) {
-        AOS.init({
-          duration: 700,
-          once: true,
-          easing: 'ease-out-cubic',
-          offset: 60
-        });
+        AOS.init({ duration: 700, once: true, easing: 'ease-out-cubic', offset: 60 });
       }
     });
   </script>
@@ -50,22 +42,17 @@
   <!-- (Optional) On-device AI utilities -->
   <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers/dist/transformers.min.js" defer></script>
 
-
+  <!-- Initial body classes (kept) -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.body.classList.add('home','is-dark');
     });
   </script>
 
-  
-
-  <!-- Live Preview -->
+  <!-- Live Preview cache-bust (kept) -->
   <script>
   (function(){
-    // Toggle with localStorage: open console and run: localStorage.setItem('devBust','1')
-    // Turn off: localStorage.removeItem('devBust')
     if (!localStorage.getItem('devBust')) return;
-
     const stamp = Date.now();
     document.querySelectorAll('link[rel="stylesheet"][data-bust], script[src][data-bust]').forEach(el => {
       const attr = el.tagName === 'LINK' ? 'href' : 'src';
@@ -77,12 +64,90 @@
   })();
   </script>
 
+  <!-- === THEME LAYER + TOGGLE STYLES (scoped, safe overrides) === -->
+  <style>
+    /* Light defaults */
+    :root {
+      --bg0: #f5f7fb; --bg1: #ffffff; --surface: rgba(255,255,255,.86);
+      --ink: #0e0f11; --muted-ink: #6e7481; --border: #e9eef5;
+      --chip-bg: #ffffff; --chip-ink: #111827;
+      --shadow-1: 0 10px 30px rgba(30,40,60,.08);
+      --shadow-2: 0 16px 50px rgba(20,50,90,.12);
+      --ring: rgba(4,112,255,.25);
+    }
+    /* Dark tokens */
+    html[data-theme="dark"] {
+      --bg0: #0d1218; --bg1: #0f1621; --surface: rgba(14,18,26,0.86);
+      --ink: #e9f2f9; --muted-ink: #9aa3b2; --border: #1b2532;
+      --chip-bg: #0b1218; --chip-ink: #dbe6ef;
+      --shadow-1: 0 10px 30px rgba(0,0,0,.40);
+      --shadow-2: 0 18px 55px rgba(0,0,0,.55);
+    }
+    /* Respect OS dark on first paint if no explicit choice yet */
+    @media (prefers-color-scheme: dark) {
+      html:not([data-theme]) {
+        --bg0:#0d1218; --bg1:#0f1621; --surface:rgba(14,18,26,.86);
+        --ink:#e9f2f9; --muted-ink:#9aa3b2; --border:#1b2532;
+        --chip-bg:#0b1218; --chip-ink:#dbe6ef;
+        --shadow-1:0 10px 30px rgba(0,0,0,.40);
+        --shadow-2:0 18px 55px rgba(0,0,0,.55);
+      }
+    }
+    /* Smooth theming */
+    html, body, .topbar, .controls .search, .card, .site-footer,
+    #albumView, .album-desc-block, .m-item, .album-ask .ask-row {
+      transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+    /* Apply tokens to your existing blocks */
+    body { background: var(--bg0); color: var(--ink); }
+    .topbar { background: var(--surface); border-bottom:1px solid var(--border); }
+    .controls .search { background: var(--bg1); border:1px solid var(--border); box-shadow: var(--shadow-1); }
+    .controls .search input { color: var(--ink); }
+    .controls .search i { color: var(--muted-ink); }
+    .chip { background: var(--chip-bg); color: var(--chip-ink); border:1px solid var(--border); }
+    .card { background: var(--bg1); border:1px solid var(--border); box-shadow: var(--shadow-1); }
+    .card:hover { box-shadow: var(--shadow-2); }
+    #albumView { background: var(--bg0); }
+    .album-desc-block { background: var(--bg0); color: var(--ink); }
+    .album-desc-inner { color: color-mix(in oklab, var(--ink) 88%, #888); }
+    .m-item { border:1px solid color-mix(in oklab, var(--border) 85%, transparent); box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+    .album-ask .ask-row { background: color-mix(in oklab, var(--bg1) 92%, #000); border:1px solid var(--border); }
+    .album-ask input { color: var(--ink); }
 
+    /* Footer centering on phones/tablets portrait (kept from your spec) */
+    @media (max-width:1024px) and (orientation:portrait){
+      .site-footer{ display:flex !important; flex-direction:column !important;
+        align-items:center !important; justify-content:center !important;
+        text-align:center !important; gap:10px !important; }
+      .site-footer .footer-left,.site-footer .footer-right{
+        width:100% !important; margin:0 !important; display:inline-flex !important;
+        align-items:center !important; justify-content:center !important; text-align:center !important;
+      }
+      .site-footer .footer-right{ margin-left:0 !important; }
+    }
 
-  
-
-  
+    /* Toggle row (below topbar) */
+    .theme-row { width:min(1200px,95vw); margin:10px auto 0; }
+    .theme-toggle{
+      --pill-bg: color-mix(in oklab, var(--bg1) 88%, #fff);
+      --pill-border: color-mix(in oklab, var(--border) 80%, transparent);
+      display:inline-flex; align-items:center; gap:.6rem;
+      padding:10px 14px; border-radius:999px;
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-border);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 6px 16px rgba(0,0,0,.10);
+      color: var(--ink); font-weight:600;
+    }
+    .theme-toggle__thumb{ width:22px; height:22px; display:grid; place-items:center; }
+    .theme-toggle:focus-visible{ outline:2px solid #f1b32a; outline-offset:2px; }
+    @media (max-width:768px){ .theme-row{ margin:8px auto 0; } }
+    /* Subtle vignette in dark */
+    html[data-theme="dark"] body {
+      background: radial-gradient(1200px 400px at 50% -200px, rgba(255,255,255,.06), transparent 60%), var(--bg0);
+    }
+  </style>
 </head>
+
 <body>
   <!-- Top bar -->
   <header class="topbar">
@@ -91,8 +156,13 @@
     <div class="spacer"></div>
   </header>
 
-  <body class="home is-dark">
-
+  <!-- Theme toggle row (mobile & desktop) -->
+  <section class="theme-row" aria-label="Theme">
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle color theme" aria-pressed="false">
+      <span class="theme-toggle__thumb" aria-hidden="true">🌗</span>
+      <span class="theme-toggle__label">Dark</span>
+    </button>
+  </section>
 
   <!-- Outside hero -->
   <section class="hero" data-aos="fade-up">
@@ -194,5 +264,40 @@
 
   <!-- Load your app logic ONCE (single include only). Keep this at the end. -->
   <script src="app.js?v=8" defer></script>
+
+  <!-- Theme toggle logic (safe, independent) -->
+  <script>
+  (function(){
+    const STORAGE_KEY='site-theme';
+    const root=document.documentElement;
+    const btn=document.getElementById('themeToggle');
+    const label=btn?btn.querySelector('.theme-toggle__label'):null;
+
+    function prefersDark(){ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+    function apply(theme){
+      if(!theme) return;
+      root.setAttribute('data-theme', theme);
+      if(btn && label){
+        const isDark = theme==='dark';
+        btn.setAttribute('aria-pressed', String(isDark));
+        label.textContent = isDark? 'Light' : 'Dark';
+      }
+    }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const theme = saved || (prefersDark()? 'dark':'light');
+    apply(theme);
+
+    if(btn){
+      btn.addEventListener('click', ()=>{
+        const next = (root.getAttribute('data-theme')==='dark') ? 'light' : 'dark';
+        localStorage.setItem(STORAGE_KEY, next);
+        apply(next);
+      });
+    }
+    window.addEventListener('storage', (e)=>{
+      if(e.key===STORAGE_KEY && e.newValue){ apply(e.newValue); }
+    });
+  })();
+  </script>
 </body>
 </html>

@@ -1141,6 +1141,52 @@ function setupResponsiveToolbar(){
 
 
 
+(function () {
+  function applyTheme(theme) {
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.setAttribute('data-theme', theme);
+    body.classList.toggle('is-dark', theme === 'dark');
+    body.classList.toggle('is-light', theme === 'light');
+  }
+
+  const saved = localStorage.getItem('theme');
+  const isGallery =
+    /(^|\/)gallery(\.html)?(?:$|[?#/])/.test(location.pathname) ||
+    /[?&]page=gallery\b/.test(location.search);
+
+  if (saved === 'dark' || saved === 'light') {
+    applyTheme(saved);
+  } else if (isGallery) {
+    applyTheme('dark');
+  }
+
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.theme-toggle');
+    if (!btn) return;
+
+    const current = (document.documentElement.getAttribute('data-theme') || 'light').toLowerCase();
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem('theme', next);
+  });
+})();
+
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
 
 // Paste the theme toggle script here at the end of your main JS file
 (function(){

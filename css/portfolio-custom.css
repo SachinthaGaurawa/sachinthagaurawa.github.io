@@ -373,7 +373,7 @@ body {
 .contact-icon > *{ --nudge-y:0px; transform:translateY(var(--nudge-y)); }
 
 /* Map pin looks a hair low → nudge UP a bit */
-.contact-icon.icon--address > *{ --nudge-y:4px; }
+.contact-icon.icon--address > *{ --nudge-y:-2px; }
 
 /* Phone handset looks top-heavy → nudge DOWN slightly */
 .contact-icon.icon--phone > *{ --nudge-y:1px; }

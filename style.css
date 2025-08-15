@@ -546,7 +546,13 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 
 
 
-/* ---------- Minor bug fix you had ---------- */
+
+
+
+
+
+
+/* ---------- Bug fix from earlier ---------- */
 #albumView .site-footer{
   z-index: 1; /* was zIndex */
 }
@@ -574,12 +580,8 @@ body.home.is-dark,
 body.home.is-dark * {
   color-scheme: dark;
 }
-body.home.is-dark a {
-  color: #8fb4ff;
-}
-body.home.is-dark a:hover {
-  color: #b8ccff;
-}
+body.home.is-dark a { color: #8fb4ff; }
+body.home.is-dark a:hover { color: #b8ccff; }
 
 /* 3) Top bar (home only) */
 body.home.is-dark .topbar{
@@ -637,10 +639,6 @@ body.home.is-dark .tech-badge{
   background: rgba(255,255,255,.06);
   color: #dbe6ff;
 }
-body.home.is-dark .project-badge.patent{
-  /* keep gradient, just stronger text antialiasing */
-  -webkit-font-smoothing: antialiased;
-}
 
 /* 8) Forms & inputs */
 body.home.is-dark .form-floating > .form-control{
@@ -665,11 +663,9 @@ body.home.is-dark .tech-counter{
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
 }
 
-/* 11) Buttons (keep brand but ensure contrast on dark) */
+/* 11) Buttons */
 body.home.is-dark .download-btn,
-body.home.is-dark .linkedin-btn{
-  color:#fff;
-}
+body.home.is-dark .linkedin-btn,
 body.home.is-dark .btn,
 body.home.is-dark .btn-primary{
   color:#fff;
@@ -699,7 +695,7 @@ body.home.is-dark .research-icon{
   color:#9fc0ff;
 }
 
-/* 15) Footer already dark; ensure perfect contrast on home too */
+/* 15) Footer on home */
 body.home.is-dark .site-footer{
   background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
   border-top: 1px solid var(--hair);
@@ -710,11 +706,64 @@ body.home.is-dark .site-footer a{
   color: #f4c34f; /* your accent */
 }
 
-/* 16) Optional: smooth section dividers on dark */
-body.home.is-dark hr{
-  border:0; height:1px; background: var(--hair);
-}
-
-/* 17) Album overlay remains independent (no change) */
+/* 16) Smooth dividers */
+body.home.is-dark hr{ border:0; height:1px; background: var(--hair); }
 
 /* ===== end home dark theme ===== */
+
+
+/* ==========================================================
+   Keep: earlier mobile/tablet footer centering (portrait only)
+   ========================================================== */
+@media (max-width: 1024px) and (orientation: portrait) {
+  body .site-footer.site-footer.site-footer,
+  body footer.site-footer.site-footer,
+  body footer.page-footer.page-footer,
+  body footer.app-footer.app-footer,
+  body footer.main-footer.main-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+  body .site-footer.site-footer.site-footer .footer-left,
+  body .site-footer.site-footer.site-footer .footer-right,
+  body footer .footer-left,
+  body footer .footer-right {
+    width: 100% !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  body .site-footer .footer-right { margin-left: 0 !important; }
+}
+
+/* ==========================================================
+   Keep: album right-column visibility fix (phone landscape)
+   ========================================================== */
+#albumView{ overflow-x: hidden; }
+.album-media{ width: min(1100px, 96vw); margin: 0 auto; }
+.masonry{
+  -webkit-column-gap: 16px;
+  column-gap: 16px;
+  -webkit-column-fill: balance;
+  column-fill: balance;
+}
+@media (max-height: 500px) and (max-width: 900px) and (orientation: landscape){
+  .album-media{ width: min(1000px, 94vw); }
+  .masonry{ column-count: 2; }
+}
+@media (max-height: 420px) and (orientation: landscape){
+  .masonry{ column-count: 1; }
+}
+
+/* ==========================================================
+   Keep: hide long search tip on tablets & phones
+   ========================================================== */
+@media (max-width: 1024px){
+  #ask-hint-row{ display:none !important; }
+}

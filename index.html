@@ -6,11 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="Graduate Electronic & Electrical Engineer specializing in Embedded Systems, Robotics, and AI-driven Safety Solutions" name="description">
     <meta content="Sachintha Gaurawa, Electronic Engineer, Robotics, Embedded Systems, AI, AAVSS" name="keywords">
-    
-
-    <!-- Live Preview -->
-    <link rel="stylesheet" href="css/site.css?v=2025-08-15-1">
-    <script src="js/app.js?v=2025-08-15-1"></script>
 
     
      <!-- Favicon -->
@@ -44,30 +39,6 @@
     <link href="css/portfolio-custom.css" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-
-
-
-
-
-
-
-      <!-- Live Preview -->
-      <script>
-      (function(){
-        // Toggle with localStorage: open console and run: localStorage.setItem('devBust','1')
-        // Turn off: localStorage.removeItem('devBust')
-        if (!localStorage.getItem('devBust')) return;
-    
-        const stamp = Date.now();
-        document.querySelectorAll('link[rel="stylesheet"][data-bust], script[src][data-bust]').forEach(el => {
-          const attr = el.tagName === 'LINK' ? 'href' : 'src';
-          const url  = new URL(el.getAttribute(attr), location.href);
-          url.searchParams.set('v', stamp);
-          el.setAttribute(attr, url.toString());
-        });
-        console.log('[cache-bust] active', stamp);
-      })();
-      </script>
     
 </head>
 
@@ -145,7 +116,7 @@
                 </div>
                 <div class="col-lg-6" data-aos="fade-left" data-aos-duration="1000">
                     <div class="profile-container">
-                        <img class="img-fluid profile-img" src="https://res.cloudinary.com/dzrfpc9be/image/upload/v1754611138/profile_oiuavq.png" alt="Sachintha Gaurawa">
+                        <img class="img-fluid profile-img" src="img/profile.png" alt="Sachintha Gaurawa">
                         <div class="tech-elements">
                             <div class="circuit-line circuit-1"></div>
                             <div class="circuit-line circuit-2"></div>
@@ -704,7 +675,7 @@
         </div>
     </div>
     <!-- Projects End -->
-    <br> <br>
+
     <!-- Research Start -->
     <div class="container-xxl py-6 pb-5" id="research">
         <div class="container">
@@ -732,7 +703,7 @@
                             </p>
                             <div class="research-meta">
                                 <span class="research-status">Published</span>
-                                <span class="research-year">2025</span>
+                                <span class="research-year">2024</span>
                             </div>
                             <button class="btn btn-primary download-research" data-paper="av-safety-framework">
                                 <i class="fas fa-download me-2"></i>Download PDF
@@ -757,7 +728,7 @@
                             </p>
                             <div class="research-meta">
                                 <span class="research-status">Published</span>
-                                <span class="research-year">2025</span>
+                                <span class="research-year">2024</span>
                             </div>
                             <button class="btn btn-primary download-research" data-paper="drone-disaster-response">
                                 <i class="fas fa-download me-2"></i>Download PDF
@@ -797,7 +768,7 @@
                         </div>
                         <h5>IET</h5>
                         <p>Institution of Engineering and Technology (UK)</p>
-                        <span class="membership-badge">MEIT Member</span>
+                        <span class="membership-badge">Associate Member</span>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="300">
@@ -837,8 +808,9 @@
                                 <i class="fas fa-map-marker-alt"></i>
                             </div>
                             <div class="contact-details">
+                                <br>
                                 <h6>Address</h6>
-                                <p>No.76, Kongollawatta, Karanthippala, Kuliyapitiya. Sri Lanka. 60200</p>
+                                <p>No.76, Kongollawatta, Karanthippala, Kuliyapitiya, Sri Lanka 60200</p>
                             </div>
                         </div>
                         <div class="contact-item">
@@ -872,6 +844,7 @@
                 </div>
                 <div class="col-lg-7 col-md-6 wow fadeInUp" data-wow-delay="0.5s" data-aos="fade-left">
                     <div class="contact-form-container">
+                        <br>
                         <form id="contactForm">
                             <div class="row g-3">
                                 <div class="col-md-6">
@@ -994,6 +967,45 @@
 
 
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const downloadBtn = document.getElementById('downloadCV');
+            console.log('Download button found:', downloadBtn); // Debug line
+            
+            if (downloadBtn) {
+                function isMobile() {
+                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                }
+                
+                downloadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Button clicked!'); // Debug line
+                    console.log('Is mobile:', isMobile()); // Debug line
+                    
+                    const link = document.createElement('a');
+                    link.href = 'Sachintha_Gaurawa_CV.pdf';
+                    
+                    if (isMobile()) {
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        console.log('Mobile: Opening in new tab'); // Debug line
+                    } else {
+                        link.download = 'Sachintha_Gaurawa_CV.pdf';
+                        console.log('Desktop: Forcing download'); // Debug line
+                    }
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    console.log('Link clicked and removed'); // Debug line
+                });
+            } else {
+                console.error('Download button not found!');
+            }
+        });
+        </script>
+        
+        
 
 
 

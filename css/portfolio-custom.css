@@ -306,7 +306,7 @@ body {
 }
 .contact-item:last-child { border-bottom: none; }
 
-/* Icon container */
+/* Icon container - perfect centring */
 .contact-icon {
     width: 60px;
     height: 60px;
@@ -314,14 +314,15 @@ body {
     border-radius: 15px;
     margin-right: 20px;
     flex-shrink: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 0;               /* avoid baseline wiggle */
-    overflow: hidden;             /* crisp rounded corners */
+    line-height: 0;
+    overflow: hidden;
 }
 
-/* --- HARD RESET: clear any old absolute/translate rules --- */
+/* Reset position for icons */
 .contact-icon svg,
 .contact-icon img,
 .contact-icon i {
@@ -330,44 +331,65 @@ body {
     left: auto !important;
     transform: none !important;
     margin: 0;
-    width: 32px;
-    height: 32px;
     display: block;
+    object-fit: contain;
 }
 
-/* White SVGs */
+/* Default icon size (mobile/tablet) */
+.contact-icon svg,
+.contact-icon img,
+.contact-icon i {
+    width: 28px;
+    height: 28px;
+}
+
+/* White SVG fill */
 .contact-icon svg,
 .contact-icon svg path {
     fill: #fff !important;
 }
 
-/* White font icons (e.g., Font Awesome) */
+/* White font icons */
 .contact-icon i {
     color: #fff !important;
-    font-size: 28px;              /* visual balance inside 32px box */
     line-height: 1;
 }
 
-/* White image icons */
+/* White images */
 .contact-icon img {
     filter: brightness(0) invert(1);
-    object-fit: contain;
 }
 
-/* Text */
+/* Larger icons for laptops/desktops */
+@media (min-width: 992px) {
+    .contact-icon {
+        width: 70px;
+        height: 70px;
+    }
+    .contact-icon svg,
+    .contact-icon img,
+    .contact-icon i {
+        width: 36px;
+        height: 36px;
+    }
+}
+
 .contact-details h6 { 
     color: var(--primary-color); 
     font-weight: 600; 
     margin-bottom: 5px; 
 }
+
 .contact-details a { 
     color: var(--dark-color); 
     text-decoration: none; 
     transition: color 0.3s ease; 
 }
+
 .contact-details a:hover { 
     color: var(--primary-color); 
 }
+
 
 
 /* Contact Form */

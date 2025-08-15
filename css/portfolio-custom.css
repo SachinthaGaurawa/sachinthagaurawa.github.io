@@ -425,7 +425,7 @@ body {
 /* Raise Address icon only on phones & tablets */
 @media (max-width: 991px) {
   .contact-item:first-child .contact-icon {
-    margin-top: 16px; /* adjust until perfectly aligned */
+    margin-top: 36px; /* adjust until perfectly aligned */
   }
 }
 

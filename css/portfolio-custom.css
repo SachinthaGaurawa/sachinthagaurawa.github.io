@@ -307,10 +307,10 @@ body {
 }
 .contact-item:last-child{ border-bottom:none; }
 
-/* ---------- Responsive sizing tokens ---------- */
+/* ---------- Responsive tokens ---------- */
 :root{
-  --icon-box:60px;   /* mobile default */
-  --icon-size:25px;  /* mobile default */
+  --icon-box:60px;   /* mobile */
+  --icon-size:28px;  /* mobile */
 }
 
 /* Tablet */
@@ -329,7 +329,7 @@ body {
   }
 }
 
-/* ---------- Icon box: rock-solid centring ---------- */
+/* ---------- Icon box: true centring ---------- */
 .contact-icon{
   width:var(--icon-box);
   height:var(--icon-box);
@@ -339,17 +339,16 @@ body {
 
   display:grid;
   place-items:center;   /* centre both axes */
-  line-height:0;        /* remove baseline drift */
-  overflow:hidden;      /* crisp rounded corners */
+  line-height:0;
+  overflow:hidden;
 }
 
-/* Hard reset any legacy rules that push icons */
+/* Reset legacy positioning WITHOUT killing our transforms */
 .contact-icon > svg,
 .contact-icon > img,
 .contact-icon > i{
   position:static !important;
   inset:auto !important;
-  transform:none !important;
   margin:0 !important;
   padding:0 !important;
   display:block !important;
@@ -360,29 +359,22 @@ body {
   height:var(--icon-size);
 }
 
-/* Make everything white */
+/* Make icons white */
 .contact-icon svg,
 .contact-icon svg path{ fill:#fff !important; }
 .contact-icon i{ color:#fff !important; font-size:var(--icon-size) !important; line-height:1 !important; }
 .contact-icon img{ filter:brightness(0) invert(1); }
 
-/* ---------- Per-icon optical nudges (fine-tune) ----------
-   Adjust these 1–2px values if your specific SVGs differ.
-   Positive = move DOWN, Negative = move UP.
+/* ---------- Per-icon optical nudges (work across devices) ----------
+   Negative = move UP, Positive = move DOWN
 */
-.contact-icon > *{ --nudge-y:0px; transform:translateY(var(--nudge-y)); }
+.contact-icon > *{ --nudge-y:0px; transform:translateY(var(--nudge-y)) !important; }
 
-/* Map pin looks a hair low → nudge UP a bit */
-.contact-icon.icon--address > *{ --nudge-x:32px; }
-
-/* Phone handset looks top-heavy → nudge DOWN slightly */
-.contact-icon.icon--phone > *{ --nudge-y:1px; }
-
-/* Envelope sits optically low → nudge UP slightly */
-.contact-icon.icon--email > *{ --nudge-y:-1px; }
-
-/* “in” glyph tends to sit low → nudge UP a touch */
-.contact-icon.icon--linkedin > *{ --nudge-y:-1px; }
+/* Tweak values as needed for your assets */
+.contact-icon.icon--address > *{ --nudge-y:-1px; }   /* map pin slightly up */
+.contact-icon.icon--phone   > *{ --nudge-y: 1px; }   /* handset a bit down */
+.contact-icon.icon--email   > *{ --nudge-y:-1px; }   /* envelope a touch up */
+.contact-icon.icon--linkedin> *{ --nudge-y:-1px; }   /* "in" sits low → up */
 
 /* ---------- Text beside icons ---------- */
 .contact-details h6{
@@ -396,8 +388,6 @@ body {
   transition:color .3s ease;
 }
 .contact-details a:hover{ color:var(--primary-color); }
-
-
 
 
 

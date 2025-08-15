@@ -290,114 +290,115 @@ body {
 
 /* Contact Section */
 /* Contact Section */
-.contact-info {
-    background: #fff;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.1);
+.contact-info{
+  background:#fff;
+  border-radius:20px;
+  padding:40px;
+  box-shadow:0 15px 35px rgba(255,255,255,0.1);
 }
 
-.contact-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 30px;
-    padding: 20px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.contact-item{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:30px;
+  padding:20px 0;
+  border-bottom:1px solid rgba(255,255,255,0.1);
 }
-.contact-item:last-child { border-bottom: none; }
+.contact-item:last-child{ border-bottom:none; }
 
-/* ---------- ICON BOX: perfect centring on all devices ---------- */
-:root {
-    --icon-box: 60px;   /* mobile default */
-    --icon-size: 25px;  /* mobile default */
+/* ---------- Responsive sizing tokens ---------- */
+:root{
+  --icon-box:60px;   /* mobile default */
+  --icon-size:25px;  /* mobile default */
 }
 
-/* Tablet bump */
-@media (min-width: 576px) {
-    :root {
-        --icon-box: 64px;
-        --icon-size: 30px;
-    }
+/* Tablet */
+@media (min-width:576px){
+  :root{
+    --icon-box:64px;
+    --icon-size:30px;
+  }
 }
 
 /* Laptop/Desktop */
-@media (min-width: 992px) {
-    :root {
-        --icon-box: 72px;
-        --icon-size: 36px;
-    }
+@media (min-width:992px){
+  :root{
+    --icon-box:72px;
+    --icon-size:36px;
+  }
 }
 
-.contact-icon {
-    width: var(--icon-box);
-    height: var(--icon-box);
-    background: var(--gradient-primary);
-    border-radius: 15px;
-    flex-shrink: 0;
+/* ---------- Icon box: rock-solid centring ---------- */
+.contact-icon{
+  width:var(--icon-box);
+  height:var(--icon-box);
+  background:var(--gradient-primary);
+  border-radius:15px;
+  flex-shrink:0;
 
-    /* Rock-solid centring */
-    display: grid;
-    place-items: center;
-
-    line-height: 0;       /* remove baseline shifts */
-    overflow: hidden;     /* keep rounded corners clean */
+  display:grid;
+  place-items:center;   /* centre both axes */
+  line-height:0;        /* remove baseline drift */
+  overflow:hidden;      /* crisp rounded corners */
 }
 
-/* ---------- HARD RESET for any legacy pos/transform ---------- */
+/* Hard reset any legacy rules that push icons */
 .contact-icon > svg,
 .contact-icon > img,
-.contact-icon > i {
-    position: static !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
+.contact-icon > i{
+  position:static !important;
+  inset:auto !important;
+  transform:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:block !important;
+  vertical-align:middle !important;
+  object-fit:contain;
 
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    vertical-align: middle !important;
-    object-fit: contain;
-
-    /* Unified sizing */
-    width: var(--icon-size);
-    height: var(--icon-size);
+  width:var(--icon-size);
+  height:var(--icon-size);
 }
 
-/* SVGs stay white */
+/* Make everything white */
 .contact-icon svg,
-.contact-icon svg path {
-    fill: #fff !important;
-}
+.contact-icon svg path{ fill:#fff !important; }
+.contact-icon i{ color:#fff !important; font-size:var(--icon-size) !important; line-height:1 !important; }
+.contact-icon img{ filter:brightness(0) invert(1); }
 
-/* Font icons (e.g., Font Awesome) — use font-size, not width/height */
-.contact-icon i {
-    color: #fff !important;
-    font-size: var(--icon-size) !important;
-    line-height: 1 !important;
-}
+/* ---------- Per-icon optical nudges (fine-tune) ----------
+   Adjust these 1–2px values if your specific SVGs differ.
+   Positive = move DOWN, Negative = move UP.
+*/
+.contact-icon > *{ --nudge-y:0px; transform:translateY(var(--nudge-y)); }
 
-/* Image icons to white */
-.contact-icon img {
-    filter: brightness(0) invert(1);
-}
+/* Map pin looks a hair low → nudge UP a bit */
+.contact-icon.icon--address > *{ --nudge-y:-1px; }
+
+/* Phone handset looks top-heavy → nudge DOWN slightly */
+.contact-icon.icon--phone > *{ --nudge-y:1px; }
+
+/* Envelope sits optically low → nudge UP slightly */
+.contact-icon.icon--email > *{ --nudge-y:-1px; }
+
+/* “in” glyph tends to sit low → nudge UP a touch */
+.contact-icon.icon--linkedin > *{ --nudge-y:-1px; }
 
 /* ---------- Text beside icons ---------- */
-.contact-details h6 {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin: 0 0 5px 0;
+.contact-details h6{
+  color:var(--primary-color);
+  font-weight:600;
+  margin:0 0 5px 0;
 }
-.contact-details a {
-    color: var(--dark-color);
-    text-decoration: none;
-    transition: color 0.3s ease;
+.contact-details a{
+  color:var(--dark-color);
+  text-decoration:none;
+  transition:color .3s ease;
 }
-.contact-details a:hover {
-    color: var(--primary-color);
-}
+.contact-details a:hover{ color:var(--primary-color); }
+
+
+
 
 
 

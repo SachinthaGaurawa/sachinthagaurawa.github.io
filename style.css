@@ -243,7 +243,7 @@ body.noscroll{overflow:hidden}
   width:min(1200px,95vw);
   margin:28px auto 44px;
   position:relative;
-  zIndex:1;
+  z-index:1; /* fixed typo */
   border-radius:10px;
 }
 
@@ -434,24 +434,15 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   #ask-hint-row.ask-hint-compact{ font-size:12.5px; padding:7px 10px; }
 }
 
-
-
 /* Hide the generic search tip on tablets & phones */
 @media (max-width: 1024px){
   #ask-hint-row{ display:none !important; }
 }
 
-
-
-/* Hide the generic search tip on tablets & phones */
+/* Hide the generic search tip on tablets & phones (duplicate kept harmless) */
 @media (max-width: 1024px){
   #ask-hint-row{ display:none !important; }
 }
-
-
-
-
-
 
 /* --- FIX: phone landscape clipping of right column in album --- */
 
@@ -480,35 +471,25 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
   .masonry{ column-count: 2; }   /* ensure the second column renders */
 }
 
-/* Very short landscape (e.g., iPhone mini / split UI): fall back to one column
-   instead of letting WebKit clip the right column */
+/* Very short landscape: fall back to one column instead of clipping */
 @media (max-height: 420px) and (orientation: landscape){
   .masonry{ column-count: 1; }
 }
 
-
-
-
-
 /* ===== Fix: Center footer on phones & tablets (portrait only) ===== */
-/* Works even if a later rule forces justify-content:space-between */
 @media (max-width: 1024px) and (orientation: portrait) {
-
-  /* Main footer */
   body .site-footer.site-footer.site-footer,
   body footer.site-footer.site-footer,
   body footer.page-footer.page-footer,
   body footer.app-footer.app-footer,
   body footer.main-footer.main-footer {
     display: flex !important;
-    flex-direction: column !important;     /* stack the two lines */
-    align-items: center !important;        /* center horizontally */
-    justify-content: center !important;    /* center within the bar */
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     text-align: center !important;
     gap: 10px !important;
   }
-
-  /* Left/right groups inside footer */
   body .site-footer.site-footer.site-footer .footer-left,
   body .site-footer.site-footer.site-footer .footer-right,
   body footer .footer-left,
@@ -520,41 +501,8 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
     justify-content: center !important;
     text-align: center !important;
   }
-
-  /* Album overlay footer clone */
-  body #albumView .site-footer.site-footer.site-footer {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    gap: 10px !important;
-  }
-  body #albumView .site-footer.site-footer.site-footer .footer-left,
-  body #albumView .site-footer.site-footer.site-footer .footer-right {
-    width: 100% !important;
-    margin: 0 !important;
-    justify-content: center !important;
-    text-align: center !important;
-  }
-
-  /* Neutralize any “push right” left from desktop */
   body .site-footer .footer-right { margin-left: 0 !important; }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* ---------- Small bug fix (typo) ---------- */
 #albumView .site-footer{
@@ -563,8 +511,6 @@ button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 
 /* ==========================================================
    THEME TOKENS (non-breaking)
-   - Default variables already exist in your CSS.
-   - We scope new palettes to body.home.is-dark / .is-light (Home only)
    ========================================================== */
 
 /* LIGHT (Home) — applied when <body class="home is-light"> */
@@ -610,7 +556,7 @@ body.home.is-light .topbar{
   backdrop-filter: blur(10px);
 }
 
-/* Theme toggle button (created by HTML/JS below) */
+/* Theme toggle (if present) */
 .theme-toggle{
   appearance: none;
   border: 1px solid var(--hair);
@@ -630,12 +576,10 @@ body.home.is-light .topbar{
 .theme-toggle i{ margin-right: 6px; }
 
 /* ==========================================================
-   HERO (Home) – image fade & legibility
+   HERO (Home)
    ========================================================== */
 body.home.is-dark .hero,
-body.home.is-light .hero{
-  background: transparent;
-}
+body.home.is-light .hero{ background: transparent; }
 body.home.is-dark .hero-media,
 body.home.is-light .hero-media{
   border: 1px solid var(--hair);
@@ -645,11 +589,8 @@ body.home.is-light .hero-media{
 }
 body.home.is-dark .hero-media::after,
 body.home.is-light .hero-media::after{
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
+  content: ""; position: absolute; inset: 0; pointer-events:none;
 }
-/* Subtle vignette tuned per theme */
 body.home.is-dark .hero-media::after{
   background:
     radial-gradient(1200px 60% at 50% 100%, rgba(0,0,0,.55), transparent 70%),
@@ -660,35 +601,27 @@ body.home.is-light .hero-media::after{
     radial-gradient(1200px 60% at 50% 100%, rgba(255,255,255,.6), transparent 70%),
     linear-gradient(180deg, rgba(255,255,255,0) 55%, rgba(255,255,255,.85));
 }
-
 body.home.is-dark .hero-text h2,
 body.home.is-dark .hero-name{ color:#f7faff; }
 body.home.is-light .hero-text h2,
 body.home.is-light .hero-name{ color:#101319; }
-
 body.home.is-dark .hero-text p{ color:var(--muted); }
 body.home.is-light .hero-text p{ color:#58606d; }
 
 /* ==========================================================
-   SEARCH (Home & Album) – glass + contrast
+   SEARCH (Home & Album)
    ========================================================== */
 .controls .search{
   background: var(--card);
   border: 1px solid var(--hair);
   box-shadow: 0 10px 30px rgba(0,0,0,.08);
 }
-.controls .search input{
-  color: var(--ink);
-}
-.controls .search i{
-  color: #9aa3b2;
-}
+.controls .search input{ color: var(--ink); }
+.controls .search i{ color: #9aa3b2; }
 .controls .search:focus-within{
   border-color:#78aaff;
   box-shadow: 0 0 0 4px rgba(120,170,255,.18), 0 12px 40px rgba(0,0,0,.14);
 }
-
-/* Mobile search sizing (already present, keep enhanced specificity) */
 @media (max-width: 768px){
   .search-bar-container input[type="text"],
   .search-slot input#searchInput{
@@ -698,7 +631,7 @@ body.home.is-light .hero-text p{ color:#58606d; }
   }
 }
 
-/* Chips/pills – theme aware */
+/* Chips/pills */
 .chip{
   background: var(--card);
   border: 1px solid var(--hair);
@@ -728,7 +661,6 @@ body.home.is-dark .contact-form-container{
   box-shadow: 0 18px 50px rgba(0,0,0,.28);
   color: var(--ink);
 }
-
 body.home.is-light .tool-card,
 body.home.is-light .spec-card,
 body.home.is-light .stats-container,
@@ -744,7 +676,7 @@ body.home.is-light .contact-form-container{
   color: var(--ink);
 }
 
-/* Project overlays stay poppy */
+/* Project overlays */
 body.home.is-dark .project-overlay{ background: rgba(44,113,255,.9); }
 body.home.is-light .project-overlay{ background: rgba(13,110,253,.9); }
 
@@ -793,12 +725,12 @@ body.home.is-light .nav-pills .nav-link.active{
   background:#0d6efd !important; color:#fff !important; border-color:transparent !important;
 }
 
-/* Back-to-top visibility on both */
+/* Back-to-top */
 body.home.is-dark .back-to-top{ background:#2c71ff; color:#fff; }
 body.home.is-light .back-to-top{ background:#0d6efd; color:#fff; }
 
 /* ==========================================================
-   FOOTER – award-grade, centered on mobile portrait (keep behavior)
+   FOOTER theme polish
    ========================================================== */
 body.home.is-dark .site-footer{
   background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
@@ -865,59 +797,37 @@ body.home.is-light .site-footer a{ color:#d0981a; }
 }
 
 /* Button ripple (CSS-only, non-invasive) */
-.btn, .theme-toggle{
-  position: relative; overflow: hidden;
-}
+.btn, .theme-toggle{ position: relative; overflow: hidden; }
 .btn::after, .theme-toggle::after{
-  content:""; position:absolute; inset:auto; left:50%; top:50%;
+  content:""; position:absolute; left:50%; top:50%;
   width:0; height:0; border-radius:999px; background: rgba(255,255,255,.25);
   transform: translate(-50%,-50%); pointer-events:none; transition: width .35s ease, height .35s ease, opacity .4s ease;
   opacity:0;
 }
-.btn:active::after, .theme-toggle:active::after{
-  width:180%; height:180%; opacity:.0;
-}
+.btn:active::after, .theme-toggle:active::after{ width:180%; height:180%; opacity:.0; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* === Dark-mode fix for album cards (title strip & borders) === */
-html[data-theme="dark"] .card{
-  background: #0f1621 !important;      /* dark surface */
-  border-color: #1b2532 !important;     /* dark border */
+/* ==========================================================
+   🔥 Dark-mode fix for album cards (this is the important part)
+   ========================================================== */
+body.home.is-dark .card{
+  background: var(--card) !important;       /* deep surface */
+  border-color: var(--hair) !important;      /* dark border */
   box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
 }
-
-html[data-theme="dark"] .card .label{
-  background: transparent !important;   /* no white band */
+body.home.is-dark .card .label{
+  background: transparent !important;        /* remove white band */
+  border-top: 1px solid var(--hair);         /* subtle divider */
 }
-
-html[data-theme="dark"] .card .title{
-  color: #e9f2f9 !important;            /* high-contrast title */
+body.home.is-dark .card .title{
+  color: #e9f2f9 !important;                 /* high contrast title */
 }
-
-/* optional: tone down the video badge ring in dark */
-html[data-theme="dark"] .badge-video{
+body.home.is-dark .badge-video{
   background: rgba(0,0,0,.55) !important;
   border-color: rgba(120,170,255,.28) !important;
   box-shadow: 0 6px 16px rgba(0,0,0,.35) !important;
 }
-
-/* keep tags readable on dark */
-html[data-theme="dark"] .chip{
+body.home.is-dark .chip{
   background: #0b1218 !important;
   color: #dbe6ef !important;
   border-color: #1b2532 !important;
 }
-

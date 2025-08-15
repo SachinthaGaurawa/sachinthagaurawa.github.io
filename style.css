@@ -831,3 +831,35 @@ body.home.is-dark .chip{
   color: #dbe6ef !important;
   border-color: #1b2532 !important;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* ================================================
+   DESKTOP/LAPTOP HERO TITLE — COLOR + LAYER FIX
+   Paste this block at the VERY END of your CSS
+   ================================================ */
+
+/* Ensure overlays sit BEHIND the title on all devices (no visual change except fixing fade) */
+.hero-media { position: relative; }
+.hero-media::after,
+.hero-overlay { z-index: 0 !important; }   /* background treatments */
+.hero-text { position: absolute; z-index: 1 !important; }  /* title/content above overlays */
+.hero-text h2 { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+/* Desktop/Laptop ONLY: crisp title colors per theme */
+@media (min-width: 1025px) {
+  /* Light theme → black title */
+  body.home.is-light .hero-text h2 { color: #0a0a0a !important; }
+
+  /* Dark theme → white title */
+  body.home.is-dark .hero-text h2 { color: #ffffff !important; }
+}

@@ -291,7 +291,7 @@ body {
 /* Contact Section */
 /* Contact Section */
 .contact-info { 
-    background: white; 
+    background: #fff; 
     border-radius: 20px; 
     padding: 40px; 
     box-shadow: 0 15px 35px rgba(255, 255, 255, 0.1); 
@@ -306,7 +306,7 @@ body {
 }
 .contact-item:last-child { border-bottom: none; }
 
-/* Icon container - perfect centring */
+/* ICON BOX — robust centring with CSS Grid */
 .contact-icon {
     width: 60px;
     height: 60px;
@@ -315,78 +315,70 @@ body {
     margin-right: 20px;
     flex-shrink: 0;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0;
-    overflow: hidden;
-    position: relative; 
+    display: grid;                 /* more reliable across icon types */
+    place-items: center;           /* perfect centre both axes */
+    line-height: 0;                /* kill baseline offset */
+    overflow: hidden;              /* keep rounded edges clean */
 }
 
-/* Reset position for icons */
-.contact-icon svg,
-.contact-icon img,
-.contact-icon i {
+/* HARD RESET for any legacy rules that push icons off-centre */
+.contact-icon > svg,
+.contact-icon > img,
+.contact-icon > i {
     position: static !important;
     top: auto !important;
     left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
     transform: none !important;
-    margin: 0;
-    display: block;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    vertical-align: middle !important;
     object-fit: contain;
 }
 
-/* Default icon size (mobile/tablet) */
+/* Default (mobile/tablet) icon size */
+.contact-icon > svg,
+.contact-icon > img,
+.contact-icon > i {
+    width: 28px;
+    height: 28px;
+}
+
+/* Make icons white */
 .contact-icon svg,
-.contact-icon img,
-.contact-icon i {
-    width: 50px;
-    height: 38px;
+.contact-icon svg path { fill: #fff !important; }
+.contact-icon i { color: #fff !important; line-height: 1 !important; }
+.contact-icon img { filter: brightness(0) invert(1); }
+
+/* Tablet bump (optional but helps) */
+@media (min-width: 576px) {
+    .contact-icon { width: 64px; height: 64px; }
+    .contact-icon > svg,
+    .contact-icon > img,
+    .contact-icon > i { width: 30px; height: 30px; }
 }
 
-/* White SVG fill */
-.contact-icon svg,
-.contact-icon svg path {
-    fill: #fff !important;
-}
-
-/* White font icons */
-.contact-icon i {
-    color: #fff !important;
-    line-height: 1;
-}
-
-/* White images */
-.contact-icon img {
-    filter: brightness(0) invert(1);
-}
-
-/* Larger icons for laptops/desktops */
+/* Laptop/Desktop */
 @media (min-width: 992px) {
-    .contact-icon {
-        width: 70px;
-        height: 70px;
-    }
-    .contact-icon svg,
-    .contact-icon img,
-    .contact-icon i {
-        width: 50px;
-        height: 50px;
-    }
+    .contact-icon { width: 70px; height: 70px; }
+    .contact-icon > svg,
+    .contact-icon > img,
+    .contact-icon > i { width: 36px; height: 36px; }
 }
 
+/* Text beside icons */
 .contact-details h6 { 
     color: var(--primary-color); 
     font-weight: 600; 
     margin-bottom: 5px; 
 }
-
 .contact-details a { 
     color: var(--dark-color); 
     text-decoration: none; 
     transition: color 0.3s ease; 
 }
-
 .contact-details a:hover { 
     color: var(--primary-color); 
 }

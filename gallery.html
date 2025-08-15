@@ -12,8 +12,11 @@
 
   <link rel="icon" type="image/png" sizes="32x32" href="img/sg_logo.png">
   <link rel="icon" type="image/png" sizes="64x64" href="img/sg_logo.png">
-
   
+  <!-- Live Preview -->
+  <link rel="stylesheet" href="css/site.css?v=2025-08-15-1">
+  <script src="js/app.js?v=2025-08-15-1"></script>
+
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,8 +57,29 @@
     });
   </script>
 
+  
+
+  <!-- Live Preview -->
+  <script>
+  (function(){
+    // Toggle with localStorage: open console and run: localStorage.setItem('devBust','1')
+    // Turn off: localStorage.removeItem('devBust')
+    if (!localStorage.getItem('devBust')) return;
+
+    const stamp = Date.now();
+    document.querySelectorAll('link[rel="stylesheet"][data-bust], script[src][data-bust]').forEach(el => {
+      const attr = el.tagName === 'LINK' ? 'href' : 'src';
+      const url  = new URL(el.getAttribute(attr), location.href);
+      url.searchParams.set('v', stamp);
+      el.setAttribute(attr, url.toString());
+    });
+    console.log('[cache-bust] active', stamp);
+  })();
+  </script>
 
 
+
+  
 
   
 </head>

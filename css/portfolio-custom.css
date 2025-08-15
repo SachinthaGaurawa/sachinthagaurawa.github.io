@@ -317,7 +317,7 @@ body {
 @media (min-width: 576px) {
     :root {
         --icon-box: 64px;
-        --icon-size: 30px;
+        --icon-size: 20px;
     }
 }
 

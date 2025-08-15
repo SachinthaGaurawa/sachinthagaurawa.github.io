@@ -1,6 +1,6 @@
 /* Next-Level Portfolio JavaScript */
 
-
+const API_BASE = (window.__API_BASE__ || 'https://sachinthagaurawa-github-io.vercel.app').replace(/\/+$/, '');
 // Initialize EmailJS SDK
 emailjs.init("Xl7XarHSSsPc7uaCF");
 

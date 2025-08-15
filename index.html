@@ -44,6 +44,30 @@
     <link href="css/portfolio-custom.css" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+
+
+
+
+
+
+      <!-- Live Preview -->
+      <script>
+      (function(){
+        // Toggle with localStorage: open console and run: localStorage.setItem('devBust','1')
+        // Turn off: localStorage.removeItem('devBust')
+        if (!localStorage.getItem('devBust')) return;
+    
+        const stamp = Date.now();
+        document.querySelectorAll('link[rel="stylesheet"][data-bust], script[src][data-bust]').forEach(el => {
+          const attr = el.tagName === 'LINK' ? 'href' : 'src';
+          const url  = new URL(el.getAttribute(attr), location.href);
+          url.searchParams.set('v', stamp);
+          el.setAttribute(attr, url.toString());
+        });
+        console.log('[cache-bust] active', stamp);
+      })();
+      </script>
     
 </head>
 

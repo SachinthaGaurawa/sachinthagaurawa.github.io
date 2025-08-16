@@ -861,20 +861,36 @@ body.home.is-dark .chip{
 
 
 
-/* Keep the example items italic like your screenshot */
-.search-tip em{ font-style: italic; opacity: .95; }
+/* ================================
+   Search tip color tuning (desktop only)
+   – subtle ash/blue-gray like your screenshot
+   ================================ */
 
-/* Hide the tip on tablets and phones (exactly as requested) */
-@media (max-width: 1024px){
-  .search-tip{ display: none !important; }
+@media (min-width: 1025px){
+  /* Dark theme: soft blue-gray text, slightly brighter "Tip:" */
+  body.home.is-dark .search-tip{
+    color: #9FB0C2;              /* main line — ash/blue-gray */
+    opacity: .96;
+  }
+  body.home.is-dark .search-tip .kicker{
+    color: #C7D2DE;              /* "Tip:" a touch brighter */
+    font-weight: 800;
+  }
+
+  /* Light theme: neutral gray so it’s readable on white */
+  body.home.is-light .search-tip{
+    color: #6B7785;              /* muted neutral gray */
+    opacity: .95;
+  }
+  body.home.is-light .search-tip .kicker{
+    color: #505A66;              /* slightly stronger for "Tip:" */
+    font-weight: 800;
+  }
 }
 
-/* If you have special mobile search overrides, keep them */
-@media (max-width: 768px){
-  .search-bar-container input[type="text"],
-  .search-slot input#searchInput{
-    /* your existing mobile styles can remain */
-  }
+/* Keep your existing desktop-only visibility rule */
+@media (max-width: 1024px){
+  .search-tip{ display: none !important; }
 }
 
 

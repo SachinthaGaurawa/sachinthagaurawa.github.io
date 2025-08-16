@@ -640,7 +640,7 @@ function insertAskHint() {
   hint.innerHTML = `
     <span class="kicker" style="font-weight:800; color:${colorKicker}">Tip:</span>
     Ask the AI about any album — e.g.
-    <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
+    <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em> or <em>night driving</em>.
   `;
 
   // Insert right after the search input
@@ -1373,27 +1373,6 @@ function setupResponsiveToolbar(){
 
 
 
-/* ===== Ensure the desktop hint is present on first load ===== */
-(function ensureDesktopTip(){
-  // Wait until DOM is ready if needed
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureDesktopTip);
-    return;
-  }
-
-  const searchBox = document.querySelector('.controls .search');
-  if (!searchBox) return; // nothing to do if the search container isn't on this page
-
-  // Create once if missing
-  let tip = document.getElementById('ask-hint-row');
-  if (!tip) {
-    tip = document.createElement('div');
-    tip.id = 'ask-hint-row';
-    tip.innerHTML =
-      '<strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors, Fusion pipeline, dataset license,</em> or <em>night driving</em>.';
-    searchBox.appendChild(tip);
-  }
-})();
 
 
 

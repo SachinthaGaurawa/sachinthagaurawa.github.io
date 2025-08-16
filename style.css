@@ -859,33 +859,53 @@ body.home.is-dark .chip{
 
 
 
+/* ================================
+   Desktop search tip (layout + look)
+   ================================ */
 
-/* ===== Desktop-only hint inside the search bar ===== */
-.controls .search{ position: relative; }
-
-/* Default: hidden (phones/tablets) */
-#ask-hint-row{
-  display: none;
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 15px;
-  font-style: italic;
-  color: rgba(214, 222, 235, .75);   /* subtle ash tone in dark / light */
-  pointer-events: none;              /* never blocks clicks/typing */
-  white-space: nowrap;               /* keep it on one line */
+/* Make sure the input flexes and the tip never overlaps */
+.controls .search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;              /* one clean row on desktop */
 }
 
-/* Show only on desktops/laptops */
-@media (min-width: 1025px){
-  #ask-hint-row{ display: block; }
-  /* Give the input some right padding so text never hits the tip */
-  .controls .search input{ padding-right: 420px; }
+/* Input must flex instead of forcing width:100% (prevents overlap) */
+.controls .search input {
+  width: auto;                    /* override earlier width:100% */
+  flex: 1 1 420px;                /* grow to fill, shrink if needed */
+  min-width: 260px;               /* keeps placeholder readable */
 }
 
-/* Optional: slightly quieter on very wide screens */
-@media (min-width: 1440px){
-  #ask-hint-row{ opacity: .9; }
+/* The tip itself (muted, elegant) */
+.search-tip{
+  margin-left: 18px;
+  white-space: nowrap;            /* one line, like your reference */
+  font-weight: 500;
+  color: var(--muted);            /* ash/gray, not too strong */
+  opacity: .95;
 }
 
+/* “Tip:” label a touch stronger, still subtle */
+.search-tip .kicker{
+  font-weight: 800;
+  margin-right: 6px;
+  color: var(--muted);
+}
+
+/* Keep the example items italic like your screenshot */
+.search-tip em{ font-style: italic; opacity: .95; }
+
+/* Hide the tip on tablets and phones (exactly as requested) */
+@media (max-width: 1024px){
+  .search-tip{ display: none !important; }
+}
+
+/* If you have special mobile search overrides, keep them */
+@media (max-width: 768px){
+  .search-bar-container input[type="text"],
+  .search-slot input#searchInput{
+    /* your existing mobile styles can remain */
+  }
+}

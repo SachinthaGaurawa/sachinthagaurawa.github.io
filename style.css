@@ -860,20 +860,32 @@ body.home.is-dark .chip{
 
 
 
-/* Desktop/laptop style for the persistent tip in the search bar */
-#ask-hint-row {
-  margin-left: auto;               /* push to the right side */
-  padding-left: 12px;
-  font-size: 14px;
-  color: var(--muted);
-  white-space: nowrap;
-  flex: 0 0 auto;                  /* don't shrink the tip */
-  opacity: .95;
-}
-#ask-hint-row em { font-style: italic; opacity: .9; }
+/* ===== Desktop-only hint inside the search bar ===== */
+.controls .search{ position: relative; }
 
-/* Keep your existing rule: hide the tip on tablets & phones */
-@media (max-width: 1024px){
-  #ask-hint-row { display: none !important; }
+/* Default: hidden (phones/tablets) */
+#ask-hint-row{
+  display: none;
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(214, 222, 235, .75);   /* subtle ash tone in dark / light */
+  pointer-events: none;              /* never blocks clicks/typing */
+  white-space: nowrap;               /* keep it on one line */
+}
+
+/* Show only on desktops/laptops */
+@media (min-width: 1025px){
+  #ask-hint-row{ display: block; }
+  /* Give the input some right padding so text never hits the tip */
+  .controls .search input{ padding-right: 420px; }
+}
+
+/* Optional: slightly quieter on very wide screens */
+@media (min-width: 1440px){
+  #ask-hint-row{ opacity: .9; }
 }
 

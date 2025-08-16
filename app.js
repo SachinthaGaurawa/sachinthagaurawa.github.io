@@ -623,7 +623,7 @@ function insertAskHint() {
   if (!search || !search.parentElement) return;
 
   const isDark = document.body.classList.contains('is-dark');
-  const colorMain   = isDark ? '#B7C6D6' : '#6E7682'; // softer ash blue / neutral gray
+  const colorMain   = isDark ? '#99A5B2' : '#6E8096'; // softer ash blue / neutral gray
   const colorKicker = isDark ? '#D6E1ED' : '#555E69'; // "Tip:" slightly brighter
    
   const hint = document.createElement('div');

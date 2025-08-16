@@ -1248,3 +1248,56 @@ function setupResponsiveToolbar(){
         applyTheme(next);
     });
 })();
+
+
+
+
+/* ==========================================================
+   Gallery routing fix: clear ?album=… when closing overlay
+   (Paste at the end of app.js — no <script> tags here)
+   ========================================================== */
+(function manageAlbumRouting() {
+  const overlay   = document.getElementById('albumView');
+  const closeBtn  = document.getElementById('closeAlbum');
+
+  // Hide overlay + unlock scroll (uses your existing CSS classes/IDs)
+  function hideOverlay() {
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    document.body.classList.remove('noscroll');
+  }
+
+  // Remove only the album query parameter and normalize the URL
+  function clearAlbumParam(replace = true) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('album');
+
+    // Build a clean URL for this page (keep any other params/hash if present)
+    const clean =
+      url.pathname +
+      (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') +
+      (url.hash || '');
+
+    // Replace current history entry so refresh/back don’t reopen the album
+    if (replace) {
+      history.replaceState({ view: 'grid' }, '', clean);
+    } else {
+      history.pushState({ view: 'grid' }, '', clean);
+    }
+  }
+
+  // Close button → hide and clear query
+  closeBtn && closeBtn.addEventListener('click', () => {
+    hideOverlay();
+    clearAlbumParam(true); // replaceState so refresh stays on the grid
+  });
+
+  // Keep Back/Forward in sync: if URL has no ?album, ensure overlay is closed
+  window.addEventListener('popstate', () => {
+    const hasAlbum = new URLSearchParams(location.search).has('album');
+    if (!hasAlbum) {
+      hideOverlay();
+    }
+    // If hasAlbum, your existing code that reacts to URL (if any) can open it.
+  });
+})();

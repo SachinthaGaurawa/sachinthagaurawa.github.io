@@ -861,7 +861,21 @@ body.home.is-dark .chip{
 
 
 
+/* Keep the example items italic like your screenshot */
+.search-tip em{ font-style: italic; opacity: .95; }
 
+/* Hide the tip on tablets and phones (exactly as requested) */
+@media (max-width: 1024px){
+  .search-tip{ display: none !important; }
+}
+
+/* If you have special mobile search overrides, keep them */
+@media (max-width: 768px){
+  .search-bar-container input[type="text"],
+  .search-slot input#searchInput{
+    /* your existing mobile styles can remain */
+  }
+}
 
 
 

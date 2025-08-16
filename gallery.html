@@ -118,20 +118,19 @@
 
   <!-- Search -->
 
+
   <section class="controls container" data-aos="fade-up" data-aos-delay="120">
-    <div class="search" id="searchBar">
+    <div class="search">
       <div class="tag-chips" id="chips"></div>
       <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
       <input id="searchInput" type="text"
              placeholder="Search by title or tags… (e.g., AAVSS, dataset, lidar)"
              aria-label="Search albums">
   
-      <!-- ✅ Always-present desktop tip -->
-      <div id="ask-hint-row" class="ask-hint" role="note" aria-live="polite">
-        <strong>Tip:</strong>
-        Ask the AI about any album — e.g.
-        <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or
-        <em>night driving</em>.
+      <!-- Desktop-only tip (always present on first load) -->
+      <div class="search-tip" id="searchTip">
+        <span class="kicker">Tip:</span>
+        Ask the AI about any album — e.g. <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
       </div>
     </div>
   </section>

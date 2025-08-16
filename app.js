@@ -1301,3 +1301,55 @@ function setupResponsiveToolbar(){
     // If hasAlbum, your existing code that reacts to URL (if any) can open it.
   });
 })();
+
+
+
+
+
+
+/* Ensure the search tip exists and is attached to the search bar */
+function ensureSearchTip() {
+  const search = document.querySelector('.controls .search');
+  if (!search) return;
+
+  let tip = document.getElementById('ask-hint-row');
+  if (!tip) {
+    // Fallback: create it if someone removed the HTML by mistake
+    tip = document.createElement('div');
+    tip.id = 'ask-hint-row';
+    tip.className = 'ask-hint';
+    tip.setAttribute('role', 'note');
+    tip.innerHTML =
+      '<strong>Tip:</strong> Ask the AI about any album — e.g. ' +
+      '<em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, ' +
+      'or <em>night driving</em>.';
+    search.appendChild(tip);
+  } else if (tip.parentElement !== search) {
+    // If some code moved it elsewhere, put it back into the search bar
+    search.appendChild(tip);
+  }
+  tip.hidden = false;
+  tip.style.display = ''; // clear any inline display:none
+}
+
+// Run once on first paint
+document.addEventListener('DOMContentLoaded', ensureSearchTip);
+
+// Also run after the album overlay closes (in case other code re-renders)
+document.addEventListener('album:closed', ensureSearchTip);
+
+// If you have a close button handler, you can dispatch this event:
+const closeBtn = document.getElementById('closeAlbum');
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    // Your existing close logic…
+
+    // Let listeners restore UI bits like the tip
+    document.dispatchEvent(new CustomEvent('album:closed'));
+  });
+}
+
+
+
+
+

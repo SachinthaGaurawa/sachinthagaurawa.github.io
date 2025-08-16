@@ -610,20 +610,87 @@ function renderChat(answerText, topicLabel){
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-/* ====== Hint under search (generic) ====== */
-function insertAskHint(){
+
+
+
+/* ====== Hint under search (desktop only, themed colors) ====== */
+function insertAskHint() {
+  // Only one hint, and only on desktop/laptop
   if (document.getElementById('ask-hint-row')) return;
-  const search = $('#searchInput');
-  if (!search) return;
+  if (!window.matchMedia('(min-width:1025px)').matches) return;
+
+  const search = document.getElementById('searchInput');
+  if (!search || !search.parentElement) return;
+
+  const isDark = document.body.classList.contains('is-dark');
+  const colorMain   = isDark ? '#9FB0C2' : '#6B7785'; // ash/blue-gray vs neutral gray
+  const colorKicker = isDark ? '#C7D2DE' : '#505A66'; // "Tip:" a touch brighter
+
   const hint = document.createElement('div');
   hint.id = 'ask-hint-row';
+  hint.className = 'search-tip';
+  Object.assign(hint.style, {
+    margin: '.5rem 0 .25rem',
+    fontSize: '.95rem',
+    lineHeight: '1.45',
+    color: colorMain,
+    userSelect: 'none'
+  });
+
   hint.innerHTML = `
-    <div style="margin:.5rem 0 .25rem; font-size:.92rem; color:#6e8096;">
-      <strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
-    </div>
+    <span class="kicker" style="font-weight:800; color:${colorKicker}">Tip:</span>
+    Ask the AI about any album — e.g.
+    <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, or <em>night driving</em>.
   `;
-  search.parentElement?.insertBefore(hint, search.nextSibling);
+
+  // Insert right after the search input
+  search.parentElement.insertBefore(hint, search.nextSibling);
 }
+
+/* Keep the hint colors synced if the theme class changes */
+(function watchThemeForHint(){
+  const applyColors = () => {
+    const tip = document.getElementById('ask-hint-row');
+    if (!tip) return;
+    const isDark = document.body.classList.contains('is-dark');
+    const colorMain   = isDark ? '#9FB0C2' : '#6B7785';
+    const colorKicker = isDark ? '#C7D2DE' : '#505A66';
+    tip.style.color = colorMain;
+    const kicker = tip.querySelector('.kicker');
+    if (kicker) kicker.style.color = colorKicker;
+  };
+
+  // Observe class changes on <body> (theme toggles add/remove .is-dark / .is-light)
+  const mo = new MutationObserver(applyColors);
+  mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  // Re-apply on resize crossing desktop threshold
+  let wasDesktop = window.matchMedia('(min-width:1025px)').matches;
+  window.addEventListener('resize', () => {
+    const isDesktop = window.matchMedia('(min-width:1025px)').matches;
+    if (isDesktop && !document.getElementById('ask-hint-row')) {
+      // We crossed into desktop – ensure hint exists
+      insertAskHint();
+      applyColors();
+    }
+    wasDesktop = isDesktop;
+  });
+
+  // Initial paint
+  document.addEventListener('DOMContentLoaded', () => {
+    insertAskHint();
+    applyColors();
+  });
+})();
+
+
+
+
+
+
+
+
+
 
 /* ====== Responsive center pill between chat & gallery ====== */
 function injectAskPillStylesOnce(){

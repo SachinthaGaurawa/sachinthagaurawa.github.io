@@ -1306,48 +1306,27 @@ function setupResponsiveToolbar(){
 
 
 
+/* ===== Ensure the desktop hint is present on first load ===== */
+(function ensureDesktopTip(){
+  // Wait until DOM is ready if needed
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureDesktopTip);
+    return;
+  }
 
-/* Ensure the search tip exists and is attached to the search bar */
-function ensureSearchTip() {
-  const search = document.querySelector('.controls .search');
-  if (!search) return;
+  const searchBox = document.querySelector('.controls .search');
+  if (!searchBox) return; // nothing to do if the search container isn't on this page
 
+  // Create once if missing
   let tip = document.getElementById('ask-hint-row');
   if (!tip) {
-    // Fallback: create it if someone removed the HTML by mistake
     tip = document.createElement('div');
     tip.id = 'ask-hint-row';
-    tip.className = 'ask-hint';
-    tip.setAttribute('role', 'note');
     tip.innerHTML =
-      '<strong>Tip:</strong> Ask the AI about any album — e.g. ' +
-      '<em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em>, ' +
-      'or <em>night driving</em>.';
-    search.appendChild(tip);
-  } else if (tip.parentElement !== search) {
-    // If some code moved it elsewhere, put it back into the search bar
-    search.appendChild(tip);
+      '<strong>Tip:</strong> Ask the AI about any album — e.g. <em>Sensors, Fusion pipeline, dataset license,</em> or <em>night driving</em>.';
+    searchBox.appendChild(tip);
   }
-  tip.hidden = false;
-  tip.style.display = ''; // clear any inline display:none
-}
-
-// Run once on first paint
-document.addEventListener('DOMContentLoaded', ensureSearchTip);
-
-// Also run after the album overlay closes (in case other code re-renders)
-document.addEventListener('album:closed', ensureSearchTip);
-
-// If you have a close button handler, you can dispatch this event:
-const closeBtn = document.getElementById('closeAlbum');
-if (closeBtn) {
-  closeBtn.addEventListener('click', () => {
-    // Your existing close logic…
-
-    // Let listeners restore UI bits like the tip
-    document.dispatchEvent(new CustomEvent('album:closed'));
-  });
-}
+})();
 
 
 

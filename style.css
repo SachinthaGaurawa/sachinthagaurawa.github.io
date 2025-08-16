@@ -860,22 +860,27 @@ body.home.is-dark .chip{
 
 
 
-/* Desktop/laptop style for the persistent tip in the search bar */
+/* Subtle, ash-gray style for the search tip */
 #ask-hint-row {
-  margin-left: auto;               /* push to the right side */
+  margin-left: auto;
   padding-left: 12px;
   font-size: 14px;
-  color: var(--muted);
+  color: #9ca3af;           /* ash gray */
   white-space: nowrap;
-  flex: 0 0 auto;                  /* don't shrink the tip */
-  opacity: .95;
+  flex: 0 0 auto;
+  opacity: 0.9;             /* soft, not too strong */
 }
-#ask-hint-row em { font-style: italic; opacity: .9; }
+#ask-hint-row em {
+  font-style: italic;
+  opacity: 0.85;
+  color: #aab1bb;           /* slightly lighter ash for emphasis */
+}
 
-/* Keep your existing rule: hide the tip on tablets & phones */
+/* Keep hiding on mobile/tablet */
 @media (max-width: 1024px){
   #ask-hint-row { display: none !important; }
 }
+
 
 
 

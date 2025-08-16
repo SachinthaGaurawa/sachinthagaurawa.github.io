@@ -623,9 +623,9 @@ function insertAskHint() {
   if (!search || !search.parentElement) return;
 
   const isDark = document.body.classList.contains('is-dark');
-  const colorMain   = isDark ? '#9FB0C2' : '#6B7785'; // ash/blue-gray vs neutral gray
-  const colorKicker = isDark ? '#C7D2DE' : '#505A66'; // "Tip:" a touch brighter
-
+  const colorMain   = isDark ? '#B7C6D6' : '#6E7682'; // softer ash blue / neutral gray
+  const colorKicker = isDark ? '#D6E1ED' : '#555E69'; // "Tip:" slightly brighter
+   
   const hint = document.createElement('div');
   hint.id = 'ask-hint-row';
   hint.className = 'search-tip';

@@ -834,15 +834,6 @@ body.home.is-dark .chip{
 
 
 
-
-
-
-
-
-
-
-
-
 /* ================================================
    DESKTOP/LAPTOP HERO TITLE — COLOR + LAYER FIX
    Paste this block at the VERY END of your CSS
@@ -863,3 +854,29 @@ body.home.is-dark .chip{
   /* Dark theme → white title */
   body.home.is-dark .hero-text h2 { color: #ffffff !important; }
 }
+
+
+
+
+
+
+/* Desktop/laptop style for the persistent tip in the search bar */
+#ask-hint-row {
+  margin-left: auto;               /* push to the right side */
+  padding-left: 12px;
+  font-size: 14px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex: 0 0 auto;                  /* don't shrink the tip */
+  opacity: .95;
+}
+#ask-hint-row em { font-style: italic; opacity: .9; }
+
+/* Keep your existing rule: hide the tip on tablets & phones */
+@media (max-width: 1024px){
+  #ask-hint-row { display: none !important; }
+}
+
+
+
+

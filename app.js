@@ -695,7 +695,7 @@ function insertAlbumAskHintBelowChat(){
     pill.innerHTML = `
       <span class="spark">✨</span>
       <strong>Tip:</strong>
-      <span>Ask about —</span>
+      <span>Ask the AI about any —</span>
       <span class="examples">
         <em>“Overview”</em>
         <em>“How it works?”</em>

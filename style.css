@@ -908,12 +908,11 @@ body.home.is-dark .chip{
 
 
 
-
-
-
 /* ==========================================================
-   GLOBAL THEME (applies on every page)
-   Toggle by adding .is-light or .is-dark to <body>
+   GLOBAL THEME TOKENS (site-wide)
+   Toggle by adding .is-light or .is-dark to <body>.
+   This augments your existing variables and leaves all
+   features intact.
    ========================================================== */
 body.is-light{
   --bg: #f7f9fc;
@@ -923,6 +922,15 @@ body.is-light{
   --card: #ffffff;
   --card-2: #f3f6fb;
   --hair: #e7ecf4;
+
+  /* Album-specific tokens (light) */
+  --album-bg: #f7f9fc;
+  --album-ink: #0f1217;
+  --album-subtle: #5e6673;
+  --album-panel: #ffffff;
+  --album-panel-2: #f3f6fb;
+  --album-hair: #e3e9f2;
+  --album-glow: 0 30px 120px rgba(36,48,76,.12);
   color-scheme: light;
   background: var(--bg);
   color: var(--ink);
@@ -935,17 +943,23 @@ body.is-dark{
   --card: #0f141c;
   --card-2: #0c1118;
   --hair: rgba(255,255,255,.08);
+
+  /* Album-specific tokens (dark) */
+  --album-bg: #0a0c10;
+  --album-ink: #e9f1ff;
+  --album-subtle: #a7b4c7;
+  --album-panel: #0f141c;
+  --album-panel-2: #0c1118;
+  --album-hair: rgba(255,255,255,.08);
+  --album-glow: 0 30px 120px rgba(0,0,0,.55);
   color-scheme: dark;
   background: var(--bg);
   color: var(--ink);
 }
 
 /* ==========================================================
-   SITE-WIDE OVERRIDES (reuse your components everywhere)
-   These do not remove anything you already had.
+   TOPBAR / COMMON SURFACES — make them honor global theme
    ========================================================== */
-
-/* Topbar + brand on all pages */
 body.is-dark .topbar{
   background: rgba(10,12,18,.72);
   border-bottom: 1px solid var(--hair);
@@ -959,7 +973,7 @@ body.is-light .topbar{
 body.is-dark .brand{ color:#eaf0ff; }
 body.is-light .brand{ color:#0e0f11; }
 
-/* Surfaces: cards, search, chips (everywhere, including albums) */
+/* Cards & chips everywhere (home + albums) */
 body.is-dark .card{
   background: var(--card) !important;
   border-color: var(--hair) !important;
@@ -986,7 +1000,7 @@ body.is-light .chip{
   color:var(--ink);
 }
 
-/* Search container + input */
+/* Search */
 body.is-dark .controls .search{
   background: var(--card);
   border: 1px solid var(--hair);
@@ -999,85 +1013,190 @@ body.is-light .controls .search{
 }
 body.is-dark .controls .search input,
 body.is-light .controls .search input{ color: var(--ink); }
-
-/* Footer everywhere (main + inside album clone) */
-body.is-dark .site-footer{
-  background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
-  border-top:1px solid var(--hair);
-  color:#eaf0ff;
+body.is-dark .controls .search:focus-within,
+body.is-light .controls .search:focus-within{
+  border-color:#78aaff;
+  box-shadow: 0 0 0 4px rgba(120,170,255,.18), 0 12px 40px rgba(0,0,0,.14);
 }
-body.is-light .site-footer{
-  background: linear-gradient(180deg,#ffffff 0%, #f7f9fc 100%);
-  border-top:1px solid var(--hair);
-  color:#20242c;
-}
-body.is-dark .site-footer .footer-name,
-body.is-dark .site-footer a{ color:#f4c34f; }
-body.is-light .site-footer .footer-name,
-body.is-light .site-footer a{ color:#d0981a; }
 
-/* Hero titles in any section using .hero-text */
+/* ==========================================================
+   HERO TITLE LAYERING + THEME COLOR (desktop polish)
+   ========================================================== */
+.hero-media{ position:relative; }
+.hero-media::after, .hero-overlay{ z-index:0 !important; }
+.hero-text{ position:absolute; z-index:1 !important; }
 @media (min-width:1025px){
   body.is-light .hero-text h2{ color:#0a0a0a !important; }
   body.is-dark  .hero-text h2{ color:#ffffff !important; }
 }
 
-/* Forms / pills consistency */
-body.is-dark .form-floating > .form-control{
-  background:#0c1118; color:var(--ink); border:2px solid var(--hair);
-}
-body.is-dark .form-floating > .form-control:focus{
-  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.18);
-}
-body.is-light .form-floating > .form-control{
-  background:#fff; color:var(--ink); border:2px solid #e7ecf4;
-}
-body.is-light .form-floating > .form-control:focus{
-  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.14);
-}
-
-/* Nav pills */
-body.is-dark .nav-pills .nav-link{
-  background:#0f141d; color:#cfe0ff; border:1px solid var(--hair);
-}
-body.is-dark .nav-pills .nav-link.active{
-  background:#2c71ff !important; color:#fff !important; border-color:transparent !important;
-}
-body.is-light .nav-pills .nav-link{
-  background:#f6f8fc; color:#2a3140; border:1px solid var(--hair);
-}
-body.is-light .nav-pills .nav-link.active{
-  background:#0d6efd !important; color:#fff !important; border-color:transparent !important;
-}
-
-/* Album overlay — stay dark background but adopt theme tokens for UI bits */
-#albumView{ background: #000; }
-body.is-dark #albumView .album-desc-inner{ color:#dfe8f5; }
-body.is-light #albumView .album-desc-inner{ color:#f1f5fb; } /* readable on black */
-body.is-dark #albumView .m-item{ border-color:#151515; }
-body.is-light #albumView .m-item{ border-color:#1a1a1a; }
-
-/* Viewer controls contrast */
-body.is-dark .viewer-close,
-body.is-dark .nav{ background:rgba(10,12,16,.75); color:#fff; }
-body.is-light .viewer-close,
-body.is-light .nav{ background:rgba(20,22,28,.75); color:#fff; }
-
-/* Desktop search tip — soft ash/blue like your mock */
+/* ==========================================================
+   DESKTOP SEARCH TIP — ash/blue like your mock, PC only
+   ========================================================== */
 @media (min-width:1025px){
   body.is-dark .search-tip{ color:#9FB0C2; opacity:.96; }
   body.is-dark .search-tip .kicker{ color:#C7D2DE; font-weight:800; }
   body.is-light .search-tip{ color:#6B7785; opacity:.95; }
   body.is-light .search-tip .kicker{ color:#505A66; font-weight:800; }
 }
-@media (max-width:1024px){
-  .search-tip{ display:none !important; }  /* PC/Laptop only */
+@media (max-width:1024px){ .search-tip{ display:none !important; } }
+
+/* ==========================================================
+   ★ ALBUM OVERLAY — FULL THEME SUPPORT
+   Everything below repaints the inside of albums and the
+   viewer when your LIGHT/DARK button is toggled.
+   ========================================================== */
+
+/* Overlay container & type color */
+#albumView{
+  background: var(--album-bg) !important;
+  color: var(--album-ink) !important;
 }
 
-/* Small polish: focus rings match theme */
-:root{ --focusRing: 0 0 0 4px rgba(120,170,255,.18); }
-body.is-dark .controls .search:focus-within{ box-shadow: var(--focusRing); border-color:#78aaff; }
-body.is-light .controls .search:focus-within{ box-shadow: var(--focusRing); border-color:#78aaff; }
+/* Album banner overlay tint for readability */
+body.is-dark .album-hero-overlay{
+  background: linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,.55));
+}
+body.is-light .album-hero-overlay{
+  /* Gentle light fade so white text remains legible; we also recolor h2 below */
+  background: linear-gradient(180deg, rgba(255,255,255,0) 60%, rgba(255,255,255,.82));
+}
+
+/* Album banner title color per theme */
+body.is-dark  .album-hero h2{ color:#fff !important; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
+body.is-light .album-hero h2{ color:#0b0f14 !important; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+
+/* Album description block */
+.album-desc-block{
+  background: var(--album-bg) !important;
+  color: var(--album-ink) !important;
+}
+.album-desc-inner{
+  color: var(--album-subtle) !important;
+}
+
+/* Masonry items (cards with media) */
+.m-item{
+  border: 1px solid var(--album-hair) !important;
+  background: var(--album-panel) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+body.is-dark .m-item{ box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+
+/* Play badge on media */
+.m-item .play{
+  background: rgba(0,0,0,.55);
+  border-color: rgba(255,255,255,.12);
+}
+body.is-light .m-item .play{
+  background: rgba(20,24,30,.55);
+  border-color: rgba(0,0,0,.08);
+}
+
+/* Mini tags on thumbnails */
+.mini-chip{
+  background: color-mix(in srgb, #000 65%, transparent);
+  border-color: rgba(255,255,255,.15);
+}
+body.is-light .mini-chip{
+  background: color-mix(in srgb, #000 45%, transparent);
+  border-color: rgba(0,0,0,.12);
+}
+
+/* Ask row inside album */
+.album-ask .ask-row{
+  background: var(--album-panel) !important;
+  border: 1px solid var(--album-hair) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,.10) !important;
+}
+.album-ask input{ color: var(--album-ink) !important; }
+.album-ask .ask-btn{
+  background: linear-gradient(180deg, #1f2937, #172133);
+  color:#fff;
+  border:1px solid rgba(120,170,255,.35);
+}
+body.is-light .album-ask .ask-btn{
+  background: linear-gradient(180deg, #0d6efd, #0b5ed7);
+  border-color: rgba(13,110,253,.35);
+}
+
+/* ===== Viewer (lightbox) ===== */
+#viewerOverlay{
+  /* keep a strong dimmer in both themes for media focus */
+  background: rgba(0,0,0,.75) !important;
+  backdrop-filter: blur(6px);
+}
+.stage{
+  background: var(--album-panel) !important;
+  border: 1px solid var(--album-hair) !important;
+  box-shadow: var(--album-glow),
+              0 0 0 6px rgba(56,231,171,.20),
+              0 0 0 12px rgba(4,112,255,.16) !important;
+}
+.stage img, .stage video, .stage iframe{
+  background: var(--album-panel) !important;
+}
+
+/* Viewer controls */
+.viewer-close, .nav{
+  background: rgba(10,12,16,.78);
+  color:#fff;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.08);
+}
+body.is-light .viewer-close, body.is-light .nav{
+  background: rgba(26,32,42,.82);
+  border-color: rgba(0,0,0,.10);
+}
+
+/* Peek previews */
+.peek{
+  border: 2px solid rgba(120,170,255,.35);
+  opacity:.9;
+  filter: grayscale(.04) saturate(1.04);
+}
+
+/* Footer cloned inside album */
+#albumView .site-footer{
+  background: linear-gradient(180deg, var(--album-panel) 0%, var(--album-panel-2) 100%) !important;
+  color: var(--album-ink) !important;
+  border-top: 1px solid var(--album-hair) !important;
+  border-radius: 10px;
+}
+body.is-dark #albumView .site-footer{
+  background: linear-gradient(180deg,#0d0e10 0%, #0f1012 100%) !important;
+  color:#e9eef5 !important;
+  border-top:1px solid rgba(255,255,255,.06) !important;
+}
+
+/* Close button in the album header area */
+.close-btn{
+  background: color-mix(in srgb, var(--album-panel) 88%, #000 12%) !important;
+  color: var(--album-ink) !important;
+  border: 1px solid var(--album-hair) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12) !important;
+}
+body.is-dark .close-btn{
+  background:#101317 !important;
+  color:#fff !important;
+  border-color: rgba(255,255,255,.06) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.2) !important;
+}
+
+/* Hero (outside) — keep your overlay logic but apply theme text */
+body.is-dark .hero-text p{ color:var(--muted); }
+body.is-light .hero-text p{ color:#58606d; }
+
+/* ==========================================================
+   SMALL RESPONSIVE TWEAKS INSIDE ALBUM (unchanged behavior)
+   ========================================================== */
+@media (max-width:720px){
+  .viewer-shell{ width:min(1000px,96vw); }
+  .stage{ max-height:78vh; }
+}
+
+
+
 
 
 

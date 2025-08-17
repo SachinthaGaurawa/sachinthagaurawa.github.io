@@ -625,7 +625,7 @@ function insertAskHint() {
   const isDark = document.body.classList.contains('is-dark');
   const colorMain   = isDark ? '#6E8096' : '#6E8096'; // softer ash blue / neutral gray
   const colorKicker = isDark ? '#D6E1ED' : '#555E69'; // "Tip:" slightly brighter
-   
+
   const hint = document.createElement('div');
   hint.id = 'ask-hint-row';
   hint.className = 'search-tip';
@@ -1274,7 +1274,7 @@ function setupResponsiveToolbar(){
 
 
 
-   
+
 
 
 
@@ -1448,7 +1448,18 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
     $body.classList.add(m);
     document.documentElement.style.colorScheme = (mode === 'light') ? 'light' : 'dark';
 
- 
+    // Optional: update button label/icon without changing your button style
+    if ($btn) {
+      $btn.innerHTML = (mode === 'light') ? '☀️ Light' : '🌙 Dark';
+      $btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
+    }
+  }
+
+  function currentMode() {
+    if ($body.classList.contains('is-light')) return 'light';
+    if ($body.classList.contains('is-dark'))  return 'dark';
+    return null;
+  }
 
   // 1) On first load, apply saved preference or default
   const saved = localStorage.getItem(KEY);
@@ -1519,7 +1530,6 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
             btn = document.createElement('button');
             btn.id = 'themeToggle';
             btn.className = 'theme-toggle';
-            
             btn.innerHTML = '<i>🌗</i><span>Dark</span>';
             btn.setAttribute('aria-pressed', 'false');
             const topbar = document.querySelector('.topbar');
@@ -1615,6 +1625,10 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 
+
+
+
+
 hint.style.color = colorMain;
 hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
 hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
@@ -1665,20 +1679,22 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
     }
   });
 
- 
+  // click to toggle
+  document.addEventListener('click', function(ev){
+    var btn = ev.target.closest('.theme-toggle');
+    if (!btn) return;
+    var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+  });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // optional: sync with OS change (only when user hasn’t chosen explicitly)
+  try {
+    if (!localStorage.getItem('sg_theme')) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener('change', function(e){
+        applyTheme(e.matches ? 'dark' : 'light');
+      });
+    }
+  } catch(e){}
+})();
 

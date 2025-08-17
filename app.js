@@ -1448,18 +1448,7 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
     $body.classList.add(m);
     document.documentElement.style.colorScheme = (mode === 'light') ? 'light' : 'dark';
 
-    // Optional: update button label/icon without changing your button style
-    if ($btn) {
-      $btn.innerHTML = (mode === 'light') ? '☀️ Light' : '🌙 Dark';
-      $btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
-    }
-  }
-
-  function currentMode() {
-    if ($body.classList.contains('is-light')) return 'light';
-    if ($body.classList.contains('is-dark'))  return 'dark';
-    return null;
-  }
+ 
 
   // 1) On first load, apply saved preference or default
   const saved = localStorage.getItem(KEY);
@@ -1531,7 +1520,7 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
             btn.id = 'themeToggle';
             btn.className = 'theme-toggle';
             
-            btn.innerHTML = (mode === 'dark' ? '🌗 Dark' : '☀️ Light');
+            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
             btn.setAttribute('aria-pressed', 'false');
             const topbar = document.querySelector('.topbar');
             if (topbar){

@@ -1087,30 +1087,6 @@ body.is-light .controls .search:focus-within{ box-shadow: var(--focusRing); bord
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ==========================================================
    GLOBAL THEME TOKENS (site-wide)
    Toggle by adding .is-light or .is-dark to <body>.
@@ -1398,3 +1374,31 @@ body.is-light .hero-text p{ color:#58606d; }
   .stage{ max-height:78vh; }
 }
 
+
+
+
+
+
+
+
+/* Desktop tip: strong navy in LIGHT mode, keep current in DARK */
+@media (min-width:1025px){
+  body.is-light .search-tip{
+    color:#1F3B63 !important;   /* main line */
+    opacity:1 !important;       /* kill any inherited fade */
+  }
+  body.is-light .search-tip .kicker{
+    color:#16345F !important;   /* "Tip:" label */
+    font-weight:800;
+  }
+  body.is-light .search-tip em{
+    color:#2A4E86 !important;   /* examples */
+    font-style:italic;
+  }
+
+  /* If your container (#ask-hint-row) had opacity, neutralize it */
+  body.is-light #ask-hint-row{
+    opacity:1 !important;
+    filter:none !important;
+  }
+}

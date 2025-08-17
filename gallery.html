@@ -13,9 +13,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="img/sg_logo.png">
   <link rel="icon" type="image/png" sizes="64x64" href="img/sg_logo.png">
   
-  <!-- Live Preview -->
-  <link rel="stylesheet" href="css/site.css?v=2025-08-15-1">
-  <script src="js/app.js?v=2025-08-15-1"></script>
 
 
   <!-- Fonts -->
@@ -23,9 +20,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-  <!-- Icons + Styles -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+
+
+
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('sg_theme');
+        if (!saved) saved = 'dark';                          // default
+        document.documentElement.setAttribute('data-theme', saved);
+        // mirror on <body> after it exists
+        window.addEventListener('DOMContentLoaded', function(){
+          document.body.classList.toggle('is-dark', saved === 'dark');
+          document.body.classList.toggle('is-light', saved === 'light');
+        });
+      } catch (e) {}
+    })();
+  </script>
+
+
+
+
+
+
+  
 
   <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
@@ -49,6 +67,10 @@
 
   <!-- (Optional) On-device AI utilities -->
   <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers/dist/transformers.min.js" defer></script>
+
+
+
+  
 
 
   <script>
@@ -77,11 +99,19 @@
   })();
   </script>
 
-
-
   
 
+  <!-- Live Preview -->
+  <link rel="stylesheet" href="css/site.css?v=2025-08-15-1">
+  <script src="js/app.js?v=2025-08-15-1"></script>
+
   
+  <!-- Icons + Styles -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+
+
 </head>
 <body>
   <!-- Top bar -->

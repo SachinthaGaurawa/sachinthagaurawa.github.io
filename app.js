@@ -1409,49 +1409,61 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 /* ===== Global theme toggle (persists across refresh) ===== */
-(function () {
-  const KEY = 'sg-theme';            // localStorage key
-  const DEFAULT = 'dark';            // you want default black
+(function(){
+  function applyTheme(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    document.body.classList.toggle('is-dark', mode === 'dark');
+    document.body.classList.toggle('is-light', mode === 'light');
 
-  const $body = document.body;
-  const $btn  = document.querySelector('.theme-toggle'); // keep your button
+    try {
+      localStorage.setItem('sg_theme', mode);
+    } catch(e){}
+    updateToggle(mode);
+  }
 
-  function apply(mode) {
-    const m = (mode === 'light') ? 'is-light' : 'is-dark';
-    $body.classList.remove('is-light','is-dark');
-    $body.classList.add(m);
-    document.documentElement.style.colorScheme = (mode === 'light') ? 'light' : 'dark';
+  function currentTheme(){
+    return document.documentElement.getAttribute('data-theme') || 'dark';
+  }
 
-    // Optional: update button label/icon without changing your button style
-    if ($btn) {
-      $btn.innerHTML = (mode === 'light') ? '☀️ Light' : '🌙 Dark';
-      $btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
+  function updateToggle(mode){
+    var btn = document.querySelector('.theme-toggle');
+    if (!btn) return;
+    btn.innerHTML = (mode === 'dark' ? '🌙 Dark' : '☀️ Light');
+    btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
+  }
+
+  // init label after DOM ready (preload already set the attribute)
+  window.addEventListener('DOMContentLoaded', function(){
+    // restore saved theme if any
+    let saved = null;
+    try {
+      saved = localStorage.getItem('sg_theme');
+    } catch(e){}
+
+    if (saved) {
+      applyTheme(saved);
+    } else {
+      // default = dark
+      applyTheme('dark');
     }
-  }
-
-  function currentMode() {
-    if ($body.classList.contains('is-light')) return 'light';
-    if ($body.classList.contains('is-dark'))  return 'dark';
-    return null;
-  }
-
-  // 1) On first load, apply saved preference or default
-  const saved = localStorage.getItem(KEY);
-  apply(saved || DEFAULT);
-
-  // 2) Wire up the button
-  if ($btn) {
-    $btn.addEventListener('click', () => {
-      const next = (currentMode() === 'dark') ? 'light' : 'dark';
-      localStorage.setItem(KEY, next);
-      apply(next);
-    });
-  }
-
-  // 3) If some other script or page sets the theme, react to storage event
-  window.addEventListener('storage', (e) => {
-    if (e.key === KEY && e.newValue) apply(e.newValue);
   });
-})();
 
+  // click to toggle
+  document.addEventListener('click', function(ev){
+    var btn = ev.target.closest('.theme-toggle');
+    if (!btn) return;
+    var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+  });
+
+  // optional: sync with OS change (only when user hasn’t chosen explicitly)
+  try {
+    if (!localStorage.getItem('sg_theme')) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener('change', function(e){
+        applyTheme(e.matches ? 'dark' : 'light');
+      });
+    }
+  } catch(e){}
+})();
 

@@ -692,9 +692,12 @@ function insertAskHint() {
 
 
 
-/* ====== Responsive center pill between chat & gallery ====== */
+// ====== Responsive center pill between chat & gallery (THEME-AWARE) ======
 function injectAskPillStylesOnce(){
-  if (document.getElementById('ask-hint-pill-css')) return;
+  // If an older style tag exists, remove it so we can inject the updated one
+  const old = document.getElementById('ask-hint-pill-css');
+  if (old) old.remove();
+
   const s = document.createElement('style');
   s.id = 'ask-hint-pill-css';
   s.textContent = `
@@ -703,6 +706,8 @@ function injectAskPillStylesOnce(){
       width:100%;
       margin:10px 0 14px;
     }
+
+    /* Base layout (no colors here) */
     .ask-hint-pill{
       max-width:min(1080px, 94vw);
       width:auto;
@@ -712,17 +717,37 @@ function injectAskPillStylesOnce(){
       border-radius:999px;
       font-size:.9rem; line-height:1.35;
       text-align:center;
-      color:#e8f1ff;
-      background:linear-gradient(180deg, rgba(120,170,255,.18), rgba(120,170,255,.10));
-      border:2px dashed rgba(150,190,255,.95);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
-      backdrop-filter: blur(2px);
       word-break: keep-all;
+      backdrop-filter: blur(2px);
+      border:2px dashed; /* color comes from theme rules below */
+      box-shadow: inset 0 0 0 1px transparent, 0 6px 18px rgba(0,0,0,.22);
     }
     .ask-hint-pill .spark{ filter:drop-shadow(0 0 6px rgba(150,190,255,.75)); }
-    .ask-hint-pill strong{ font-weight:700; color:#f3f7ff; }
+    .ask-hint-pill strong{ font-weight:700; }
     .ask-hint-pill .examples{ display:flex; gap:.9rem; flex-wrap:wrap; }
     .ask-hint-pill .examples em{ font-style:italic; font-weight:600; opacity:.98; padding:0 .05rem; white-space:nowrap; }
+
+    /* —— DARK THEME (unchanged look) —— */
+    body.is-dark .ask-hint-pill{
+      color:#e8f1ff;
+      background:linear-gradient(180deg, rgba(120,170,255,.18), rgba(120,170,255,.10));
+      border-color:rgba(150,190,255,.95);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
+    }
+    body.is-dark .ask-hint-pill strong{ color:#f3f7ff; }
+    body.is-dark .ask-hint-pill .examples em{ color:#cfe1ff; }
+
+    /* —— LIGHT THEME (requested dark-navy text) —— */
+    body.is-light .ask-hint-pill{
+      color:#1F3B63; /* main line */
+      background:linear-gradient(180deg, #eef5ff, #e9f1ff);
+      border-color:#86aef2;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.70), 0 6px 18px rgba(0,0,0,.08);
+    }
+    body.is-light .ask-hint-pill strong{ color:#16345F; }       /* “Tip:” */
+    body.is-light .ask-hint-pill .examples em{ color:#2A4E86; } /* examples */
+
+    /* Responsiveness (kept from your version) */
     @media (max-width: 900px){
       .ask-hint-pill{ font-size:.86rem; padding:9px 14px; max-width:94vw; }
       .ask-hint-pill .examples{ gap:.6rem; }
@@ -743,6 +768,7 @@ function injectAskPillStylesOnce(){
   `;
   document.head.appendChild(s);
 }
+
 
 function insertAlbumAskHintBelowChat(){
   const out = document.getElementById('askResult');

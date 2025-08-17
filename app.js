@@ -1530,7 +1530,8 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
             btn = document.createElement('button');
             btn.id = 'themeToggle';
             btn.className = 'theme-toggle';
-            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
+            
+            btn.innerHTML = (mode === 'dark' ? '🌗 Dark' : '☀️ Light');
             btn.setAttribute('aria-pressed', 'false');
             const topbar = document.querySelector('.topbar');
             if (topbar){
@@ -1675,24 +1676,7 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
     }
   });
 
-  // click to toggle
-  document.addEventListener('click', function(ev){
-    var btn = ev.target.closest('.theme-toggle');
-    if (!btn) return;
-    var next = currentTheme() === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-  });
-
-  // optional: sync with OS change (only when user hasn’t chosen explicitly)
-  try {
-    if (!localStorage.getItem('sg_theme')) {
-      var mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.addEventListener('change', function(e){
-        applyTheme(e.matches ? 'dark' : 'light');
-      });
-    }
-  } catch(e){}
-})();
+ 
 
 
 

@@ -1625,10 +1625,6 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 
-
-
-
-
 hint.style.color = colorMain;
 hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
 hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
@@ -1697,5 +1693,19 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
     }
   } catch(e){}
 })();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

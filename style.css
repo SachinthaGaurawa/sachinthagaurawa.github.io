@@ -1082,3 +1082,41 @@ body.is-light .controls .search:focus-within{ box-shadow: var(--focusRing); bord
 
 
 
+
+
+
+
+
+
+
+/* Search tip — navy in LIGHT theme (works for both class & data-attr) */
+body.is-light .search-tip,
+[data-theme="light"] .search-tip{
+  color:#1F3B63 !important;   /* main line */
+  opacity:1 !important;
+}
+
+body.is-light .search-tip .kicker,
+[data-theme="light"] .search-tip .kicker{
+  color:#16345F !important;   /* "Tip:" label */
+  font-weight:800 !important;
+}
+
+body.is-light .search-tip em,
+[data-theme="light"] .search-tip em{
+  color:#2A4E86 !important;   /* examples */
+  font-style:italic;
+}
+
+/* If a wrapper had opacity/filter, neutralize it in LIGHT */
+body.is-light #ask-hint-row,
+[data-theme="light"] #ask-hint-row{
+  opacity:1 !important;
+  filter:none !important;
+}
+
+
+
+
+
+

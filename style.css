@@ -1,11 +1,81 @@
+/* ==========================================================
+   GLOBAL TOKENS (base defaults – overridden by .is-light/.is-dark)
+   ========================================================== */
 :root{
   --bg:#ffffff;
   --ink:#0e0f11;
   --muted:#6e7481;
   --ring:rgba(4,112,255,.25);
+
+  /* surfaces */
+  --card:#ffffff;
+  --card-2:#f3f6fb;
+  --hair:#e7ecf4;
+
+  /* album-specific */
+  --album-canvas:#0b0d12;   /* overlay page background */
+  --album-ink:#eaf0ff;      /* overlay base text */
+  --album-muted:#a9b4c7;
+  --album-border:#161a20;
+
+  /* viewer overlay backdrop */
+  --veil: rgba(0,0,0,.75);
+
+  /* focus */
+  --focus-ring: 0 0 0 4px rgba(120,170,255,.18);
 }
 
-/* ───────── Base ───────── */
+/* ==========================================================
+   THEME (apply site-wide by toggling .is-light / .is-dark on <body>)
+   ========================================================== */
+body.is-light{
+  --bg:#f7f9fc;
+  --ink:#0e0f11;
+  --muted:#6e7481;
+  --ring:rgba(4,112,255,.22);
+
+  --card:#ffffff;
+  --card-2:#f3f6fb;
+  --hair:#e7ecf4;
+
+  --album-canvas:#ffffff;     /* album overlay becomes light */
+  --album-ink:#0e0f11;
+  --album-muted:#6e7481;
+  --album-border:#e7ecf4;
+
+  --veil: rgba(0,0,0,.65);
+  --focus-ring: 0 0 0 4px rgba(120,170,255,.18);
+
+  color-scheme: light;
+  background:var(--bg);
+  color:var(--ink);
+}
+body.is-dark{
+  --bg:#0b0d12;
+  --ink:#eaf0ff;
+  --muted:#a9b4c7;
+  --ring:rgba(120,170,255,.35);
+
+  --card:#0f141c;
+  --card-2:#0c1118;
+  --hair:rgba(255,255,255,.08);
+
+  --album-canvas:#0b0d12;     /* rich dark overlay */
+  --album-ink:#eaf0ff;
+  --album-muted:#a9b4c7;
+  --album-border:#1b2532;
+
+  --veil: rgba(0,0,0,.78);
+  --focus-ring: 0 0 0 4px rgba(120,170,255,.22);
+
+  color-scheme: dark;
+  background:var(--bg);
+  color:var(--ink);
+}
+
+/* ==========================================================
+   BASE
+   ========================================================== */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -16,15 +86,18 @@ body{
 }
 body.noscroll{overflow:hidden}
 
-/* ───────── Top bar ───────── */
+/* ==========================================================
+   TOP BAR
+   ========================================================== */
 .topbar{
   position:sticky; top:0; z-index:40;
   display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px;
   padding:14px clamp(16px,3vw,28px);
   background:rgba(255,255,255,.86);
   backdrop-filter:blur(10px);
-  border-bottom:1px solid #eaeef5;
+  border-bottom:1px solid var(--hair);
 }
+body.is-dark .topbar{ background:rgba(10,12,18,.72); }
 .brand{
   font-family:'Orbitron',monospace; font-weight:700;
   color:var(--ink); text-decoration:none;
@@ -37,15 +110,19 @@ body.noscroll{overflow:hidden}
 }
 .spacer{height:1px}
 
-/* ───────── Outside hero ───────── */
+/* ==========================================================
+   HERO (outside)
+   ========================================================== */
 .hero{padding:10px 0 0}
 .hero-media{
   position:relative; overflow:hidden; border-radius:18px;
   margin:0 auto; width:min(1200px,95vw); aspect-ratio:16/6;
-  border:1px solid #eef1f7; box-shadow:0 10px 40px rgba(0,0,0,.08);
+  border:1px solid var(--hair);
+  box-shadow:0 10px 40px rgba(0,0,0,.08);
 }
 .hero-media img{width:100%;height:100%;object-fit:cover;display:block}
 .hero-overlay{position:absolute; inset:0; background:linear-gradient(180deg,transparent 40%,rgba(255,255,255,.92))}
+body.is-dark .hero-overlay{ background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.55)); }
 .hero-text{position:absolute; left:5%; right:5%; bottom:6%; text-align:center}
 .hero-text h2{
   margin:0 0 8px; font-family:'Orbitron',monospace;
@@ -53,34 +130,59 @@ body.noscroll{overflow:hidden}
 }
 .hero-text p{margin:0; color:var(--muted); font-weight:500}
 
-/* ───────── Containers / search ───────── */
+/* crisp desktop colors for title */
+@media (min-width:1025px){
+  body.is-light .hero-text h2{ color:#0a0a0a !important; }
+  body.is-dark  .hero-text h2{ color:#ffffff !important; }
+}
+
+/* ==========================================================
+   CONTAINERS / SEARCH
+   ========================================================== */
 .container{width:min(1200px,95vw); margin:24px auto}
 .controls .search{
   display:flex; align-items:center; gap:10px;
   padding:12px 14px; border-radius:14px;
-  border:1px solid #e9eef5; background:#fff;
+  border:1px solid var(--hair); background:var(--card);
   box-shadow:0 6px 20px rgba(20,40,60,.05);
 }
+body.is-dark .controls .search{ box-shadow:0 10px 30px rgba(0,0,0,.28); }
 .controls .search input{
-  width:100%; border:0; outline:0; font-size:16px; background:transparent
+  width:100%; border:0; outline:0; font-size:16px; background:transparent; color:var(--ink);
 }
 .controls .search i{color:#9aa3b2}
+.controls .search:focus-within{
+  border-color:#78aaff; box-shadow:var(--focus-ring);
+}
 
+/* tip (desktop only; ash/blue tone) */
+.search-tip{ margin-left:auto; font-size:.96rem; }
+.search-tip .kicker{ font-weight:800; }
+@media (min-width:1025px){
+  body.is-dark  .search-tip{ color:#9FB0C2; opacity:.96; }
+  body.is-dark  .search-tip .kicker{ color:#C7D2DE; }
+  body.is-light .search-tip{ color:#6B7785; opacity:.95; }
+  body.is-light .search-tip .kicker{ color:#505A66; }
+}
+@media (max-width:1024px){ .search-tip{ display:none !important; } }
 
-/* ───────── Album grid (outside) ───────── */
+/* ==========================================================
+   ALBUM GRID (outside)
+   ========================================================== */
 #albumGrid{
   display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px;
 }
 .card{
   position:relative; overflow:hidden; border-radius:18px; cursor:pointer;
-  background:#fff; border:1px solid #ecf1f7;
+  background:var(--card); border:1px solid var(--hair);
   box-shadow:0 10px 30px rgba(30,40,60,.08);
-  transition:transform .25s ease, box-shadow .25s ease;
+  transition:transform .25s ease, box-shadow .25s ease, border-color .2s ease;
 }
-.card:hover{transform:translateY(-6px); box-shadow:0 16px 50px rgba(20,50,90,.12)}
+.card:hover{transform:translateY(-6px); box-shadow:0 16px 50px rgba(20,50,90,.12); border-color:rgba(120,170,255,.35)}
+body.is-dark .card{ box-shadow:0 12px 32px rgba(0,0,0,.45); }
 .card img{width:100%; height:200px; object-fit:cover; display:block}
-.card .label{padding:12px 14px}
-.card .title{font-weight:700}
+.card .label{padding:12px 14px; border-top:1px solid var(--hair); background:transparent}
+.card .title{font-weight:700; color:var(--ink)}
 .badge-video{
   position:absolute; top:10px; right:10px;
   width:34px; height:34px; border-radius:50%;
@@ -89,53 +191,63 @@ body.noscroll{overflow:hidden}
   box-shadow:0 6px 16px rgba(4,112,255,.25);
 }
 
-/* ───────── Inside album overlay ───────── */
+/* ==========================================================
+   INSIDE ALBUM (overlay) — now fully theming
+   ========================================================== */
 #albumView{
   position:fixed; inset:0; z-index:80;
-  display:none; overflow:auto; background:#000;
+  display:none; overflow:auto;
+  background: var(--album-canvas);
+  color: var(--album-ink);
 }
 #albumView.active{display:block}
 .close-btn{
   position:sticky; top:12px; float:right; margin:12px; z-index:10;
-  border:0; background:#101317; color:#fff;
-  padding:10px 12px; border-radius:12px; cursor:pointer;
+  border:1px solid var(--album-border); background:linear-gradient(180deg,var(--card),var(--card-2));
+  color:var(--ink); padding:10px 12px; border-radius:12px; cursor:pointer;
   box-shadow:0 6px 18px rgba(0,0,0,.2);
 }
+body.is-dark .close-btn{ background:#101317; color:#fff; border-color:#20252d }
 
 /* Banner */
 .album-hero.slim{
   position:relative; display:block;
   width:min(1400px,96vw); margin:6px auto 0;
-  border-radius:18px; overflow:hidden; border:1px solid #171717;
-  aspect-ratio:21/7; /* short landscape */
+  border-radius:18px; overflow:hidden; border:1px solid var(--album-border);
+  aspect-ratio:21/7;
+  background: #000;
 }
 .album-hero img{width:100%;height:100%;object-fit:cover;display:block}
 .album-hero-overlay{position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,0) 60%,rgba(0,0,0,.55))}
+body.is-light .album-hero-overlay{ background:linear-gradient(180deg,rgba(255,255,255,0) 60%, rgba(255,255,255,.65)); }
 .album-hero h2{
   position:absolute; left:4vw; bottom:1.4vw; margin:0;
   font-family:'Orbitron',monospace; font-weight:700;
   font-size:clamp(28px,8vw,120px); color:#fff; line-height:.9; letter-spacing:1px;
 }
+body.is-light #albumView .album-hero h2{ color:#0e0f11; text-shadow:0 1px 18px rgba(255,255,255,.35); }
 
 /* Description */
-.album-desc-block{padding:40px 0 26px; background:#000; color:#fff}
+.album-desc-block{padding:40px 0 26px; background:transparent; color:var(--album-ink)}
 .album-desc-inner{
   width:min(1100px,88vw); margin:0 auto;
   font-weight:300; font-size:clamp(16px,2.1vw,28px); line-height:1.45;
-  text-align:center; color:#e9e9e9;
+  text-align:center; color:var(--album-muted);
 }
 
-/* Masonry (column layout) */
-.album-media{padding:4px 0 30px}
-.masonry{column-count:3; column-gap:16px}
+/* Masonry */
+.album-media{padding:4px 0 30px; width:min(1100px,96vw); margin:0 auto;}
+.masonry{column-count:3; column-gap:16px; -webkit-column-gap:16px; -webkit-column-fill:balance; column-fill:balance}
 @media (max-width:1100px){.masonry{column-count:2}}
 @media (max-width:640px){.masonry{column-count:1}}
 .m-item{
   break-inside:avoid; -webkit-column-break-inside:avoid; -moz-column-break-inside:avoid;
   margin-bottom:16px; position:relative; cursor:pointer;
-  border-radius:14px; overflow:hidden; border:1px solid #151515;
+  border-radius:14px; overflow:hidden; border:1px solid var(--album-border);
   box-shadow:0 8px 24px rgba(0,0,0,.35); display:block; min-height:10px;
+  background:#000; /* safe fallback for media */
 }
+body.is-light .m-item{ background:#fff; box-shadow:0 10px 26px rgba(17,23,32,.08); }
 .m-item img{width:100%; height:auto; display:block}
 .m-item .play{
   position:absolute; right:10px; bottom:10px;
@@ -143,12 +255,15 @@ body.noscroll{overflow:hidden}
   color:#fff; background:rgba(0,0,0,.6);
   border:1px solid rgba(255,255,255,.12); border-radius:50%;
 }
+body.is-light .m-item .play{ background:rgba(10,12,16,.55); border-color:rgba(0,0,0,.15) }
 
-/* ───────── Viewer (lightbox) ───────── */
+/* ==========================================================
+   VIEWER (lightbox) — themed
+   ========================================================== */
 #viewerOverlay{
   position:fixed; inset:0; z-index:120;
   display:none; place-items:center;
-  background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+  background:var(--veil); backdrop-filter:blur(6px);
 }
 #viewerOverlay.active{display:grid}
 
@@ -156,37 +271,44 @@ body.noscroll{overflow:hidden}
 .stage{
   margin:0; position:relative; overflow:hidden; width:100%;
   min-height:60vh; max-height:84vh;
-  border-radius:18px; border:1px solid #0f0f10;
+  border-radius:18px; border:1px solid var(--album-border);
   box-shadow:0 30px 120px rgba(0,0,0,.55),
-             0 0 0 6px rgba(56,231,171,.25),
-             0 0 0 12px rgba(4,112,255,.20);
-  background:#000; display:grid; place-items:center;
+             0 0 0 6px rgba(56,231,171,.20),
+             0 0 0 12px rgba(4,112,255,.18);
+  background: var(--album-canvas);
+  display:grid; place-items:center;
 }
 .stage img,.stage video,.stage iframe{
   width:100% !important; height:100% !important;
-  object-fit:contain; background:#000; display:block; border:0;
+  object-fit:contain; background:var(--album-canvas); display:block; border:0;
 }
 .viewer-close{
   position:absolute; top:10px; right:10px; z-index:2;
-  border:0; background:#111827; color:#fff;
-  padding:8px 10px; border-radius:10px; cursor:pointer;
+  border:1px solid var(--album-border);
+  background:linear-gradient(180deg,var(--card),var(--card-2));
+  color:var(--ink); padding:8px 10px; border-radius:10px; cursor:pointer;
 }
+body.is-dark .viewer-close{ background:#111827; color:#fff; }
 .nav{
   position:absolute; top:50%; transform:translateY(-50%);
-  border:0; background:rgba(10,12,16,.75); color:#fff;
+  border:1px solid var(--album-border);
+  background:rgba(10,12,16,.75); color:#fff;
   width:46px; height:46px; border-radius:50%; cursor:pointer;
   box-shadow:0 10px 24px rgba(0,0,0,.35);
 }
-.nav.prev{left:10px} .nav.next{right:10px}
+body.is-light .nav{ background:rgba(20,22,28,.72); color:#fff; }
+
 .peek{
   position:absolute; bottom:-70px; width:110px; height:70px;
   border:2px solid rgba(4,112,255,.35); border-radius:10px;
   object-fit:cover; opacity:.9; filter:grayscale(.1) saturate(1.1);
 }
 .peek-left{left:10px} .peek-right{right:10px}
-.hint{color:#9ca3af; font-size:12px; margin:10px auto 0; text-align:center}
+.hint{color:var(--album-muted); font-size:12px; margin:10px auto 0; text-align:center}
 
-/* ───────── Responsive tweaks ───────── */
+/* ==========================================================
+   RESPONSIVE TWEAKS
+   ========================================================== */
 @media (max-width:720px){
   .album-hero.slim{aspect-ratio:21/10}
   .peek{display:none}
@@ -194,17 +316,19 @@ body.noscroll{overflow:hidden}
   .stage{max-height:78vh}
 }
 
-/* ───────── Canonical Footer (main + inside albums) ───────── */
+/* ==========================================================
+   FOOTER (main + inside albums)
+   ========================================================== */
 .site-footer{
   --accent:#f1b32a;
   background:linear-gradient(180deg,#0d0e10 0%, #0f1012 100%);
   color:#e9eef5;
-  border-top:1px solid rgba(255,255,255,.06);
+  border-top:1px solid var(--hair);
   padding:18px clamp(18px,4vw,28px);
 
   display:flex;
-  align-items:center;                 /* vertical centering */
-  justify-content:space-between;      /* left & right ends */
+  align-items:center;
+  justify-content:space-between;
   gap:16px;
 
   line-height:1.4;
@@ -213,872 +337,128 @@ body.noscroll{overflow:hidden}
   border-bottom-left-radius:10px;
   border-bottom-right-radius:10px;
 }
-
-/* keep both sides on the same baseline */
+body.is-light .site-footer{
+  background: linear-gradient(180deg,#ffffff 0%, #f7f9fc 100%);
+  color:#20242c;
+}
 .site-footer .footer-left,
+.site-footer .footer-right{ display:inline-flex; align-items:center; }
+.site-footer .footer-left{ white-space:nowrap }
+.site-footer .footer-name, .site-footer a{
+  color:var(--accent); text-decoration:underline; text-underline-offset:3px; font-weight:600;
+}
 .site-footer .footer-right{
-  display:inline-flex;
-  align-items:center;
+  margin-left:auto; text-align:right; color:var(--accent); font-weight:600; letter-spacing:.2px;
 }
-
-.site-footer .footer-left{white-space:nowrap}
-
-.site-footer .footer-name,
-.site-footer a{
-  color:var(--accent);
-  text-decoration:underline;
-  text-underline-offset:3px;
-  font-weight:600;
-}
-
-.site-footer .footer-right{
-  margin-left:auto;                 /* push to far right on desktop */
-  text-align:right;
-  color:var(--accent);
-  font-weight:600;
-  letter-spacing:.2px;
-}
-
-/* When the same footer is cloned into the album overlay */
 #albumView .site-footer{
-  width:min(1200px,95vw);
-  margin:28px auto 44px;
-  position:relative;
-  z-index:1; /* fixed typo */
-  border-radius:10px;
+  width:min(1200px,95vw); margin:28px auto 44px; position:relative; z-index:1; border-radius:10px;
 }
-
-/* Mobile stacking for the footer */
 @media (max-width:600px){
-  .site-footer{
-    flex-direction:column;
-    text-align:center;
-    gap:6px;
-  }
-  .site-footer .footer-right{
-    margin-left:0;
-    text-align:center;  /* ✅ center when stacked */
-  }
+  .site-footer{ flex-direction:column; text-align:center; gap:6px; }
+  .site-footer .footer-right{ margin-left:0; text-align:center; }
 }
+/* Final enforce */
+.site-footer{ width:100% !important; display:flex !important; align-items:center !important; justify-content:space-between !important; padding:18px clamp(18px,4vw,28px); }
+.site-footer .footer-left{ flex:1 1 auto; white-space:nowrap; display:inline-flex; align-items:center; }
+.site-footer .footer-right{ margin-left:auto; text-align:right; display:inline-flex; align-items:center; }
+#albumView .site-footer{ width:100% !important; margin:28px 0 44px !important; border-radius:0 !important; }
 
-/* ===== FINAL footer override (forces right item to the edge) ===== */
-.site-footer{
-  width:100% !important;
-  display:flex !important;
-  align-items:center !important;      /* vertical centering */
-  justify-content:space-between !important;
-  padding:18px clamp(18px,4vw,28px);  /* keep your spacing */
-}
-
-.site-footer .footer-left{
-  flex:1 1 auto;                      /* take the left side */
-  white-space:nowrap;
-  display:inline-flex;
-  align-items:center;
-}
-
-.site-footer .footer-right{
-  margin-left:auto;                   /* push to far right */
-  text-align:right;
-  display:inline-flex;
-  align-items:center;                 /* baseline alignment with left */
-}
-
-/* In the album overlay, keep it full-width bar if you prefer */
-#albumView .site-footer{
-  width:100% !important;              /* full bleed inside overlay */
-  margin:28px 0 44px !important;
-  border-radius:0 !important;
-}
-
+/* ==========================================================
+   MISC + EXISTING COMPONENT POLISH
+   ========================================================== */
 .hero .word{ display:inline-block; will-change:transform }
 
 .lazy-cover{ filter:blur(14px); transform:scale(1.02); transition:filter .35s, transform .35s }
 .lazy-cover.is-loaded{ filter:blur(0); transform:scale(1) }
 
 .tag-chips{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0 }
-.chip{ border:1px solid #e9eef5; background:#fff; border-radius:999px; padding:6px 10px; cursor:pointer }
-.chip:hover{ background:#f5f7fb }
+.chip{ border:1px solid var(--hair); background:var(--card); border-radius:999px; padding:6px 10px; cursor:pointer; transition: transform .12s ease, box-shadow .2s ease, background .2s ease; }
+.chip:hover{ background:var(--card-2); transform:translateY(-1px); box-shadow:0 8px 20px rgba(0,0,0,.12) }
 
 @media (prefers-reduced-motion: reduce){
   * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
 
+/* Album ask block */
 .album-ask { margin-top: 8px; }
 .album-ask .ask-row{
   display:flex; gap:10px; align-items:center;
-  padding:10px; border:1px solid #1b1b1b; border-radius:12px;
-  background:#0b0b0b; box-shadow:0 6px 20px rgba(0,0,0,.25);
+  padding:10px; border:1px solid var(--album-border); border-radius:12px;
+  background: linear-gradient(180deg,var(--card),var(--card-2));
+  box-shadow:0 6px 20px rgba(0,0,0,.1);
 }
+body.is-dark .album-ask .ask-row{ background:#0b0b0b; border-color:#1b1b1b; box-shadow:0 6px 20px rgba(0,0,0,.25); }
 .album-ask input{
-  flex:1; border:0; outline:0; background:transparent; color:#e9eef5;
+  flex:1; border:0; outline:0; background:transparent; color:var(--ink);
   font-size:16px; padding:10px 8px;
 }
+body.is-dark .album-ask input{ color:#e9eef5; }
 .album-ask .ask-btn{
-  border:0; border-radius:10px; padding:10px 14px; cursor:pointer;
-  background:#1f2937; color:#fff; font-weight:600;
+  border:1px solid var(--album-border); border-radius:10px; padding:10px 14px; cursor:pointer;
+  background:linear-gradient(180deg,var(--card),var(--card-2)); color:var(--ink); font-weight:600;
 }
+body.is-dark .album-ask .ask-btn{ background:#1f2937; color:#fff; border-color:#2a3442 }
 .album-ask .ask-btn:disabled{ opacity:.6; cursor:not-allowed }
-.album-ask .ask-result{
-  margin-top:10px; color:#d6d6d6; line-height:1.5; white-space:pre-wrap;
-}
+.album-ask .ask-result{ margin-top:10px; color:var(--album-muted); line-height:1.5; white-space:pre-wrap; }
 
 button:focus-visible { outline: 2px solid #f1b32a; outline-offset: 2px; }
 
-.mini-tags{
-  position:absolute; left:8px; bottom:8px;
-  display:flex; gap:6px; flex-wrap:wrap;
-}
+/* mini tags on cards */
+.mini-tags{ position:absolute; left:8px; bottom:8px; display:flex; gap:6px; flex-wrap:wrap; }
 .mini-chip{
   padding:4px 8px; font-size:12px;
   background:rgba(0,0,0,.55); color:#fff;
   border:1px solid rgba(255,255,255,.15);
-  border-radius:999px;
-  backdrop-filter: blur(2px);
+  border-radius:999px; backdrop-filter: blur(2px);
 }
 
-/* Mobile search bar fix (kept; harmless if container unused) */
+/* Mobile search bar convenience */
 @media (max-width: 768px) {
-  .search-bar-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 10px;
-  }
+  .search-bar-container { display:flex; flex-direction:column; align-items:center; padding:0 10px; }
   .search-bar-container input[type="text"],
-  .search-slot input#searchInput{           /* ✅ ensure actual search input also benefits */
-    width: 90% !important;
-    max-width: 350px;
-    font-size: 14px;
-    border-radius: 8px;
-    padding: 8px 12px;
-    box-sizing: border-box;
+  .search-slot input#searchInput{
+    width:90% !important; max-width:350px; font-size:14px; border-radius:8px; padding:8px 12px; box-sizing:border-box;
+    background:var(--card); color:var(--ink); border:1px solid var(--hair);
   }
-  .search-bar-container button {
-    margin-top: 8px;
-    width: auto;
-    max-width: 120px;
-  }
+  .search-bar-container button{ margin-top:8px; width:auto; max-width:120px; }
 }
 
-/* ─────────── Mobile/Tablet toolbar layout (chips left, search right) ─────────── */
+/* Album toolbar on mobile/tablet */
 @media (max-width: 1024px){
-  .album-toolbar{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    width:100%;
-    min-height:44px; /* keeps row stable */
-  }
-
-  /* one-line, swipeable chip row with soft edge fade */
+  .album-toolbar{ display:flex; align-items:center; gap:10px; width:100%; min-height:44px; }
   .chips-scroll{
-    display:flex;
-    gap:8px;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    padding-bottom:4px;
-    flex:1 1 50%;
+    display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:4px; flex:1 1 50%;
     mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent); /* ✅ iOS */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
     scroll-snap-type:x proximity;
   }
   .chips-scroll > *{ scroll-snap-align:center; }
   .chips-scroll::-webkit-scrollbar{ display:none; }
-
-  /* search on the right with sensible min width */
-  .search-slot{
-    flex:0 1 50%;
-    min-width: 180px;
-    display:flex;
-  }
-  .search-slot input{
-    width:100%;
-    box-sizing:border-box;
-    font-size:14px;
-    padding:9px 12px;
-    border-radius:10px;
-  }
-
-  /* compact pill-style tip moved below the toolbar */
+  .search-slot{ flex:0 1 50%; min-width:180px; display:flex; }
+  .search-slot input{ width:100%; box-sizing:border-box; font-size:14px; padding:9px 12px; border-radius:10px; }
   #ask-hint-row.ask-hint-compact{
-    display:flex;
-    justify-content:center;
-    margin:8px auto 2px;
-    max-width: min(840px, 96%);
+    display:flex; justify-content:center; margin:8px auto 2px; max-width:min(840px,96%);
     background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
     border:1px dashed rgba(158,193,255,.55);
-    border-radius:999px;
-    padding:8px 12px;
-    font-size:13px;
-    color:rgba(230,240,255,.92);
-    backdrop-filter: blur(4px);
+    border-radius:999px; padding:8px 12px; font-size:13px;
+    color:rgba(230,240,255,.92); backdrop-filter: blur(4px);
   }
-  #ask-hint-row.ask-hint-compact em{
-    font-style: italic;
-    opacity:.95;
-    white-space: nowrap;
-  }
+  #ask-hint-row.ask-hint-compact em{ font-style: italic; opacity:.95; white-space: nowrap; }
 }
 
-/* tighter phones: give search a bit more room */
-@media (max-width: 600px){
-  .chips-scroll{ flex-basis: 46%; }
-  .search-slot{ flex-basis: 54%; min-width: 160px; }
-  .search-slot input{ font-size:13.5px; padding:8px 11px; }
-}
-@media (max-width: 420px){
-  .chips-scroll{ flex-basis: 42%; }
-  .search-slot{ flex-basis: 58%; min-width: 150px; }
-  .search-slot input{ font-size:13px; padding:7.5px 10px; }
-  #ask-hint-row.ask-hint-compact{ font-size:12.5px; padding:7px 10px; }
-}
-
-/* Hide the generic search tip on tablets & phones */
-@media (max-width: 1024px){
-  #ask-hint-row{ display:none !important; }
-}
-
-/* Hide the generic search tip on tablets & phones (duplicate kept harmless) */
-@media (max-width: 1024px){
-  #ask-hint-row{ display:none !important; }
-}
-
-/* --- FIX: phone landscape clipping of right column in album --- */
-
-/* 1) keep the overlay from creating horizontal scroll that can hide the 2nd column */
-#albumView{
-  overflow-x: hidden;            /* vertical scroll still allowed */
-}
-
-/* 2) constrain & center the media block so columns never render off-canvas */
-.album-media{
-  width: min(1100px, 96vw);
-  margin: 0 auto;                /* center inside overlay */
-}
-
-/* 3) make column layout more robust on WebKit */
-.masonry{
-  -webkit-column-gap: 16px;
-  column-gap: 16px;
-  -webkit-column-fill: balance;
-  column-fill: balance;
-}
-
-/* Phones in landscape (short height): force a reliable 2-column layout */
+/* phone landscape adjustments */
 @media (max-height: 500px) and (max-width: 900px) and (orientation: landscape){
-  .album-media{ width: min(1000px, 94vw); }
-  .masonry{ column-count: 2; }   /* ensure the second column renders */
-}
-
-/* Very short landscape: fall back to one column instead of clipping */
-@media (max-height: 420px) and (orientation: landscape){
-  .masonry{ column-count: 1; }
-}
-
-/* ===== Fix: Center footer on phones & tablets (portrait only) ===== */
-@media (max-width: 1024px) and (orientation: portrait) {
-  body .site-footer.site-footer.site-footer,
-  body footer.site-footer.site-footer,
-  body footer.page-footer.page-footer,
-  body footer.app-footer.app-footer,
-  body footer.main-footer.main-footer {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    gap: 10px !important;
-  }
-  body .site-footer.site-footer.site-footer .footer-left,
-  body .site-footer.site-footer.site-footer .footer-right,
-  body footer .footer-left,
-  body footer .footer-right {
-    width: 100% !important;
-    margin: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-  }
-  body .site-footer .footer-right { margin-left: 0 !important; }
-}
-
-/* ---------- Small bug fix (typo) ---------- */
-#albumView .site-footer{
-  z-index: 1; /* was zIndex */
-}
-
-/* ==========================================================
-   THEME TOKENS (non-breaking)
-   ========================================================== */
-
-/* LIGHT (Home) — applied when <body class="home is-light"> */
-body.home.is-light{
-  --bg: #f7f9fc;
-  --ink: #0e0f11;
-  --muted: #6e7481;
-  --ring: rgba(4,112,255,.22);
-  --card: #ffffff;
-  --card-2: #f3f6fb;
-  --hair: #e7ecf4;
-}
-
-/* DARK (Home) — applied when <body class="home is-dark"> */
-body.home.is-dark{
-  --bg: #0b0d12;
-  --ink: #eaf0ff;
-  --muted: #a9b4c7;
-  --ring: rgba(120,170,255,.35);
-  --card: #0f141c;
-  --card-2: #0c1118;
-  --hair: rgba(255,255,255,.08);
-  color-scheme: dark;
-}
-
-/* Base apply for Home (both themes) */
-body.home.is-dark, body.home.is-light{
-  background: var(--bg);
-  color: var(--ink);
-}
-
-/* ==========================================================
-   TOPBAR (Home)
-   ========================================================== */
-body.home.is-dark .topbar{
-  background: rgba(10,12,18,.72);
-  border-bottom: 1px solid var(--hair);
-  backdrop-filter: blur(10px);
-}
-body.home.is-light .topbar{
-  background: rgba(255,255,255,.85);
-  border-bottom: 1px solid var(--hair);
-  backdrop-filter: blur(10px);
-}
-
-/* Theme toggle (if present) */
-.theme-toggle{
-  appearance: none;
-  border: 1px solid var(--hair);
-  background: linear-gradient(180deg, var(--card), var(--card-2));
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-weight: 700;
-  font-family: 'Orbitron', system-ui, sans-serif;
-  letter-spacing: .2px;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
-  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-}
-.theme-toggle:hover{ transform: translateY(-1px); box-shadow:0 12px 30px rgba(0,0,0,.12); }
-.theme-toggle:active{ transform: translateY(0); }
-.theme-toggle i{ margin-right: 6px; }
-
-/* ==========================================================
-   HERO (Home)
-   ========================================================== */
-body.home.is-dark .hero,
-body.home.is-light .hero{ background: transparent; }
-body.home.is-dark .hero-media,
-body.home.is-light .hero-media{
-  border: 1px solid var(--hair);
-  box-shadow: 0 14px 44px rgba(0,0,0,.25);
-  overflow: hidden;
-  position: relative;
-}
-body.home.is-dark .hero-media::after,
-body.home.is-light .hero-media::after{
-  content: ""; position: absolute; inset: 0; pointer-events:none;
-}
-body.home.is-dark .hero-media::after{
-  background:
-    radial-gradient(1200px 60% at 50% 100%, rgba(0,0,0,.55), transparent 70%),
-    linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.55));
-}
-body.home.is-light .hero-media::after{
-  background:
-    radial-gradient(1200px 60% at 50% 100%, rgba(255,255,255,.6), transparent 70%),
-    linear-gradient(180deg, rgba(255,255,255,0) 55%, rgba(255,255,255,.85));
-}
-body.home.is-dark .hero-text h2,
-body.home.is-dark .hero-name{ color:#f7faff; }
-body.home.is-light .hero-text h2,
-body.home.is-light .hero-name{ color:#101319; }
-body.home.is-dark .hero-text p{ color:var(--muted); }
-body.home.is-light .hero-text p{ color:#58606d; }
-
-/* ==========================================================
-   SEARCH (Home & Album)
-   ========================================================== */
-.controls .search{
-  background: var(--card);
-  border: 1px solid var(--hair);
-  box-shadow: 0 10px 30px rgba(0,0,0,.08);
-}
-.controls .search input{ color: var(--ink); }
-.controls .search i{ color: #9aa3b2; }
-.controls .search:focus-within{
-  border-color:#78aaff;
-  box-shadow: 0 0 0 4px rgba(120,170,255,.18), 0 12px 40px rgba(0,0,0,.14);
-}
-@media (max-width: 768px){
-  .search-bar-container input[type="text"],
-  .search-slot input#searchInput{
-    width: 90% !important; max-width: 360px;
-    font-size: 14px; border-radius: 10px; padding: 10px 12px;
-    background: var(--card); color: var(--ink); border: 1px solid var(--hair);
-  }
-}
-
-/* Chips/pills */
-.chip{
-  background: var(--card);
-  border: 1px solid var(--hair);
-  color: var(--ink);
-  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
-}
-.chip:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0,0,0,.12);
-  background: var(--card-2);
-}
-
-/* ==========================================================
-   CARD SURFACES (Home sections)
-   ========================================================== */
-body.home.is-dark .tool-card,
-body.home.is-dark .spec-card,
-body.home.is-dark .stats-container,
-body.home.is-dark .experience-card,
-body.home.is-dark .project-card,
-body.home.is-dark .research-card,
-body.home.is-dark .membership-card,
-body.home.is-dark .contact-info,
-body.home.is-dark .contact-form-container{
-  background: var(--card);
-  border: 1px solid var(--hair);
-  box-shadow: 0 18px 50px rgba(0,0,0,.28);
-  color: var(--ink);
-}
-body.home.is-light .tool-card,
-body.home.is-light .spec-card,
-body.home.is-light .stats-container,
-body.home.is-light .experience-card,
-body.home.is-light .project-card,
-body.home.is-light .research-card,
-body.home.is-light .membership-card,
-body.home.is-light .contact-info,
-body.home.is-light .contact-form-container{
-  background: #fff;
-  border: 1px solid var(--hair);
-  box-shadow: 0 18px 50px rgba(36,48,76,.08);
-  color: var(--ink);
-}
-
-/* Project overlays */
-body.home.is-dark .project-overlay{ background: rgba(44,113,255,.9); }
-body.home.is-light .project-overlay{ background: rgba(13,110,253,.9); }
-
-/* Diplomas / badges */
-body.home.is-dark .diploma-badge{
-  background: rgba(255,255,255,.06);
-  color:#cfe0ff; border:1px solid rgba(128,168,255,.35);
-}
-body.home.is-light .diploma-badge{
-  background: #f3f7ff; color:#1f3f8f; border:1px solid #b9cdf9;
-}
-
-/* Forms */
-body.home.is-dark .form-floating > .form-control{
-  background:#0c1118; color:var(--ink); border:2px solid var(--hair);
-}
-body.home.is-dark .form-floating > .form-control:focus{
-  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.18);
-}
-body.home.is-light .form-floating > .form-control{
-  background:#fff; color:var(--ink); border:2px solid #e7ecf4;
-}
-body.home.is-light .form-floating > .form-control:focus{
-  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.14);
-}
-
-/* Contact icon block */
-body.home.is-dark .contact-icon{
-  background: linear-gradient(135deg,#1a60ff 0%, #6a3bff 100%);
-}
-body.home.is-light .contact-icon{
-  background: linear-gradient(135deg,#5a9bff 0%, #7ca6ff 100%);
-}
-
-/* Nav pills */
-body.home.is-dark .nav-pills .nav-link{
-  background:#0f141d; color:#cfe0ff; border:1px solid var(--hair);
-}
-body.home.is-dark .nav-pills .nav-link.active{
-  background:#2c71ff !important; color:#fff !important; border-color:transparent !important;
-}
-body.home.is-light .nav-pills .nav-link{
-  background:#f6f8fc; color:#2a3140; border:1px solid var(--hair);
-}
-body.home.is-light .nav-pills .nav-link.active{
-  background:#0d6efd !important; color:#fff !important; border-color:transparent !important;
-}
-
-/* Back-to-top */
-body.home.is-dark .back-to-top{ background:#2c71ff; color:#fff; }
-body.home.is-light .back-to-top{ background:#0d6efd; color:#fff; }
-
-/* ==========================================================
-   FOOTER theme polish
-   ========================================================== */
-body.home.is-dark .site-footer{
-  background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
-  border-top:1px solid var(--hair);
-  color:#eaf0ff;
-}
-body.home.is-light .site-footer{
-  background: linear-gradient(180deg,#ffffff 0%, #f7f9fc 100%);
-  border-top:1px solid var(--hair);
-  color:#20242c;
-}
-body.home.is-dark .site-footer .footer-name,
-body.home.is-dark .site-footer a{ color:#f4c34f; }
-body.home.is-light .site-footer .footer-name,
-body.home.is-light .site-footer a{ color:#d0981a; }
-
-@media (max-width: 1024px) and (orientation: portrait) {
-  body .site-footer.site-footer.site-footer,
-  body footer.site-footer.site-footer{
-    display:flex !important; flex-direction:column !important;
-    align-items:center !important; justify-content:center !important;
-    text-align:center !important; gap:10px !important;
-  }
-  body .site-footer .footer-left,
-  body .site-footer .footer-right{
-    width:100% !important; margin:0 !important;
-    display:inline-flex !important; align-items:center !important; justify-content:center !important;
-    text-align:center !important;
-  }
-  body .site-footer .footer-right{ margin-left:0 !important; }
-}
-
-/* ==========================================================
-   ALBUM: right-column visibility on phone landscape (KEEP)
-   ========================================================== */
-#albumView{ overflow-x: hidden; } /* vertical scroll ok */
-.album-media{ width: min(1100px, 96vw); margin: 0 auto; }
-.masonry{ -webkit-column-gap:16px; column-gap:16px; -webkit-column-fill:balance; column-fill:balance; }
-@media (max-height:500px) and (max-width:900px) and (orientation: landscape){
-  .album-media{ width: min(1000px, 94vw); }
+  .album-media{ width:min(1000px,94vw); }
   .masonry{ column-count:2; }
 }
-@media (max-height:420px) and (orientation: landscape){
+@media (max-height: 420px) and (orientation: landscape){
   .masonry{ column-count:1; }
 }
 
-/* ==========================================================
-   ASK TIP: hide on tablets/phones (KEEP)
-   ========================================================== */
-@media (max-width: 1024px){
-  #ask-hint-row{ display:none !important; }
+/* Footer center on portrait tablets/phones */
+@media (max-width: 1024px) and (orientation: portrait) {
+  body .site-footer{ display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; text-align:center !important; gap:10px !important; }
+  body .site-footer .footer-left,
+  body .site-footer .footer-right{ width:100% !important; margin:0 !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; }
+  body .site-footer .footer-right{ margin-left:0 !important; }
 }
-
-/* ==========================================================
-   BONUS: tasteful depth micro-interactions (safe)
-   ========================================================== */
-.card, .tool-card, .spec-card, .project-card, .research-card, .membership-card{
-  transition: transform .18s ease, box-shadow .22s ease, border-color .2s ease;
-}
-.card:hover, .tool-card:hover, .spec-card:hover, .project-card:hover, .research-card:hover, .membership-card:hover{
-  transform: translateY(-6px);
-  box-shadow: 0 24px 60px rgba(0,0,0,.18);
-  border-color: rgba(120,170,255,.35);
-}
-
-/* Button ripple (CSS-only, non-invasive) */
-.btn, .theme-toggle{ position: relative; overflow: hidden; }
-.btn::after, .theme-toggle::after{
-  content:""; position:absolute; left:50%; top:50%;
-  width:0; height:0; border-radius:999px; background: rgba(255,255,255,.25);
-  transform: translate(-50%,-50%); pointer-events:none; transition: width .35s ease, height .35s ease, opacity .4s ease;
-  opacity:0;
-}
-.btn:active::after, .theme-toggle:active::after{ width:180%; height:180%; opacity:.0; }
-
-/* ==========================================================
-   🔥 Dark-mode fix for album cards (this is the important part)
-   ========================================================== */
-body.home.is-dark .card{
-  background: var(--card) !important;       /* deep surface */
-  border-color: var(--hair) !important;      /* dark border */
-  box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
-}
-body.home.is-dark .card .label{
-  background: transparent !important;        /* remove white band */
-  border-top: 1px solid var(--hair);         /* subtle divider */
-}
-body.home.is-dark .card .title{
-  color: #e9f2f9 !important;                 /* high contrast title */
-}
-body.home.is-dark .badge-video{
-  background: rgba(0,0,0,.55) !important;
-  border-color: rgba(120,170,255,.28) !important;
-  box-shadow: 0 6px 16px rgba(0,0,0,.35) !important;
-}
-body.home.is-dark .chip{
-  background: #0b1218 !important;
-  color: #dbe6ef !important;
-  border-color: #1b2532 !important;
-}
-
-
-
-/* ================================================
-   DESKTOP/LAPTOP HERO TITLE — COLOR + LAYER FIX
-   Paste this block at the VERY END of your CSS
-   ================================================ */
-
-/* Ensure overlays sit BEHIND the title on all devices (no visual change except fixing fade) */
-.hero-media { position: relative; }
-.hero-media::after,
-.hero-overlay { z-index: 0 !important; }   /* background treatments */
-.hero-text { position: absolute; z-index: 1 !important; }  /* title/content above overlays */
-.hero-text h2 { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-
-/* Desktop/Laptop ONLY: crisp title colors per theme */
-@media (min-width: 1025px) {
-  /* Light theme → black title */
-  body.home.is-light .hero-text h2 { color: #0a0a0a !important; }
-
-  /* Dark theme → white title */
-  body.home.is-dark .hero-text h2 { color: #ffffff !important; }
-}
-
-
-
-
-
-
-/* ================================
-   Search tip color tuning (desktop only)
-   – subtle ash/blue-gray like your screenshot
-   ================================ */
-
-@media (min-width: 1025px){
-  /* Dark theme: soft blue-gray text, slightly brighter "Tip:" */
-  body.home.is-dark .search-tip{
-    color: #9FB0C2;              /* main line — ash/blue-gray */
-    opacity: .96;
-  }
-  body.home.is-dark .search-tip .kicker{
-    color: #C7D2DE;              /* "Tip:" a touch brighter */
-    font-weight: 800;
-  }
-
-  /* Light theme: neutral gray so it’s readable on white */
-  body.home.is-light .search-tip{
-    color: #6B7785;              /* muted neutral gray */
-    opacity: .95;
-  }
-  body.home.is-light .search-tip .kicker{
-    color: #505A66;              /* slightly stronger for "Tip:" */
-    font-weight: 800;
-  }
-}
-
-/* Keep your existing desktop-only visibility rule */
-@media (max-width: 1024px){
-  .search-tip{ display: none !important; }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ==========================================================
-   GLOBAL THEME (applies on every page)
-   Toggle by adding .is-light or .is-dark to <body>
-   ========================================================== */
-body.is-light{
-  --bg: #f7f9fc;
-  --ink: #0e0f11;
-  --muted: #6e7481;
-  --ring: rgba(4,112,255,.22);
-  --card: #ffffff;
-  --card-2: #f3f6fb;
-  --hair: #e7ecf4;
-  color-scheme: light;
-  background: var(--bg);
-  color: var(--ink);
-}
-body.is-dark{
-  --bg: #0b0d12;
-  --ink: #eaf0ff;
-  --muted: #a9b4c7;
-  --ring: rgba(120,170,255,.35);
-  --card: #0f141c;
-  --card-2: #0c1118;
-  --hair: rgba(255,255,255,.08);
-  color-scheme: dark;
-  background: var(--bg);
-  color: var(--ink);
-}
-
-/* ==========================================================
-   SITE-WIDE OVERRIDES (reuse your components everywhere)
-   These do not remove anything you already had.
-   ========================================================== */
-
-/* Topbar + brand on all pages */
-body.is-dark .topbar{
-  background: rgba(10,12,18,.72);
-  border-bottom: 1px solid var(--hair);
-  backdrop-filter: blur(10px);
-}
-body.is-light .topbar{
-  background: rgba(255,255,255,.85);
-  border-bottom: 1px solid var(--hair);
-  backdrop-filter: blur(10px);
-}
-body.is-dark .brand{ color:#eaf0ff; }
-body.is-light .brand{ color:#0e0f11; }
-
-/* Surfaces: cards, search, chips (everywhere, including albums) */
-body.is-dark .card{
-  background: var(--card) !important;
-  border-color: var(--hair) !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
-}
-body.is-dark .card .label{
-  background: transparent !important;
-  border-top: 1px solid var(--hair);
-}
-body.is-dark .card .title{ color:#e9f2f9 !important; }
-body.is-dark .badge-video{
-  background: rgba(0,0,0,.55) !important;
-  border-color: rgba(120,170,255,.28) !important;
-  box-shadow: 0 6px 16px rgba(0,0,0,.35) !important;
-}
-body.is-dark .chip{
-  background:#0b1218 !important;
-  color:#dbe6ef !important;
-  border-color:#1b2532 !important;
-}
-body.is-light .chip{
-  background:var(--card);
-  border-color:var(--hair);
-  color:var(--ink);
-}
-
-/* Search container + input */
-body.is-dark .controls .search{
-  background: var(--card);
-  border: 1px solid var(--hair);
-  box-shadow: 0 10px 30px rgba(0,0,0,.28);
-}
-body.is-light .controls .search{
-  background: var(--card);
-  border: 1px solid var(--hair);
-  box-shadow: 0 10px 30px rgba(36,48,76,.08);
-}
-body.is-dark .controls .search input,
-body.is-light .controls .search input{ color: var(--ink); }
-
-/* Footer everywhere (main + inside album clone) */
-body.is-dark .site-footer{
-  background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
-  border-top:1px solid var(--hair);
-  color:#eaf0ff;
-}
-body.is-light .site-footer{
-  background: linear-gradient(180deg,#ffffff 0%, #f7f9fc 100%);
-  border-top:1px solid var(--hair);
-  color:#20242c;
-}
-body.is-dark .site-footer .footer-name,
-body.is-dark .site-footer a{ color:#f4c34f; }
-body.is-light .site-footer .footer-name,
-body.is-light .site-footer a{ color:#d0981a; }
-
-/* Hero titles in any section using .hero-text */
-@media (min-width:1025px){
-  body.is-light .hero-text h2{ color:#0a0a0a !important; }
-  body.is-dark  .hero-text h2{ color:#ffffff !important; }
-}
-
-/* Forms / pills consistency */
-body.is-dark .form-floating > .form-control{
-  background:#0c1118; color:var(--ink); border:2px solid var(--hair);
-}
-body.is-dark .form-floating > .form-control:focus{
-  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.18);
-}
-body.is-light .form-floating > .form-control{
-  background:#fff; color:var(--ink); border:2px solid #e7ecf4;
-}
-body.is-light .form-floating > .form-control:focus{
-  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.14);
-}
-
-/* Nav pills */
-body.is-dark .nav-pills .nav-link{
-  background:#0f141d; color:#cfe0ff; border:1px solid var(--hair);
-}
-body.is-dark .nav-pills .nav-link.active{
-  background:#2c71ff !important; color:#fff !important; border-color:transparent !important;
-}
-body.is-light .nav-pills .nav-link{
-  background:#f6f8fc; color:#2a3140; border:1px solid var(--hair);
-}
-body.is-light .nav-pills .nav-link.active{
-  background:#0d6efd !important; color:#fff !important; border-color:transparent !important;
-}
-
-/* Album overlay — stay dark background but adopt theme tokens for UI bits */
-#albumView{ background: #000; }
-body.is-dark #albumView .album-desc-inner{ color:#dfe8f5; }
-body.is-light #albumView .album-desc-inner{ color:#f1f5fb; } /* readable on black */
-body.is-dark #albumView .m-item{ border-color:#151515; }
-body.is-light #albumView .m-item{ border-color:#1a1a1a; }
-
-/* Viewer controls contrast */
-body.is-dark .viewer-close,
-body.is-dark .nav{ background:rgba(10,12,16,.75); color:#fff; }
-body.is-light .viewer-close,
-body.is-light .nav{ background:rgba(20,22,28,.75); color:#fff; }
-
-/* Desktop search tip — soft ash/blue like your mock */
-@media (min-width:1025px){
-  body.is-dark .search-tip{ color:#9FB0C2; opacity:.96; }
-  body.is-dark .search-tip .kicker{ color:#C7D2DE; font-weight:800; }
-  body.is-light .search-tip{ color:#6B7785; opacity:.95; }
-  body.is-light .search-tip .kicker{ color:#505A66; font-weight:800; }
-}
-@media (max-width:1024px){
-  .search-tip{ display:none !important; }  /* PC/Laptop only */
-}
-
-/* Small polish: focus rings match theme */
-:root{ --focusRing: 0 0 0 4px rgba(120,170,255,.18); }
-body.is-dark .controls .search:focus-within{ box-shadow: var(--focusRing); border-color:#78aaff; }
-body.is-light .controls .search:focus-within{ box-shadow: var(--focusRing); border-color:#78aaff; }
-
-
-
-

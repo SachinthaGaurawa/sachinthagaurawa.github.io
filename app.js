@@ -1382,16 +1382,17 @@ function setupResponsiveToolbar(){
 
 
 
-// On load: restore
+// restore on load
 const saved = localStorage.getItem('theme') || 'dark';
 document.body.classList.toggle('is-dark', saved === 'dark');
 document.body.classList.toggle('is-light', saved === 'light');
 
-// On button click:
+// click handler
 function toggleTheme(){
   const toDark = !document.body.classList.contains('is-dark');
   document.body.classList.toggle('is-dark', toDark);
   document.body.classList.toggle('is-light', !toDark);
   localStorage.setItem('theme', toDark ? 'dark' : 'light');
 }
+
 

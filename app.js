@@ -10,6 +10,87 @@ const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.ap
 
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
 
+
+
+
+
+
+
+
+
+
+// === Global theme controller (persist + apply everywhere) ===
+(function () {
+  const KEY = "sg_theme";           // localStorage key
+  const DEFAULT_THEME = "dark";     // your default
+
+  // Apply the theme to <html> and <body> (for legacy CSS)
+  function applyTheme(mode) {
+    const root = document.documentElement;
+
+    // Attribute for modern CSS
+    root.setAttribute("data-theme", mode);
+    root.classList.toggle("theme-dark", mode === "dark");
+    root.classList.toggle("theme-light", mode === "light");
+
+    // Update <body> classes for existing selectors like "body.home.is-dark"
+    const applyToBody = () => {
+      const b = document.body;
+      if (!b) return;
+      b.classList.remove("is-dark", "is-light");
+      b.classList.add(mode === "dark" ? "is-dark" : "is-light");
+    };
+    if (document.body) applyToBody();
+    else document.addEventListener("DOMContentLoaded", applyToBody);
+
+    // Persist
+    try { localStorage.setItem(KEY, mode); } catch (e) {}
+
+    // Toggle button label/state (if present)
+    const btn = document.querySelector(".theme-toggle");
+    if (btn) {
+      btn.textContent = (mode === "dark" ? "🌙 Dark" : "☀️ Light");
+      btn.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
+    }
+  }
+
+  function getSavedTheme() {
+    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  }
+
+  // Init ASAP (works even if this file is loaded at the end)
+  const initial = getSavedTheme() || DEFAULT_THEME;
+  applyTheme(initial);
+
+  // Click to toggle
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".theme-toggle");
+    if (!btn) return;
+    const next = (document.documentElement.getAttribute("data-theme") === "dark") ? "light" : "dark";
+    applyTheme(next);
+  });
+
+  // Optional: if you want OS changes to auto-apply when user hasn't chosen yet
+  try {
+    if (!getSavedTheme()) {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      mq.addEventListener("change", (e) => applyTheme(e.matches ? "dark" : "light"));
+    }
+  } catch (e) {}
+})();
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Show any uncaught errors so we don’t silently fail
 window.addEventListener('error', (e) => {
   console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);

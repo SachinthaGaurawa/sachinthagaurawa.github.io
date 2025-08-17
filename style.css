@@ -897,3 +897,188 @@ body.home.is-dark .chip{
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================================
+   GLOBAL THEME (applies on every page)
+   Toggle by adding .is-light or .is-dark to <body>
+   ========================================================== */
+body.is-light{
+  --bg: #f7f9fc;
+  --ink: #0e0f11;
+  --muted: #6e7481;
+  --ring: rgba(4,112,255,.22);
+  --card: #ffffff;
+  --card-2: #f3f6fb;
+  --hair: #e7ecf4;
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--ink);
+}
+body.is-dark{
+  --bg: #0b0d12;
+  --ink: #eaf0ff;
+  --muted: #a9b4c7;
+  --ring: rgba(120,170,255,.35);
+  --card: #0f141c;
+  --card-2: #0c1118;
+  --hair: rgba(255,255,255,.08);
+  color-scheme: dark;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* ==========================================================
+   SITE-WIDE OVERRIDES (reuse your components everywhere)
+   These do not remove anything you already had.
+   ========================================================== */
+
+/* Topbar + brand on all pages */
+body.is-dark .topbar{
+  background: rgba(10,12,18,.72);
+  border-bottom: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+}
+body.is-light .topbar{
+  background: rgba(255,255,255,.85);
+  border-bottom: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+}
+body.is-dark .brand{ color:#eaf0ff; }
+body.is-light .brand{ color:#0e0f11; }
+
+/* Surfaces: cards, search, chips (everywhere, including albums) */
+body.is-dark .card{
+  background: var(--card) !important;
+  border-color: var(--hair) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45) !important;
+}
+body.is-dark .card .label{
+  background: transparent !important;
+  border-top: 1px solid var(--hair);
+}
+body.is-dark .card .title{ color:#e9f2f9 !important; }
+body.is-dark .badge-video{
+  background: rgba(0,0,0,.55) !important;
+  border-color: rgba(120,170,255,.28) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.35) !important;
+}
+body.is-dark .chip{
+  background:#0b1218 !important;
+  color:#dbe6ef !important;
+  border-color:#1b2532 !important;
+}
+body.is-light .chip{
+  background:var(--card);
+  border-color:var(--hair);
+  color:var(--ink);
+}
+
+/* Search container + input */
+body.is-dark .controls .search{
+  background: var(--card);
+  border: 1px solid var(--hair);
+  box-shadow: 0 10px 30px rgba(0,0,0,.28);
+}
+body.is-light .controls .search{
+  background: var(--card);
+  border: 1px solid var(--hair);
+  box-shadow: 0 10px 30px rgba(36,48,76,.08);
+}
+body.is-dark .controls .search input,
+body.is-light .controls .search input{ color: var(--ink); }
+
+/* Footer everywhere (main + inside album clone) */
+body.is-dark .site-footer{
+  background: linear-gradient(180deg,#090b0f 0%, #0b0d10 100%);
+  border-top:1px solid var(--hair);
+  color:#eaf0ff;
+}
+body.is-light .site-footer{
+  background: linear-gradient(180deg,#ffffff 0%, #f7f9fc 100%);
+  border-top:1px solid var(--hair);
+  color:#20242c;
+}
+body.is-dark .site-footer .footer-name,
+body.is-dark .site-footer a{ color:#f4c34f; }
+body.is-light .site-footer .footer-name,
+body.is-light .site-footer a{ color:#d0981a; }
+
+/* Hero titles in any section using .hero-text */
+@media (min-width:1025px){
+  body.is-light .hero-text h2{ color:#0a0a0a !important; }
+  body.is-dark  .hero-text h2{ color:#ffffff !important; }
+}
+
+/* Forms / pills consistency */
+body.is-dark .form-floating > .form-control{
+  background:#0c1118; color:var(--ink); border:2px solid var(--hair);
+}
+body.is-dark .form-floating > .form-control:focus{
+  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.18);
+}
+body.is-light .form-floating > .form-control{
+  background:#fff; color:var(--ink); border:2px solid #e7ecf4;
+}
+body.is-light .form-floating > .form-control:focus{
+  border-color:#6aa2ff; box-shadow:0 0 0 4px rgba(120,170,255,.14);
+}
+
+/* Nav pills */
+body.is-dark .nav-pills .nav-link{
+  background:#0f141d; color:#cfe0ff; border:1px solid var(--hair);
+}
+body.is-dark .nav-pills .nav-link.active{
+  background:#2c71ff !important; color:#fff !important; border-color:transparent !important;
+}
+body.is-light .nav-pills .nav-link{
+  background:#f6f8fc; color:#2a3140; border:1px solid var(--hair);
+}
+body.is-light .nav-pills .nav-link.active{
+  background:#0d6efd !important; color:#fff !important; border-color:transparent !important;
+}
+
+/* Album overlay — stay dark background but adopt theme tokens for UI bits */
+#albumView{ background: #000; }
+body.is-dark #albumView .album-desc-inner{ color:#dfe8f5; }
+body.is-light #albumView .album-desc-inner{ color:#f1f5fb; } /* readable on black */
+body.is-dark #albumView .m-item{ border-color:#151515; }
+body.is-light #albumView .m-item{ border-color:#1a1a1a; }
+
+/* Viewer controls contrast */
+body.is-dark .viewer-close,
+body.is-dark .nav{ background:rgba(10,12,16,.75); color:#fff; }
+body.is-light .viewer-close,
+body.is-light .nav{ background:rgba(20,22,28,.75); color:#fff; }
+
+/* Desktop search tip — soft ash/blue like your mock */
+@media (min-width:1025px){
+  body.is-dark .search-tip{ color:#9FB0C2; opacity:.96; }
+  body.is-dark .search-tip .kicker{ color:#C7D2DE; font-weight:800; }
+  body.is-light .search-tip{ color:#6B7785; opacity:.95; }
+  body.is-light .search-tip .kicker{ color:#505A66; font-weight:800; }
+}
+@media (max-width:1024px){
+  .search-tip{ display:none !important; }  /* PC/Laptop only */
+}
+
+/* Small polish: focus rings match theme */
+:root{ --focusRing: 0 0 0 4px rgba(120,170,255,.18); }
+body.is-dark .controls .search:focus-within{ box-shadow: var(--focusRing); border-color:#78aaff; }
+body.is-light .controls .search:focus-within{ box-shadow: var(--focusRing); border-color:#78aaff; }
+
+
+
+

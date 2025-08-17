@@ -1463,7 +1463,15 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 
-   
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1588,28 +1596,10 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 
-// restore on load
-const saved = localStorage.getItem('theme') || 'dark';
-document.body.classList.toggle('is-dark', saved === 'dark');
-document.body.classList.toggle('is-light', saved === 'light');
-
-// click handler
-function toggleTheme(){
-  const toDark = !document.body.classList.contains('is-dark');
-  document.body.classList.toggle('is-dark', toDark);
-  document.body.classList.toggle('is-light', !toDark);
-  localStorage.setItem('theme', toDark ? 'dark' : 'light');
-}
 
 
 
 
-
-
-// before inserting the HTML
-const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';  // main text
-const colorKicker = isDark ? '#D6E1ED' : '#16345F';  // "Tip:"
-const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';  // italic examples
 
 
 
@@ -1682,31 +1672,4 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
   } catch(e){}
 })();
 
-
-
-
-
-
-
-
-@media (max-width:1024px){
-  .search-tip{ display:none !important; }
-}
-
-
-
-hint.style.color = colorMain;
-hint.querySelector('.kicker').style.color = colorKicker;
-hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
-
-
-
-// before inserting the HTML
-const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';
-const colorKicker = isDark ? '#D6E1ED' : '#16345F';
-const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';
-
-hint.style.color = colorMain;
-hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
-hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 

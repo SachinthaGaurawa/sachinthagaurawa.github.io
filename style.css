@@ -1082,17 +1082,3 @@ body.is-light .controls .search:focus-within{ box-shadow: var(--focusRing); bord
 
 
 
-
-
-/* ==========================================================
-   MISC KEEPS (no behavior change)
-   ========================================================== */
-button.btn, .theme-toggle{ position:relative; overflow:hidden; }
-button.btn::after, .theme-toggle::after{
-  content:""; position:absolute; left:50%; top:50%; width:0; height:0; border-radius:999px; background:rgba(255,255,255,.25);
-  transform:translate(-50%,-50%); pointer-events:none; transition:width .35s ease, height .35s ease, opacity .4s ease; opacity:0;
-}
-button.btn:active::after, .theme-toggle:active::after{ width:180%; height:180%; opacity:0; }
-
-/* keep generic ask tip hidden on touch devices */
-@media (max-width:1024px){ #ask-hint-row{ display:none !important; } }

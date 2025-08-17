@@ -1373,15 +1373,6 @@ function setupResponsiveToolbar(){
 
 
 
-
-
-
-
-
-
-
-
-
 // restore on load
 const saved = localStorage.getItem('theme') || 'dark';
 document.body.classList.toggle('is-dark', saved === 'dark');
@@ -1394,5 +1385,21 @@ function toggleTheme(){
   document.body.classList.toggle('is-light', !toDark);
   localStorage.setItem('theme', toDark ? 'dark' : 'light');
 }
+
+
+
+
+
+
+// before inserting the HTML
+const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';  // main text
+const colorKicker = isDark ? '#D6E1ED' : '#16345F';  // "Tip:"
+const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';  // italic examples
+
+
+
+hint.style.color = colorMain;
+hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
+hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 

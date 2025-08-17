@@ -7,100 +7,8 @@
    For local dev (running server.js locally): 'http://localhost:8787'
 */
 const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
+
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
-
-/* ==========================================================
-   GLOBAL THEME CONTROLLER (single source of truth)
-   - Persists across refresh
-   - Applies to <html data-theme> and <body is-*> for legacy CSS
-   - Keeps existing .theme-toggle button (no markup changes)
-   ========================================================== */
-const Theme = (() => {
-  const KEY = 'sg_theme';
-  const DEFAULT = 'dark'; // your preferred default
-
-  function apply(mode) {
-    const html = document.documentElement;
-    const body = document.body;
-
-    // attribute for modern CSS tokens
-    html.setAttribute('data-theme', mode);
-
-    // legacy classes some selectors rely on (e.g., body.is-dark / is-light)
-    if (body) {
-      body.classList.toggle('is-dark', mode === 'dark');
-      body.classList.toggle('is-light', mode === 'light');
-    } else {
-      // in case script runs before <body>, defer
-      document.addEventListener('DOMContentLoaded', () => {
-        document.body.classList.toggle('is-dark', mode === 'dark');
-        document.body.classList.toggle('is-light', mode === 'light');
-      }, { once: true });
-    }
-
-    // persist
-    try { localStorage.setItem(KEY, mode); } catch {}
-
-    // update toggle label/state if present
-    const btn = document.querySelector('.theme-toggle');
-    if (btn) {
-      btn.innerHTML = (mode === 'dark' ? '🌙 Dark' : '☀️ Light'); // keep your existing button, just label
-      btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
-    }
-  }
-
-  function get() {
-    try {
-      const saved = localStorage.getItem(KEY);
-      if (saved === 'dark' || saved === 'light') return saved;
-    } catch {}
-    return null;
-  }
-
-  function current() {
-    return document.documentElement.getAttribute('data-theme') || get() || DEFAULT;
-  }
-
-  function toggle() {
-    const next = current() === 'dark' ? 'light' : 'dark';
-    apply(next);
-  }
-
-  // init ASAP (runs at parse-time)
-  (function initEarly() {
-    const saved = get();
-    apply(saved || DEFAULT);
-  })();
-
-  // click handler (delegated) – keeps your existing .theme-toggle button
-  document.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('.theme-toggle');
-    if (!btn) return;
-    toggle();
-  });
-
-  // optional: sync with OS only if the user hasn't chosen explicitly
-  try {
-    if (!get()) {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.addEventListener('change', e => apply(e.matches ? 'dark' : 'light'));
-    }
-  } catch {}
-
-  return { apply, get, current, toggle };
-})();
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Show any uncaught errors so we don’t silently fail
 window.addEventListener('error', (e) => {
@@ -1501,6 +1409,221 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 /* ===== Global theme toggle (persists across refresh) ===== */
+(function () {
+  const KEY = 'sg-theme';            // localStorage key
+  const DEFAULT = 'dark';            // you want default black
+
+  const $body = document.body;
+  const $btn  = document.querySelector('.theme-toggle'); // keep your button
+
+  function apply(mode) {
+    const m = (mode === 'light') ? 'is-light' : 'is-dark';
+    $body.classList.remove('is-light','is-dark');
+    $body.classList.add(m);
+    document.documentElement.style.colorScheme = (mode === 'light') ? 'light' : 'dark';
+
+    // Optional: update button label/icon without changing your button style
+    if ($btn) {
+      $btn.innerHTML = (mode === 'light') ? '☀️ Light' : '🌙 Dark';
+      $btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
+    }
+  }
+
+  function currentMode() {
+    if ($body.classList.contains('is-light')) return 'light';
+    if ($body.classList.contains('is-dark'))  return 'dark';
+    return null;
+  }
+
+  // 1) On first load, apply saved preference or default
+  const saved = localStorage.getItem(KEY);
+  apply(saved || DEFAULT);
+
+  // 2) Wire up the button
+  if ($btn) {
+    $btn.addEventListener('click', () => {
+      const next = (currentMode() === 'dark') ? 'light' : 'dark';
+      localStorage.setItem(KEY, next);
+      apply(next);
+    });
+  }
+
+  // 3) If some other script or page sets the theme, react to storage event
+  window.addEventListener('storage', (e) => {
+    if (e.key === KEY && e.newValue) apply(e.newValue);
+  });
+})();
+
+
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+
+// Paste the theme toggle script here at the end of your main JS file
+(function(){
+    if (!document.body.classList.contains('home')) return;
+
+    const KEY = 'site_theme_home';
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    function applyTheme(mode){
+        document.body.classList.remove('is-dark','is-light');
+        document.body.classList.add(mode === 'dark' ? 'is-dark' : 'is-light');
+        localStorage.setItem(KEY, mode);
+        updateToggle(mode);
+    }
+
+    function currentTheme(){
+        if (document.body.classList.contains('is-dark')) return 'dark';
+        if (document.body.classList.contains('is-light')) return 'light';
+        return prefersDark ? 'dark' : 'light';
+    }
+
+    function ensureToggle(){
+        let btn = document.getElementById('themeToggle');
+        if (!btn){
+            btn = document.createElement('button');
+            btn.id = 'themeToggle';
+            btn.className = 'theme-toggle';
+            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
+            btn.setAttribute('aria-pressed', 'false');
+            const topbar = document.querySelector('.topbar');
+            if (topbar){
+                topbar.appendChild(btn);
+            } else {
+                document.body.appendChild(btn);
+                btn.style.position = 'fixed';
+                btn.style.right = '16px';
+                btn.style.top = '16px';
+                btn.style.zIndex = '1000';
+            }
+        }
+        return btn;
+    }
+
+    function updateToggle(mode){
+        const btn = ensureToggle();
+        const span = btn.querySelector('span');
+        const dark = (mode === 'dark');
+        btn.setAttribute('aria-pressed', String(dark));
+        if (span) span.textContent = dark ? 'Light' : 'Dark';
+        btn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    }
+
+    const saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') applyTheme(saved);
+    else updateToggle(currentTheme());
+
+    ensureToggle().addEventListener('click', function(){
+        const next = currentTheme() === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+    });
+})();
+
+
+
+
+/* ==========================================================
+   Gallery routing fix: clear ?album=… when closing overlay
+   (Paste at the end of app.js — no <script> tags here)
+   ========================================================== */
+(function manageAlbumRouting() {
+  const overlay   = document.getElementById('albumView');
+  const closeBtn  = document.getElementById('closeAlbum');
+
+  // Hide overlay + unlock scroll (uses your existing CSS classes/IDs)
+  function hideOverlay() {
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    document.body.classList.remove('noscroll');
+  }
+
+  // Remove only the album query parameter and normalize the URL
+  function clearAlbumParam(replace = true) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('album');
+
+    // Build a clean URL for this page (keep any other params/hash if present)
+    const clean =
+      url.pathname +
+      (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') +
+      (url.hash || '');
+
+    // Replace current history entry so refresh/back don’t reopen the album
+    if (replace) {
+      history.replaceState({ view: 'grid' }, '', clean);
+    } else {
+      history.pushState({ view: 'grid' }, '', clean);
+    }
+  }
+
+  // Close button → hide and clear query
+  closeBtn && closeBtn.addEventListener('click', () => {
+    hideOverlay();
+    clearAlbumParam(true); // replaceState so refresh stays on the grid
+  });
+
+  // Keep Back/Forward in sync: if URL has no ?album, ensure overlay is closed
+  window.addEventListener('popstate', () => {
+    const hasAlbum = new URLSearchParams(location.search).has('album');
+    if (!hasAlbum) {
+      hideOverlay();
+    }
+    // If hasAlbum, your existing code that reacts to URL (if any) can open it.
+  });
+})();
+
+
+
+
+
+// restore on load
+const saved = localStorage.getItem('theme') || 'dark';
+document.body.classList.toggle('is-dark', saved === 'dark');
+document.body.classList.toggle('is-light', saved === 'light');
+
+// click handler
+function toggleTheme(){
+  const toDark = !document.body.classList.contains('is-dark');
+  document.body.classList.toggle('is-dark', toDark);
+  document.body.classList.toggle('is-light', !toDark);
+  localStorage.setItem('theme', toDark ? 'dark' : 'light');
+}
+
+
+
+
+
+
+// before inserting the HTML
+const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';  // main text
+const colorKicker = isDark ? '#D6E1ED' : '#16345F';  // "Tip:"
+const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';  // italic examples
+
+
+
+hint.style.color = colorMain;
+hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
+hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
+
+
+
+
+
+
+
+/* ===== Global theme toggle (persists across refresh) ===== */
 (function(){
   function applyTheme(mode){
     document.documentElement.setAttribute('data-theme', mode);
@@ -1558,4 +1681,32 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
     }
   } catch(e){}
 })();
+
+
+
+
+
+
+
+
+@media (max-width:1024px){
+  .search-tip{ display:none !important; }
+}
+
+
+
+hint.style.color = colorMain;
+hint.querySelector('.kicker').style.color = colorKicker;
+hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
+
+
+
+// before inserting the HTML
+const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';
+const colorKicker = isDark ? '#D6E1ED' : '#16345F';
+const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';
+
+hint.style.color = colorMain;
+hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
+hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 

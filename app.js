@@ -1639,45 +1639,71 @@ hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
 
 
 
-/* ===== Global theme toggle (persists across refresh) ===== */
-(function(){
-  function applyTheme(mode){
-    document.documentElement.setAttribute('data-theme', mode);
-    document.body.classList.toggle('is-dark', mode === 'dark');
-    document.body.classList.toggle('is-light', mode === 'light');
+// === Global theme controller (persist + apply everywhere) ===
+(function () {
+  const KEY = "sg_theme";           // localStorage key
+  const DEFAULT_THEME = "dark";     // your default
 
-    try {
-      localStorage.setItem('sg_theme', mode);
-    } catch(e){}
-    updateToggle(mode);
-  }
+  // Apply the theme to <html> and <body> (for legacy CSS)
+  function applyTheme(mode) {
+    const root = document.documentElement;
 
-  function currentTheme(){
-    return document.documentElement.getAttribute('data-theme') || 'dark';
-  }
+    // Attribute for modern CSS
+    root.setAttribute("data-theme", mode);
+    root.classList.toggle("theme-dark", mode === "dark");
+    root.classList.toggle("theme-light", mode === "light");
 
-  function updateToggle(mode){
-    var btn = document.querySelector('.theme-toggle');
-    if (!btn) return;
-    btn.innerHTML = (mode === 'dark' ? '🌙 Dark' : '☀️ Light');
-    btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
-  }
+    // Update <body> classes for existing selectors like "body.home.is-dark"
+    const applyToBody = () => {
+      const b = document.body;
+      if (!b) return;
+      b.classList.remove("is-dark", "is-light");
+      b.classList.add(mode === "dark" ? "is-dark" : "is-light");
+    };
+    if (document.body) applyToBody();
+    else document.addEventListener("DOMContentLoaded", applyToBody);
 
-  // init label after DOM ready (preload already set the attribute)
-  window.addEventListener('DOMContentLoaded', function(){
-    // restore saved theme if any
-    let saved = null;
-    try {
-      saved = localStorage.getItem('sg_theme');
-    } catch(e){}
+    // Persist
+    try { localStorage.setItem(KEY, mode); } catch (e) {}
 
-    if (saved) {
-      applyTheme(saved);
-    } else {
-      // default = dark
-      applyTheme('dark');
+    // Toggle button label/state (if present)
+    const btn = document.querySelector(".theme-toggle");
+    if (btn) {
+      btn.textContent = (mode === "dark" ? "🌙 Dark" : "☀️ Light");
+      btn.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
     }
+  }
+
+  function getSavedTheme() {
+    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  }
+
+  // Init ASAP (works even if this file is loaded at the end)
+  const initial = getSavedTheme() || DEFAULT_THEME;
+  applyTheme(initial);
+
+  // Click to toggle
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".theme-toggle");
+    if (!btn) return;
+    const next = (document.documentElement.getAttribute("data-theme") === "dark") ? "light" : "dark";
+    applyTheme(next);
   });
+
+  // Optional: if you want OS changes to auto-apply when user hasn't chosen yet
+  try {
+    if (!getSavedTheme()) {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      mq.addEventListener("change", (e) => applyTheme(e.matches ? "dark" : "light"));
+    }
+  } catch (e) {}
+})();
+
+
+
+
+
+   
 
   // click to toggle
   document.addEventListener('click', function(ev){

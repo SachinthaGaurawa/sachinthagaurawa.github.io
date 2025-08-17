@@ -1402,3 +1402,104 @@ body.is-light .hero-text p{ color:#58606d; }
     filter:none !important;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* ========= Make theme tokens global (apply anywhere, not only "home") ========= */
+body.is-light{
+  --bg: #f7f9fc;
+  --ink: #0e0f11;
+  --muted: #6e7481;
+  --ring: rgba(4,112,255,.22);
+  --card: #ffffff;
+  --card-2: #f3f6fb;
+  --hair: #e7ecf4;
+  color: var(--ink);
+  background: var(--bg);
+  color-scheme: light;
+}
+body.is-dark{
+  --bg: #0b0d12;
+  --ink: #eaf0ff;
+  --muted: #a9b4c7;
+  --ring: rgba(120,170,255,.35);
+  --card: #0f141c;
+  --card-2: #0c1118;
+  --hair: rgba(255,255,255,.08);
+  color: var(--ink);
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+/* ========= Albums should also follow theme ========= */
+#albumView{
+  background: var(--bg);            /* was hard-coded black */
+  color: var(--ink);
+}
+
+/* Album hero/description blocks pick up the theme */
+.album-desc-block{
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Album cards, chips, and borders take theme tokens */
+.m-item{
+  border-color: var(--hair);
+  box-shadow: 0 8px 24px rgba(0,0,0,.30);
+}
+.mini-chip{
+  background: rgba(0,0,0,.55);      /* keep good contrast over photos */
+  color:#fff;
+  border-color: rgba(255,255,255,.15);
+}
+
+/* Lightbox shell inherits text color; stage stays dark for media contrast */
+.viewer-shell{ color: var(--ink); }
+.stage{ background:#000; }          /* leave black so photos/videos pop */
+
+/* Topbar adapts under both themes */
+body.is-dark .topbar{
+  background: rgba(10,12,18,.72);
+  border-bottom: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+}
+body.is-light .topbar{
+  background: rgba(255,255,255,.85);
+  border-bottom: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+}
+
+/* Search, chips and cards already use tokens; ensure they read the globals */
+.controls .search{
+  background: var(--card);
+  border: 1px solid var(--hair);
+}
+.chip{
+  background: var(--card);
+  border: 1px solid var(--hair);
+  color: var(--ink);
+}
+.card{
+  background: var(--card);
+  border: 1px solid var(--hair);
+}
+
+/* Footer follows theme everywhere (home + albums) */
+.site-footer{
+  background: linear-gradient(180deg,
+              color-mix(in oklab, var(--bg) 92%, #000 8%),
+              color-mix(in oklab, var(--bg) 88%, #000 12%));
+  border-top: 1px solid var(--hair);
+  color: var(--ink);
+}
+

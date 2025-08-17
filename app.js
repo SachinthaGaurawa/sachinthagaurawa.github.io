@@ -7,91 +7,90 @@
    For local dev (running server.js locally): 'http://localhost:8787'
 */
 const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
-
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
 
+/* ==========================================================
+   GLOBAL THEME CONTROLLER (single source of truth)
+   - Persists across refresh
+   - Applies to <html data-theme> and <body is-*> for legacy CSS
+   - Keeps existing .theme-toggle button (no markup changes)
+   ========================================================== */
+const Theme = (() => {
+  const KEY = 'sg_theme';
+  const DEFAULT = 'dark'; // your preferred default
 
+  function apply(mode) {
+    const html = document.documentElement;
+    const body = document.body;
 
+    // attribute for modern CSS tokens
+    html.setAttribute('data-theme', mode);
 
+    // legacy classes some selectors rely on (e.g., body.is-dark / is-light)
+    if (body) {
+      body.classList.toggle('is-dark', mode === 'dark');
+      body.classList.toggle('is-light', mode === 'light');
+    } else {
+      // in case script runs before <body>, defer
+      document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.toggle('is-dark', mode === 'dark');
+        document.body.classList.toggle('is-light', mode === 'light');
+      }, { once: true });
+    }
 
+    // persist
+    try { localStorage.setItem(KEY, mode); } catch {}
 
-
-
-
-
-// === Global theme controller (persist + apply everywhere) ===
-(function () {
-  const KEY = "sg_theme";           // localStorage key
-  const DEFAULT_THEME = "dark";     // your default
-
-  // Apply the theme to <html> and <body> (for legacy CSS)
-  function applyTheme(mode) {
-    const root = document.documentElement;
-
-    // Attribute for modern CSS
-    root.setAttribute("data-theme", mode);
-    root.classList.toggle("theme-dark", mode === "dark");
-    root.classList.toggle("theme-light", mode === "light");
-
-    // Update <body> classes for existing selectors like "body.home.is-dark"
-    const applyToBody = () => {
-      const b = document.body;
-      if (!b) return;
-      b.classList.remove("is-dark", "is-light");
-      b.classList.add(mode === "dark" ? "is-dark" : "is-light");
-    };
-    if (document.body) applyToBody();
-    else document.addEventListener("DOMContentLoaded", applyToBody);
-
-    // Persist
-    try { localStorage.setItem(KEY, mode); } catch (e) {}
-
-    // Toggle button label/state (if present)
-    const btn = document.querySelector(".theme-toggle");
+    // update toggle label/state if present
+    const btn = document.querySelector('.theme-toggle');
     if (btn) {
-      btn.textContent = (mode === "dark" ? "🌙 Dark" : "☀️ Light");
-      btn.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
+      btn.innerHTML = (mode === 'dark' ? '🌙 Dark' : '☀️ Light'); // keep your existing button, just label
+      btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
     }
   }
 
-  function getSavedTheme() {
-    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  function get() {
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {}
+    return null;
   }
 
-  // Init ASAP (works even if this file is loaded at the end)
-  const initial = getSavedTheme() || DEFAULT_THEME;
-  applyTheme(initial);
+  function current() {
+    return document.documentElement.getAttribute('data-theme') || get() || DEFAULT;
+  }
 
-  // Click to toggle
-  document.addEventListener("click", (ev) => {
-    const btn = ev.target.closest(".theme-toggle");
+  function toggle() {
+    const next = current() === 'dark' ? 'light' : 'dark';
+    apply(next);
+  }
+
+  // init ASAP (runs at parse-time)
+  (function initEarly() {
+    const saved = get();
+    apply(saved || DEFAULT);
+  })();
+
+  // click handler (delegated) – keeps your existing .theme-toggle button
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.theme-toggle');
     if (!btn) return;
-    const next = (document.documentElement.getAttribute("data-theme") === "dark") ? "light" : "dark";
-    applyTheme(next);
+    toggle();
   });
 
-  // Optional: if you want OS changes to auto-apply when user hasn't chosen yet
+  // optional: sync with OS only if the user hasn't chosen explicitly
   try {
-    if (!getSavedTheme()) {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      mq.addEventListener("change", (e) => applyTheme(e.matches ? "dark" : "light"));
+    if (!get()) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener('change', e => apply(e.matches ? 'dark' : 'light'));
     }
-  } catch (e) {}
+  } catch {}
+
+  return { apply, get, current, toggle };
 })();
 
-
-
-
-
-
-
-
-
-
-
-
-
-// Show any uncaught errors so we don’t silently fail
+/* Show any uncaught errors so we don’t silently fail */
 window.addEventListener('error', (e) => {
   console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
 });
@@ -209,7 +208,7 @@ const ChatBrain = (() => {
     if (currentAlbum.id === 'aavss')  return TOPICS.AAVSS;
     if (currentAlbum.id === 'dataset') return TOPICS.DATASET;
     return '';
-  }
+    }
   function detectTopic(q) {
     const txt = (q || '').toLowerCase();
     if (/\b(aavss)\b/.test(txt)) return TOPICS.AAVSS;
@@ -395,7 +394,7 @@ function openAlbum(id, index=0, push=false){
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
-  wireAskUI();                 // ensure AI input is wired on open
+  wireAskUI();                   // ensure AI input is wired on open
   insertAlbumAskHintBelowChat(); // centered responsive pill
 
   if(push){
@@ -411,10 +410,11 @@ function openAlbum(id, index=0, push=false){
   (window.requestIdleCallback ? requestIdleCallback(doCaptions, { timeout: 2000 }) : setTimeout(doCaptions, 300));
 }
 
-function closeAlbum(){
+function closeAlbum(replaceURL=true){
   removeAlbumFooter();
   closeViewer();
   if (!albumView) return;
+
   if (window.gsap) {
     gsap.to('#albumView',{opacity:0,duration:.2,ease:'power2.in',onComplete:()=>{
       albumView.classList.remove('active'); albumView.style.opacity="";
@@ -424,8 +424,16 @@ function closeAlbum(){
     albumView.classList.remove('active');
     albumView.setAttribute('aria-hidden','true');
   }
+
+  // clear ?album= param so refresh won’t reopen
+  try {
+    const url = new URL(location.href);
+    url.searchParams.delete('album');
+    const clean = url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : '') + (url.hash || '');
+    if (replaceURL) history.replaceState({ view:'grid' }, '', clean);
+  } catch {}
 }
-$('#closeAlbum')?.addEventListener('click', closeAlbum);
+$('#closeAlbum')?.addEventListener('click', () => closeAlbum(true));
 
 /* ====== Viewer ====== */
 const viewer   = $('#viewerOverlay');
@@ -691,9 +699,6 @@ function renderChat(answerText, topicLabel){
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-
-
-
 /* ====== Hint under search (desktop only, themed colors) ====== */
 function insertAskHint() {
   // Only one hint, and only on desktop/laptop
@@ -704,9 +709,9 @@ function insertAskHint() {
   if (!search || !search.parentElement) return;
 
   const isDark = document.body.classList.contains('is-dark');
-  const colorMain   = isDark ? '#6E8096' : '#6E8096'; // softer ash blue / neutral gray
-  const colorKicker = isDark ? '#D6E1ED' : '#555E69'; // "Tip:" slightly brighter
-   
+  const colorMain   = isDark ? '#6E8096' : '#6E8096'; // soft ash/neutral
+  const colorKicker = isDark ? '#D6E1ED' : '#555E69';
+
   const hint = document.createElement('div');
   hint.id = 'ask-hint-row';
   hint.className = 'search-tip';
@@ -742,36 +747,24 @@ function insertAskHint() {
   };
 
   // Observe class changes on <body> (theme toggles add/remove .is-dark / .is-light)
-  const mo = new MutationObserver(applyColors);
-  mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('DOMContentLoaded', () => {
+    const mo = new MutationObserver(applyColors);
+    mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    insertAskHint();
+    applyColors();
+  });
 
   // Re-apply on resize crossing desktop threshold
   let wasDesktop = window.matchMedia('(min-width:1025px)').matches;
   window.addEventListener('resize', () => {
     const isDesktop = window.matchMedia('(min-width:1025px)').matches;
     if (isDesktop && !document.getElementById('ask-hint-row')) {
-      // We crossed into desktop – ensure hint exists
       insertAskHint();
       applyColors();
     }
     wasDesktop = isDesktop;
   });
-
-  // Initial paint
-  document.addEventListener('DOMContentLoaded', () => {
-    insertAskHint();
-    applyColors();
-  });
 })();
-
-
-
-
-
-
-
-
-
 
 /* ====== Responsive center pill between chat & gallery ====== */
 function injectAskPillStylesOnce(){
@@ -1071,83 +1064,6 @@ function wireSemanticSearch(){
   }, 160));
 }
 
-/* ====== Deep link ====== */
-window.addEventListener('popstate', ()=>{
-  const id=new URL(location.href).searchParams.get('album');
-  if(id) openAlbum(id,0,false); else closeAlbum();
-});
-
-/* ====== Init ====== */
-function init(){
-  if (!hasRequiredEls()) {
-    console.warn('[gallery] Init stopped because required elements are missing on this page.');
-    return;
-  }
-
-  renderGrid();
-  setupSearch();
-  setupChips();
-  setupResponsiveToolbar();   // phones/tablets layout
-  setupHeroAnimation();
-  setupLazyHero();
-  updateAllFooterYears();
-
-  if (window.gsap && window.ScrollTrigger) {
-    gsap.registerPlugin(ScrollTrigger);
-    const heroImgEl = document.querySelector('.hero-media img');
-    const heroWrap = document.querySelector('.hero-media');
-    if (heroImgEl) {
-      gsap.fromTo(heroImgEl, {scale:1.08, y:0}, {
-        scale:1, y:-30, ease:'power2.out',
-        scrollTrigger:{ trigger: heroWrap, start:'top top', end:'bottom top', scrub:true }
-      });
-    }
-  }
-
-  const supportsFinePointer = matchMedia('(hover:hover) and (pointer:fine)').matches;
-  if (supportsFinePointer && grid) {
-    $$('.card').forEach(card => {
-      let rAF = 0;
-      const onMove = (e) => {
-        cancelAnimationFrame(rAF);
-        rAF = requestAnimationFrame(()=>{
-          const b = card.getBoundingClientRect();
-          const cx = e.clientX - b.left;
-          const cy = e.clientY - b.top;
-          const rx = ((cy / b.height) - .5) * -6;
-          const ry = ((cx / b.width)  - .5) *  6;
-          card.style.transform = `translateY(-6px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-        });
-      };
-      const reset = () => { card.style.transform = ''; };
-      card.addEventListener('mousemove', onMove);
-      card.addEventListener('mouseleave', reset);
-    });
-  }
-
-  const id=new URL(location.href).searchParams.get('album');
-  if(id) openAlbum(id,0,false);
-
-  maybeSetupSemantic().then(wireSemanticSearch);
-}
-
-document.addEventListener('DOMContentLoaded', init);
-console.log('app.js fully initialized');
-
-// Quick backend sanity ping (shows result in console)
-fetch(`${API_BASE}/api/ai`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
-})
-  .then(async r => {
-    const t = await r.text();
-    console.log('[gallery] API ping →', t);
-    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
-  })
-  .catch(err => console.error('[gallery] API ping failed:', err));
-
-
 /* ====== Mobile/Tablet toolbar: chips (left) + search (right) + tip below ====== */
 let __toolbarState = {
   applied:false, row:null, chipsParent:null, searchParent:null,
@@ -1169,7 +1085,6 @@ function injectResponsiveToolbarStylesOnce(){
       .chips-scroll::-webkit-scrollbar{ display:none; }
       .search-slot{ flex:0 1 50%; min-width:180px; display:flex; }
       .search-slot input{ width:100%; box-sizing:border-box; font-size:14px; padding:9px 12px; border-radius:10px; }
-      /* compact generic tip moved below toolbar */
       #ask-hint-row.ask-hint-compact{
         display:flex; justify-content:center; margin:8px auto 2px; max-width: min(840px, 96%);
         background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
@@ -1280,271 +1195,78 @@ function setupResponsiveToolbar(){
   else mq.addListener(update); // Safari < 14
 }
 
+/* ====== Deep link & routing ====== */
+window.addEventListener('popstate', ()=>{
+  const id=new URL(location.href).searchParams.get('album');
+  if(id) openAlbum(id,0,false); else closeAlbum(false);
+});
 
-
-
-
-
-
-
-
-
-(function () {
-  function applyTheme(theme) {
-    const html = document.documentElement;
-    const body = document.body;
-
-    html.setAttribute('data-theme', theme);
-    body.classList.toggle('is-dark', theme === 'dark');
-    body.classList.toggle('is-light', theme === 'light');
+/* ====== Init ====== */
+function init(){
+  if (!hasRequiredEls()) {
+    console.warn('[gallery] Init stopped because required elements are missing on this page.');
+    return;
   }
 
-  const saved = localStorage.getItem('theme');
-  const isGallery =
-    /(^|\/)gallery(\.html)?(?:$|[?#/])/.test(location.pathname) ||
-    /[?&]page=gallery\b/.test(location.search);
-
-  if (saved === 'dark' || saved === 'light') {
-    applyTheme(saved);
-  } else if (isGallery) {
-    applyTheme('dark');
-  }
-
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.theme-toggle');
-    if (!btn) return;
-
-    const current = (document.documentElement.getAttribute('data-theme') || 'light').toLowerCase();
-    const next = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    localStorage.setItem('theme', next);
-  });
-})();
-
-
-
-
-
-
-
-
-
-   
-
-
-
-
-
-
-// Paste the theme toggle script here at the end of your main JS file
-(function(){
-    if (!document.body.classList.contains('home')) return;
-
-    const KEY = 'site_theme_home';
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    function applyTheme(mode){
-        document.body.classList.remove('is-dark','is-light');
-        document.body.classList.add(mode === 'dark' ? 'is-dark' : 'is-light');
-        localStorage.setItem(KEY, mode);
-        updateToggle(mode);
-    }
-
-    function currentTheme(){
-        if (document.body.classList.contains('is-dark')) return 'dark';
-        if (document.body.classList.contains('is-light')) return 'light';
-        return prefersDark ? 'dark' : 'light';
-    }
-
-    function ensureToggle(){
-        let btn = document.getElementById('themeToggle');
-        if (!btn){
-            btn = document.createElement('button');
-            btn.id = 'themeToggle';
-            btn.className = 'theme-toggle';
-            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
-            btn.setAttribute('aria-pressed', 'false');
-            const topbar = document.querySelector('.topbar');
-            if (topbar){
-                topbar.appendChild(btn);
-            } else {
-                document.body.appendChild(btn);
-                btn.style.position = 'fixed';
-                btn.style.right = '16px';
-                btn.style.top = '16px';
-                btn.style.zIndex = '1000';
-            }
-        }
-        return btn;
-    }
-
-    function updateToggle(mode){
-        const btn = ensureToggle();
-        const span = btn.querySelector('span');
-        const dark = (mode === 'dark');
-        btn.setAttribute('aria-pressed', String(dark));
-        if (span) span.textContent = dark ? 'Light' : 'Dark';
-        btn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
-    }
-
-    const saved = localStorage.getItem(KEY);
-    if (saved === 'dark' || saved === 'light') applyTheme(saved);
-    else updateToggle(currentTheme());
-
-    ensureToggle().addEventListener('click', function(){
-        const next = currentTheme() === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
-    });
-})();
-
-
-
-
-/* ==========================================================
-   Gallery routing fix: clear ?album=… when closing overlay
-   (Paste at the end of app.js — no <script> tags here)
-   ========================================================== */
-(function manageAlbumRouting() {
-  const overlay   = document.getElementById('albumView');
-  const closeBtn  = document.getElementById('closeAlbum');
-
-  // Hide overlay + unlock scroll (uses your existing CSS classes/IDs)
-  function hideOverlay() {
-    if (!overlay) return;
-    overlay.classList.remove('active');
-    document.body.classList.remove('noscroll');
-  }
-
-  // Remove only the album query parameter and normalize the URL
-  function clearAlbumParam(replace = true) {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('album');
-
-    // Build a clean URL for this page (keep any other params/hash if present)
-    const clean =
-      url.pathname +
-      (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') +
-      (url.hash || '');
-
-    // Replace current history entry so refresh/back don’t reopen the album
-    if (replace) {
-      history.replaceState({ view: 'grid' }, '', clean);
-    } else {
-      history.pushState({ view: 'grid' }, '', clean);
-    }
-  }
-
-  // Close button → hide and clear query
-  closeBtn && closeBtn.addEventListener('click', () => {
-    hideOverlay();
-    clearAlbumParam(true); // replaceState so refresh stays on the grid
-  });
-
-  // Keep Back/Forward in sync: if URL has no ?album, ensure overlay is closed
-  window.addEventListener('popstate', () => {
-    const hasAlbum = new URLSearchParams(location.search).has('album');
-    if (!hasAlbum) {
-      hideOverlay();
-    }
-    // If hasAlbum, your existing code that reacts to URL (if any) can open it.
-  });
-})();
-
-
-
-
-
-// restore on load
-const saved = localStorage.getItem('theme') || 'dark';
-document.body.classList.toggle('is-dark', saved === 'dark');
-document.body.classList.toggle('is-light', saved === 'light');
-
-// click handler
-function toggleTheme(){
-  const toDark = !document.body.classList.contains('is-dark');
-  document.body.classList.toggle('is-dark', toDark);
-  document.body.classList.toggle('is-light', !toDark);
-  localStorage.setItem('theme', toDark ? 'dark' : 'light');
-}
-
-
-
-
-
-
-// before inserting the HTML
-const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';  // main text
-const colorKicker = isDark ? '#D6E1ED' : '#16345F';  // "Tip:"
-const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';  // italic examples
-
-
-
-hint.style.color = colorMain;
-hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
-hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
-
-
-
-
-
-
-
-/* ===== Global theme toggle (persists across refresh) ===== */
-(function(){
-  function applyTheme(mode){
-    document.documentElement.setAttribute('data-theme', mode);
-    document.body.classList.toggle('is-dark', mode === 'dark');
-    document.body.classList.toggle('is-light', mode === 'light');
-
-    try {
-      localStorage.setItem('sg_theme', mode);
-    } catch(e){}
-    updateToggle(mode);
-  }
-
-  function currentTheme(){
-    return document.documentElement.getAttribute('data-theme') || 'dark';
-  }
-
-  function updateToggle(mode){
-    var btn = document.querySelector('.theme-toggle');
-    if (!btn) return;
-    btn.innerHTML = (mode === 'dark' ? '🌙 Dark' : '☀️ Light');
-    btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
-  }
-
-  // init label after DOM ready (preload already set the attribute)
-  window.addEventListener('DOMContentLoaded', function(){
-    // restore saved theme if any
-    let saved = null;
-    try {
-      saved = localStorage.getItem('sg_theme');
-    } catch(e){}
-
-    if (saved) {
-      applyTheme(saved);
-    } else {
-      // default = dark
-      applyTheme('dark');
-    }
-  });
-
-  // click to toggle
-  document.addEventListener('click', function(ev){
-    var btn = ev.target.closest('.theme-toggle');
-    if (!btn) return;
-    var next = currentTheme() === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-  });
-
-  // optional: sync with OS change (only when user hasn’t chosen explicitly)
-  try {
-    if (!localStorage.getItem('sg_theme')) {
-      var mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.addEventListener('change', function(e){
-        applyTheme(e.matches ? 'dark' : 'light');
+  renderGrid();
+  setupSearch();
+  setupChips();
+  setupResponsiveToolbar();   // phones/tablets layout
+  setupHeroAnimation();
+  setupLazyHero();
+  updateAllFooterYears();
+
+  if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
+    const heroImgEl = document.querySelector('.hero-media img');
+    const heroWrap = document.querySelector('.hero-media');
+    if (heroImgEl) {
+      gsap.fromTo(heroImgEl, {scale:1.08, y:0}, {
+        scale:1, y:-30, ease:'power2.out',
+        scrollTrigger:{ trigger: heroWrap, start:'top top', end:'bottom top', scrub:true }
       });
     }
-  } catch(e){}
-})();
+  }
 
+  const supportsFinePointer = matchMedia('(hover:hover) and (pointer:fine)').matches;
+  if (supportsFinePointer && grid) {
+    $$('.card').forEach(card => {
+      let rAF = 0;
+      const onMove = (e) => {
+        cancelAnimationFrame(rAF);
+        rAF = requestAnimationFrame(()=>{
+          const b = card.getBoundingClientRect();
+          const cx = e.clientX - b.left;
+          const cy = e.clientY - b.top;
+          const rx = ((cy / b.height) - .5) * -6;
+          const ry = ((cx / b.width)  - .5) *  6;
+          card.style.transform = `translateY(-6px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+        });
+      };
+      const reset = () => { card.style.transform = ''; };
+      card.addEventListener('mousemove', onMove);
+      card.addEventListener('mouseleave', reset);
+    });
+  }
+
+  const id=new URL(location.href).searchParams.get('album');
+  if(id) openAlbum(id,0,false);
+
+  maybeSetupSemantic().then(wireSemanticSearch);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+console.log('app.js fully initialized');
+
+// Quick backend sanity ping (shows result in console)
+fetch(`${API_BASE}/api/ai`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
+})
+  .then(async r => {
+    const t = await r.text();
+    console.log('[gallery] API ping →', t);
+    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
+  })
+  .catch(err => console.error('[gallery] API ping failed:', err));

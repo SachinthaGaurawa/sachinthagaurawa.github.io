@@ -1326,3 +1326,48 @@ function setupResponsiveToolbar(){
 
 
 
+
+
+
+
+
+const API_IMG = `${API_BASE}/api/img`;
+function isGen(q){ return /^\/?(gen|generate)\b/i.test(q); }
+function isBrowse(q){ return /^\/?(browse|find|search)\b/i.test(q) && /\b(image|photo|pictures?)?\b/i.test(q); }
+
+async function doImgGenerate(prompt, {n=2, aspect='16:9', realism='photo'}={}){
+  const r = await fetch(API_IMG, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ mode:'generate', prompt, n, aspect, realism })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Image generation failed');
+  return j.images || [];
+}
+
+async function doImgBrowse(query, {n=10}={}){
+  const r = await fetch(API_IMG, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ mode:'search', query, n })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Image search failed');
+  return j.images || [];
+}
+
+// Render a small image grid inside #askResult
+function renderAskImages(imgs){
+  const wrap = document.createElement('div');
+  wrap.className = 'ai-img-grid';
+  wrap.innerHTML = imgs.map(x=>`
+    <figure class="ai-img">
+      <img src="${x.thumb || x.url}" alt="" loading="lazy">
+      <figcaption>
+        <a href="${x.url}" target="_blank" rel="noopener">Open</a>
+        <a href="${x.url}" download>Download</a>
+      </figcaption>
+    </figure>
+  `).join('');
+  return wrap;
+}
+

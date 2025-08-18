@@ -1239,6 +1239,29 @@ body.is-light #ask-hint-row,
 
 
 
+/* Dark mode only: darker blue-gray */
+[data-theme="dark"] .search .tip {
+  color: #6f86aa;   /* darker blue-gray, more contrast than #8ea3c2 */
+}
+
+/* Light mode: keep as is (optional, can remove if already set elsewhere) */
+[data-theme="light"] .search .tip {
+  color: #4a5568;   /* neutral gray */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Force Orbitron on the toggle + children */
 .theme-toggle,
 .theme-toggle * {

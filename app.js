@@ -15,6 +15,7 @@ window.addEventListener('error', (e) => {
   console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
 });
 
+
 /* ====== tiny helpers ====== */
 const $  = (s, p=document) => p.querySelector(s);
 const $$ = (s, p=document) => [...p.querySelectorAll(s)];
@@ -610,12 +611,8 @@ function renderChat(answerText, topicLabel){
   tools.querySelector('#regenAns').onclick = ()=> $('#askBtn')?.click();
 }
 
-
-
-
 /* ====== Hint under search (desktop only, themed colors) ====== */
 function insertAskHint() {
-  // Only one hint, and only on desktop/laptop
   if (document.getElementById('ask-hint-row')) return;
   if (!window.matchMedia('(min-width:1025px)').matches) return;
 
@@ -623,8 +620,8 @@ function insertAskHint() {
   if (!search || !search.parentElement) return;
 
   const isDark = document.body.classList.contains('is-dark');
-  const colorMain   = isDark ? '#6E8096' : '#6E8096'; // softer ash blue / neutral gray
-  const colorKicker = isDark ? '#D6E1ED' : '#555E69'; // "Tip:" slightly brighter
+  const colorMain   = isDark ? '#6E8096' : '#6E8096';
+  const colorKicker = isDark ? '#D6E1ED' : '#555E69';
 
   const hint = document.createElement('div');
   hint.id = 'ask-hint-row';
@@ -643,13 +640,12 @@ function insertAskHint() {
     <em>Sensors</em>, <em>Fusion pipeline</em>, <em>dataset license</em> or <em>night driving</em>.
   `;
 
-  // Insert right after the search input
   search.parentElement.insertBefore(hint, search.nextSibling);
 }
 
-/* Keep the hint colors synced if the theme class changes */
+/* Keep the hint colors synced if the theme changes */
 (function watchThemeForHint(){
-  const applyColors = () => {
+  function applyColors(){
     const tip = document.getElementById('ask-hint-row');
     if (!tip) return;
     const isDark = document.body.classList.contains('is-dark');
@@ -658,123 +654,73 @@ function insertAskHint() {
     tip.style.color = colorMain;
     const kicker = tip.querySelector('.kicker');
     if (kicker) kicker.style.color = colorKicker;
-  };
+  }
 
-  // Observe class changes on <body> (theme toggles add/remove .is-dark / .is-light)
+  document.addEventListener('DOMContentLoaded', () => {
+    insertAskHint();
+    applyColors();
+  });
+  window.addEventListener('themechange', applyColors);
+
   const mo = new MutationObserver(applyColors);
   mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-  // Re-apply on resize crossing desktop threshold
   let wasDesktop = window.matchMedia('(min-width:1025px)').matches;
   window.addEventListener('resize', () => {
     const isDesktop = window.matchMedia('(min-width:1025px)').matches;
     if (isDesktop && !document.getElementById('ask-hint-row')) {
-      // We crossed into desktop – ensure hint exists
       insertAskHint();
       applyColors();
     }
     wasDesktop = isDesktop;
   });
-
-  // Initial paint
-  document.addEventListener('DOMContentLoaded', () => {
-    insertAskHint();
-    applyColors();
-  });
 })();
 
-
-
-
-
-
-
-
-
-
-// ====== Responsive center pill between chat & gallery (THEME-AWARE) ======
+/* ====== Center ask pill (theme aware) ====== */
 function injectAskPillStylesOnce(){
-  // If an older style tag exists, remove it so we can inject the updated one
   const old = document.getElementById('ask-hint-pill-css');
   if (old) old.remove();
 
   const s = document.createElement('style');
   s.id = 'ask-hint-pill-css';
   s.textContent = `
-    #album-ask-hint-row{
-      display:flex; justify-content:center; align-items:center;
-      width:100%;
-      margin:10px 0 14px;
-    }
-
-    /* Base layout (no colors here) */
+    #album-ask-hint-row{ display:flex; justify-content:center; align-items:center; width:100%; margin:10px 0 14px; }
     .ask-hint-pill{
-      max-width:min(1080px, 94vw);
-      width:auto;
-      display:flex; justify-content:center; align-items:center; gap:.6rem;
-      flex-wrap:wrap;
-      padding:10px 16px;
-      border-radius:999px;
-      font-size:.9rem; line-height:1.35;
-      text-align:center;
-      word-break: keep-all;
-      backdrop-filter: blur(2px);
-      border:2px dashed; /* color comes from theme rules below */
-      box-shadow: inset 0 0 0 1px transparent, 0 6px 18px rgba(0,0,0,.22);
+      max-width:min(1080px, 94vw); width:auto; display:flex; justify-content:center; align-items:center; gap:.6rem;
+      flex-wrap:wrap; padding:10px 16px; border-radius:999px; font-size:.9rem; line-height:1.35; text-align:center;
+      word-break: keep-all; backdrop-filter: blur(2px); border:2px dashed; box-shadow: inset 0 0 0 1px transparent, 0 6px 18px rgba(0,0,0,.22);
     }
     .ask-hint-pill .spark{ filter:drop-shadow(0 0 6px rgba(150,190,255,.75)); }
     .ask-hint-pill strong{ font-weight:700; }
     .ask-hint-pill .examples{ display:flex; gap:.9rem; flex-wrap:wrap; }
     .ask-hint-pill .examples em{ font-style:italic; font-weight:600; opacity:.98; padding:0 .05rem; white-space:nowrap; }
 
-    /* —— DARK THEME (unchanged look) —— */
     body.is-dark .ask-hint-pill{
-      color:#e8f1ff;
-      background:linear-gradient(180deg, rgba(120,170,255,.18), rgba(120,170,255,.10));
-      border-color:rgba(150,190,255,.95);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
+      color:#e8f1ff; background:linear-gradient(180deg, rgba(120,170,255,.18), rgba(120,170,255,.10));
+      border-color:rgba(150,190,255,.95); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.22);
     }
     body.is-dark .ask-hint-pill strong{ color:#f3f7ff; }
     body.is-dark .ask-hint-pill .examples em{ color:#cfe1ff; }
 
-    /* —— LIGHT THEME (requested dark-navy text) —— */
     body.is-light .ask-hint-pill{
-      color:#1F3B63; /* main line */
-      background:linear-gradient(180deg, #eef5ff, #e9f1ff);
-      border-color:#86aef2;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.70), 0 6px 18px rgba(0,0,0,.08);
+      color:#1F3B63; background:linear-gradient(180deg, #eef5ff, #e9f1ff);
+      border-color:#86aef2; box-shadow: inset 0 0 0 1px rgba(255,255,255,.70), 0 6px 18px rgba(0,0,0,.08);
     }
-    body.is-light .ask-hint-pill strong{ color:#16345F; }       /* “Tip:” */
-    body.is-light .ask-hint-pill .examples em{ color:#2A4E86; } /* examples */
+    body.is-light .ask-hint-pill strong{ color:#16345F; }
+    body.is-light .ask-hint-pill .examples em{ color:#2A4E86; }
 
-    /* Responsiveness (kept from your version) */
-    @media (max-width: 900px){
-      .ask-hint-pill{ font-size:.86rem; padding:9px 14px; max-width:94vw; }
-      .ask-hint-pill .examples{ gap:.6rem; }
-    }
-    @media (max-width: 520px){
-      .ask-hint-pill{ font-size:.82rem; padding:8px 12px; border-width:1.8px; }
-      .ask-hint-pill .examples{ gap:.5rem; }
-    }
-    @media (max-width: 380px){
-      .ask-hint-pill{ font-size:.8rem; }
-      .ask-hint-pill .examples em:nth-child(3),
-      .ask-hint-pill .examples em:nth-child(4){ display:none; }
-    }
-    @media (max-width: 320px){
-      .ask-hint-pill{ font-size:.78rem; padding:7px 10px; }
-      .ask-hint-pill .examples em:nth-child(2){ display:none; }
-    }
+    @media (max-width: 900px){ .ask-hint-pill{ font-size:.86rem; padding:9px 14px; max-width:94vw; } .ask-hint-pill .examples{ gap:.6rem; } }
+    @media (max-width: 520px){ .ask-hint-pill{ font-size:.82rem; padding:8px 12px; border-width:1.8px; } .ask-hint-pill .examples{ gap:.5rem; } }
+    @media (max-width: 380px){ .ask-hint-pill{ font-size:.8rem; } .ask-hint-pill .examples em:nth-child(3), .ask-hint-pill .examples em:nth-child(4){ display:none; } }
+    @media (max-width: 320px){ .ask-hint-pill{ font-size:.78rem; padding:7px 10px; } .ask-hint-pill .examples em:nth-child(2){ display:none; } }
   `;
   document.head.appendChild(s);
 }
-
 
 function insertAlbumAskHintBelowChat(){
   const out = document.getElementById('askResult');
   const masonry = document.getElementById('albumMasonry');
   if (!out || !masonry) return;
-
   injectAskPillStylesOnce();
 
   let row = document.getElementById('album-ask-hint-row');
@@ -790,16 +736,12 @@ function insertAlbumAskHintBelowChat(){
       <strong>Tip:</strong>
       <span>Ask the AI about any —</span>
       <span class="examples">
-        <em>“Overview”</em>
-        <em>“How it works?”</em>
-        <em>“Specs”</em>
-        <em>“License”</em>
+        <em>“Overview”</em><em>“How it works?”</em><em>“Specs”</em><em>“License”</em>
       </span>
     `;
     row.appendChild(pill);
   }
 
-  // Place the pill between chat and gallery (with guard)
   const parent = masonry.parentElement;
   if (parent) {
     if (row.parentElement !== parent || row.nextSibling !== masonry) {
@@ -1114,7 +1056,6 @@ function injectResponsiveToolbarStylesOnce(){
       .chips-scroll::-webkit-scrollbar{ display:none; }
       .search-slot{ flex:0 1 50%; min-width:180px; display:flex; }
       .search-slot input{ width:100%; box-sizing:border-box; font-size:14px; padding:9px 12px; border-radius:10px; }
-      /* compact generic tip moved below toolbar */
       #ask-hint-row.ask-hint-compact{
         display:flex; justify-content:center; margin:8px auto 2px; max-width: min(840px, 96%);
         background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
@@ -1147,35 +1088,29 @@ function applyMobileToolbar(){
 
   injectResponsiveToolbarStylesOnce();
 
-  // capture the (long) generic tip that sits near the search bar
-  const tip = document.getElementById('ask-hint-row'); // created by insertAskHint()
+  const tip = document.getElementById('ask-hint-row');
   if (tip) {
     __toolbarState.tipNode   = tip;
     __toolbarState.tipParent = tip.parentElement;
     __toolbarState.tipWasAfterSearch = (tip.previousElementSibling === input) || (tip.nextElementSibling === input);
   }
 
-  // remember original parents
   __toolbarState.chipsParent  = chips.parentElement;
   __toolbarState.searchParent = input.parentElement;
 
-  // row container
   const row = document.createElement('div');
   row.id = 'albumToolbarRow';
   row.className = 'album-toolbar';
   __toolbarState.chipsParent.insertBefore(row, chips);
 
-  // left: chips (horizontal scroll)
   chips.classList.add('chips-scroll');
   row.appendChild(chips);
 
-  // right: search
   const slot = document.createElement('div');
   slot.className = 'search-slot';
   row.appendChild(slot);
   slot.appendChild(input);
 
-  // compact tip: move below the row (and shrink on mobile with CSS)
   if (tip) {
     tip.classList.add('ask-hint-compact');
     row.insertAdjacentElement('afterend', tip);
@@ -1200,7 +1135,6 @@ function removeMobileToolbar(){
     searchParent.appendChild(input);
   }
 
-  // return the tip to where it was on desktop
   if (tipNode && tipParent) {
     tipNode.classList.remove('ask-hint-compact');
     if (tipWasAfterSearch && input?.parentElement) {
@@ -1222,156 +1156,31 @@ function setupResponsiveToolbar(){
   const update = () => (mq.matches ? applyMobileToolbar() : removeMobileToolbar());
   update();
   if (mq.addEventListener) mq.addEventListener('change', update);
-  else mq.addListener(update); // Safari < 14
+  else mq.addListener(update);
 }
-
-
-
-
-
-
-
-
-
-
-(function () {
-  function applyTheme(theme) {
-    const html = document.documentElement;
-    const body = document.body;
-
-    html.setAttribute('data-theme', theme);
-    body.classList.toggle('is-dark', theme === 'dark');
-    body.classList.toggle('is-light', theme === 'light');
-  }
-
-  const saved = localStorage.getItem('theme');
-  const isGallery =
-    /(^|\/)gallery(\.html)?(?:$|[?#/])/.test(location.pathname) ||
-    /[?&]page=gallery\b/.test(location.search);
-
-  if (saved === 'dark' || saved === 'light') {
-    applyTheme(saved);
-  } else if (isGallery) {
-    applyTheme('dark');
-  }
-
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.theme-toggle');
-    if (!btn) return;
-
-    const current = (document.documentElement.getAttribute('data-theme') || 'light').toLowerCase();
-    const next = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    localStorage.setItem('theme', next);
-  });
-})();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Paste the theme toggle script here at the end of your main JS file
-(function(){
-    if (!document.body.classList.contains('home')) return;
-
-    const KEY = 'site_theme_home';
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    function applyTheme(mode){
-        document.body.classList.remove('is-dark','is-light');
-        document.body.classList.add(mode === 'dark' ? 'is-dark' : 'is-light');
-        localStorage.setItem(KEY, mode);
-        updateToggle(mode);
-    }
-
-    function currentTheme(){
-        if (document.body.classList.contains('is-dark')) return 'dark';
-        if (document.body.classList.contains('is-light')) return 'light';
-        return prefersDark ? 'dark' : 'light';
-    }
-
-    function ensureToggle(){
-        let btn = document.getElementById('themeToggle');
-        if (!btn){
-            btn = document.createElement('button');
-            btn.id = 'themeToggle';
-            btn.className = 'theme-toggle';
-            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
-            btn.setAttribute('aria-pressed', 'false');
-            const topbar = document.querySelector('.topbar');
-            if (topbar){
-                topbar.appendChild(btn);
-            } else {
-                document.body.appendChild(btn);
-                btn.style.position = 'fixed';
-                btn.style.right = '16px';
-                btn.style.top = '16px';
-                btn.style.zIndex = '1000';
-            }
-        }
-        return btn;
-    }
-
-    function updateToggle(mode){
-        const btn = ensureToggle();
-        const span = btn.querySelector('span');
-        const dark = (mode === 'dark');
-        btn.setAttribute('aria-pressed', String(dark));
-        if (span) span.textContent = dark ? 'Light' : 'Dark';
-        btn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
-    }
-
-    const saved = localStorage.getItem(KEY);
-    if (saved === 'dark' || saved === 'light') applyTheme(saved);
-    else updateToggle(currentTheme());
-
-    ensureToggle().addEventListener('click', function(){
-        const next = currentTheme() === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
-    });
-})();
-
-
-
 
 /* ==========================================================
    Gallery routing fix: clear ?album=… when closing overlay
-   (Paste at the end of app.js — no <script> tags here)
    ========================================================== */
 (function manageAlbumRouting() {
   const overlay   = document.getElementById('albumView');
   const closeBtn  = document.getElementById('closeAlbum');
 
-  // Hide overlay + unlock scroll (uses your existing CSS classes/IDs)
   function hideOverlay() {
     if (!overlay) return;
     overlay.classList.remove('active');
     document.body.classList.remove('noscroll');
   }
 
-  // Remove only the album query parameter and normalize the URL
   function clearAlbumParam(replace = true) {
     const url = new URL(window.location.href);
     url.searchParams.delete('album');
 
-    // Build a clean URL for this page (keep any other params/hash if present)
     const clean =
       url.pathname +
       (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') +
       (url.hash || '');
 
-    // Replace current history entry so refresh/back don’t reopen the album
     if (replace) {
       history.replaceState({ view: 'grid' }, '', clean);
     } else {
@@ -1379,322 +1188,141 @@ function setupResponsiveToolbar(){
     }
   }
 
-  // Close button → hide and clear query
   closeBtn && closeBtn.addEventListener('click', () => {
     hideOverlay();
-    clearAlbumParam(true); // replaceState so refresh stays on the grid
+    clearAlbumParam(true);
   });
 
-  // Keep Back/Forward in sync: if URL has no ?album, ensure overlay is closed
   window.addEventListener('popstate', () => {
     const hasAlbum = new URLSearchParams(location.search).has('album');
-    if (!hasAlbum) {
-      hideOverlay();
-    }
-    // If hasAlbum, your existing code that reacts to URL (if any) can open it.
+    if (!hasAlbum) hideOverlay();
   });
 })();
 
-
-
-
-
-// restore on load
-const saved = localStorage.getItem('theme') || 'dark';
-document.body.classList.toggle('is-dark', saved === 'dark');
-document.body.classList.toggle('is-light', saved === 'light');
-
-// click handler
-function toggleTheme(){
-  const toDark = !document.body.classList.contains('is-dark');
-  document.body.classList.toggle('is-dark', toDark);
-  document.body.classList.toggle('is-light', !toDark);
-  localStorage.setItem('theme', toDark ? 'dark' : 'light');
-}
-
-
-
-
-
-
-// before inserting the HTML
-const colorMain   = isDark ? '#B7C6D6' : '#1F3B63';  // main text
-const colorKicker = isDark ? '#D6E1ED' : '#16345F';  // "Tip:"
-const colorEm     = isDark ? '#B8C9DA' : '#2A4E86';  // italic examples
-
-
-
-hint.style.color = colorMain;
-hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
-hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
-
-
-
-
-
-
-
-/* ===== Global theme toggle (persists across refresh) ===== */
-(function () {
-  const KEY = 'sg-theme';            // localStorage key
-  const DEFAULT = 'dark';            // you want default black
-
-  const $body = document.body;
-  const $btn  = document.querySelector('.theme-toggle'); // keep your button
-
-  function apply(mode) {
-    const m = (mode === 'light') ? 'is-light' : 'is-dark';
-    $body.classList.remove('is-light','is-dark');
-    $body.classList.add(m);
-    document.documentElement.style.colorScheme = (mode === 'light') ? 'light' : 'dark';
-
-    // Optional: update button label/icon without changing your button style
-    if ($btn) {
-      $btn.innerHTML = (mode === 'light') ? '☀️ Light' : '🌙 Dark';
-      $btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
+/* ===============================
+   LIGHT/DARK toggle (button + CSS)
+   =============================== */
+(function ensureThemeToggleStyles(){
+  if (document.getElementById('theme-toggle-css')) return;
+  const s = document.createElement('style');
+  s.id = 'theme-toggle-css';
+  s.textContent = `
+    .theme-toggle{
+      display:flex; align-items:center; gap:.65rem; border:none; cursor:pointer; user-select:none;
+      padding:10px 14px; border-radius:999px; font:600 14px/1.1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 4px 12px rgba(0,0,0,.25);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: #dfe9f5;
     }
+    .theme-toggle i{ font-style:normal; display:inline-flex; align-items:center; }
+    .theme-toggle:hover{ transform: translateY(-1px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 6px 16px rgba(0,0,0,.3); }
+    .topbar .theme-toggle{ margin-left: 12px; }
+
+    /* Dark palette */
+    body.is-dark .theme-toggle{
+      background: linear-gradient(180deg, #0e1420, #0b111a);
+      color:#E7F0FF; border:1px solid rgba(150,190,255,.22);
+    }
+    body.is-dark .theme-toggle i{ filter: drop-shadow(0 0 6px rgba(255,230,120,.55)); }
+
+    /* Light palette */
+    body.is-light .theme-toggle{
+      background: linear-gradient(180deg, #F3F7FF, #EDF3FF);
+      color:#1F3B63; border:1px solid rgba(134,174,242,.65);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.85), 0 6px 18px rgba(0,0,0,.08);
+    }
+    body.is-light .theme-toggle i{ filter: drop-shadow(0 0 4px rgba(20,60,120,.25)); }
+  `;
+  document.head.appendChild(s);
+})();
+
+/* =========================
+   Single Global Theme Manager
+   ========================= */
+(function ThemeManager(){
+  const STORAGE_KEY = 'sg_theme';       // single key
+  const DEFAULT     = 'dark';           // default on first load
+
+  const $html = document.documentElement;
+  const $body = document.body;
+
+  function ensureToggle(){
+    let btn = document.querySelector('.theme-toggle');
+    if (!btn){
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'theme-toggle';
+      btn.innerHTML = '<i>🌗</i><span>Dark</span>';
+      // place inside topbar (keeps layout like your screenshots)
+      const topbar = document.querySelector('.topbar');
+      if (topbar){
+        topbar.appendChild(btn);
+      } else {
+        document.body.appendChild(btn);
+        btn.style.position = 'fixed';
+        btn.style.right = '16px';
+        btn.style.top = '16px';
+        btn.style.zIndex = '1000';
+      }
+    }
+    return btn;
   }
 
-  function currentMode() {
-    if ($body.classList.contains('is-light')) return 'light';
+  const $btn = ensureToggle(); // make sure it exists now
+
+  function apply(mode){
+    const val = (mode === 'light') ? 'light' : 'dark';
+
+    // Body classes
+    $body.classList.remove('is-dark','is-light');
+    $body.classList.add(val === 'dark' ? 'is-dark' : 'is-light');
+
+    // Mirror to <html>
+    $html.setAttribute('data-theme', val);
+    $html.style.colorScheme = (val === 'light') ? 'light' : 'dark';
+
+    // Persist
+    try { localStorage.setItem(STORAGE_KEY, val); } catch {}
+
+    // Update toggle label/accessibility
+    if ($btn) {
+      $btn.setAttribute('aria-pressed', String(val === 'dark'));
+      const sp = $btn.querySelector('span');
+      if (sp) sp.textContent = (val === 'dark') ? 'Light' : 'Dark';
+    }
+
+    // Notify dependants
+    window.dispatchEvent(new CustomEvent('themechange', { detail: { mode: val }}));
+  }
+
+  function current(){
     if ($body.classList.contains('is-dark'))  return 'dark';
+    if ($body.classList.contains('is-light')) return 'light';
     return null;
   }
 
-  // 1) On first load, apply saved preference or default
-  const saved = localStorage.getItem(KEY);
+  // Initial
+  let saved = null;
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch {}
   apply(saved || DEFAULT);
 
-  // 2) Wire up the button
-  if ($btn) {
-    $btn.addEventListener('click', () => {
-      const next = (currentMode() === 'dark') ? 'light' : 'dark';
-      localStorage.setItem(KEY, next);
-      apply(next);
-    });
-  }
-
-  // 3) If some other script or page sets the theme, react to storage event
-  window.addEventListener('storage', (e) => {
-    if (e.key === KEY && e.newValue) apply(e.newValue);
-  });
-})();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Paste the theme toggle script here at the end of your main JS file
-(function(){
-    if (!document.body.classList.contains('home')) return;
-
-    const KEY = 'site_theme_home';
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    function applyTheme(mode){
-        document.body.classList.remove('is-dark','is-light');
-        document.body.classList.add(mode === 'dark' ? 'is-dark' : 'is-light');
-        localStorage.setItem(KEY, mode);
-        updateToggle(mode);
-    }
-
-    function currentTheme(){
-        if (document.body.classList.contains('is-dark')) return 'dark';
-        if (document.body.classList.contains('is-light')) return 'light';
-        return prefersDark ? 'dark' : 'light';
-    }
-
-    function ensureToggle(){
-        let btn = document.getElementById('themeToggle');
-        if (!btn){
-            btn = document.createElement('button');
-            btn.id = 'themeToggle';
-            btn.className = 'theme-toggle';
-            btn.innerHTML = '<i>🌗</i><span>Dark</span>';
-            btn.setAttribute('aria-pressed', 'false');
-            const topbar = document.querySelector('.topbar');
-            if (topbar){
-                topbar.appendChild(btn);
-            } else {
-                document.body.appendChild(btn);
-                btn.style.position = 'fixed';
-                btn.style.right = '16px';
-                btn.style.top = '16px';
-                btn.style.zIndex = '1000';
-            }
-        }
-        return btn;
-    }
-
-    function updateToggle(mode){
-        const btn = ensureToggle();
-        const span = btn.querySelector('span');
-        const dark = (mode === 'dark');
-        btn.setAttribute('aria-pressed', String(dark));
-        if (span) span.textContent = dark ? 'Light' : 'Dark';
-        btn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
-    }
-
-    const saved = localStorage.getItem(KEY);
-    if (saved === 'dark' || saved === 'light') applyTheme(saved);
-    else updateToggle(currentTheme());
-
-    ensureToggle().addEventListener('click', function(){
-        const next = currentTheme() === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
-    });
-})();
-
-
-
-
-/* ==========================================================
-   Gallery routing fix: clear ?album=… when closing overlay
-   (Paste at the end of app.js — no <script> tags here)
-   ========================================================== */
-(function manageAlbumRouting() {
-  const overlay   = document.getElementById('albumView');
-  const closeBtn  = document.getElementById('closeAlbum');
-
-  // Hide overlay + unlock scroll (uses your existing CSS classes/IDs)
-  function hideOverlay() {
-    if (!overlay) return;
-    overlay.classList.remove('active');
-    document.body.classList.remove('noscroll');
-  }
-
-  // Remove only the album query parameter and normalize the URL
-  function clearAlbumParam(replace = true) {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('album');
-
-    // Build a clean URL for this page (keep any other params/hash if present)
-    const clean =
-      url.pathname +
-      (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') +
-      (url.hash || '');
-
-    // Replace current history entry so refresh/back don’t reopen the album
-    if (replace) {
-      history.replaceState({ view: 'grid' }, '', clean);
-    } else {
-      history.pushState({ view: 'grid' }, '', clean);
-    }
-  }
-
-  // Close button → hide and clear query
-  closeBtn && closeBtn.addEventListener('click', () => {
-    hideOverlay();
-    clearAlbumParam(true); // replaceState so refresh stays on the grid
-  });
-
-  // Keep Back/Forward in sync: if URL has no ?album, ensure overlay is closed
-  window.addEventListener('popstate', () => {
-    const hasAlbum = new URLSearchParams(location.search).has('album');
-    if (!hasAlbum) {
-      hideOverlay();
-    }
-    // If hasAlbum, your existing code that reacts to URL (if any) can open it.
-  });
-})();
-
-
-
-
-
-
-
-
-
-
-
-
-hint.style.color = colorMain;
-hint.querySelector('.kicker')?.style && (hint.querySelector('.kicker').style.color = colorKicker);
-hint.querySelectorAll('em').forEach(el => el.style.color = colorEm);
-
-
-
-
-
-
-
-/* ===== Global theme toggle (persists across refresh) ===== */
-(function(){
-  function applyTheme(mode){
-    document.documentElement.setAttribute('data-theme', mode);
-    document.body.classList.toggle('is-dark', mode === 'dark');
-    document.body.classList.toggle('is-light', mode === 'light');
-
-    try {
-      localStorage.setItem('sg_theme', mode);
-    } catch(e){}
-    updateToggle(mode);
-  }
-
-  function currentTheme(){
-    return document.documentElement.getAttribute('data-theme') || 'dark';
-  }
-
-  function updateToggle(mode){
-    var btn = document.querySelector('.theme-toggle');
+  // Toggle (single handler)
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.theme-toggle');
     if (!btn) return;
-    btn.innerHTML = (mode === 'dark' ? '🌙 Dark' : '☀️ Light');
-    btn.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
-  }
-
-  // init label after DOM ready (preload already set the attribute)
-  window.addEventListener('DOMContentLoaded', function(){
-    // restore saved theme if any
-    let saved = null;
-    try {
-      saved = localStorage.getItem('sg_theme');
-    } catch(e){}
-
-    if (saved) {
-      applyTheme(saved);
-    } else {
-      // default = dark
-      applyTheme('dark');
-    }
+    const next = (current() === 'dark') ? 'light' : 'dark';
+    apply(next);
   });
 
-  // click to toggle
-  document.addEventListener('click', function(ev){
-    var btn = ev.target.closest('.theme-toggle');
-    if (!btn) return;
-    var next = currentTheme() === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
+  // Cross-tab sync
+  window.addEventListener('storage', (e)=>{
+    if (e.key === STORAGE_KEY && e.newValue) apply(e.newValue);
   });
-
-  // optional: sync with OS change (only when user hasn’t chosen explicitly)
-  try {
-    if (!localStorage.getItem('sg_theme')) {
-      var mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.addEventListener('change', function(e){
-        applyTheme(e.matches ? 'dark' : 'light');
-      });
-    }
-  } catch(e){}
 })();
+
+
+
+
+
 

@@ -1470,3 +1470,32 @@ body.is-light #ask-hint-row,
     text-align: left;     /* more readable on phones */
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ai-img-grid{
+  display:grid; gap:10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+  margin-top:10px;
+}
+.ai-img{ position:relative; border:1px solid var(--chip-border,rgba(255,255,255,.12));
+  border-radius:12px; overflow:hidden; background:rgba(255,255,255,.02);}
+.ai-img img{ width:100%; height:120px; object-fit:cover; display:block; }
+.ai-img figcaption{
+  display:flex; gap:8px; justify-content:flex-end; padding:6px 8px;
+  background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.45));
+  position:absolute; left:0; right:0; bottom:0;
+}
+.ai-img a{ color:#fff; font-size:.85rem; text-decoration:none; background:rgba(0,0,0,.35);
+  padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.35); }
+body.is-light .ai-img a{ color:#1b2b45; background:rgba(255,255,255,.8); border-color:rgba(0,0,0,.15); }

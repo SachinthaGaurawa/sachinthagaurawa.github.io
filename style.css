@@ -1319,3 +1319,10 @@ body.is-light #ask-hint-row,
   font-size: 0.9rem;
   line-height: 1.4;
 }
+
+
+
+
+
+
+.search-slot::before{ content:"\\f002"; font-family:"Font Awesome 6 Free"; font-weight:900; }

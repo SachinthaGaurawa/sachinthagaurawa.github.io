@@ -895,7 +895,7 @@ function setupLazyHero(){
 }
 
 function setupChips(){
-  const POPULAR = ['AAVSS','dataset','lidar','night','rain'];
+  const POPULAR = ['autonomous','dataset','lidar','night','rain'];
   const chips = document.getElementById('chips');
   if (!chips) return;
   chips.innerHTML = POPULAR.map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');

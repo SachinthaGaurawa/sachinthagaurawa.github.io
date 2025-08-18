@@ -1399,3 +1399,44 @@ async function askAI(question) {
   const data = await res.json();
   return data.answer;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// After you call expertAsk() and get: { answer, sources }
+
+function renderCitations(sources = []) {
+  if (!sources.length) return '';
+  const items = sources.map(s => {
+    if (s.startsWith('pdf:')) {
+      const [, payload] = s.split(':');
+      const [id, title, pageKV, url] = payload.split('|');
+      const page = (pageKV.split('=')[1] || '').trim();
+      return `<li>📄 <a href="${url}#page=${page}" target="_blank" rel="noopener">${title} — p.${page}</a></li>`;
+    }
+    if (s.startsWith('kb:')) {
+      const [, payload] = s.split(':');
+      const [id, title] = payload.split('|');
+      return `<li>🧠 KB: ${title}</li>`;
+    }
+    return `<li>${s}</li>`;
+  }).join('');
+  return `<div class="ai-sources"><ul>${items}</ul></div>`;
+}
+
+// Example usage:
+const { answer, sources } = await expertAsk(userQuestion);
+document.querySelector('#ai-answer').innerHTML = answer + renderCitations(sources);
+

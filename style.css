@@ -1325,4 +1325,59 @@ body.is-light #ask-hint-row,
 
 
 
-.search-slot::before{ content:"\\f002"; font-family:"Font Awesome 6 Free"; font-weight:900; }
+
+
+
+
+
+/* Phones & tablets: keep the search pill inside the card and stop awkward wrapping */
+@media (max-width: 1024px) {
+  /* the card itself should fill the width nicely */
+  .controls.container > .search {
+    max-width: 100% !important;
+    width: 100%;
+    margin: 0;                 /* no auto-centering on mobile */
+    display: grid;             /* keep icon + input together and tip below */
+    grid-template-columns: 28px 1fr;  /* [icon] [input] */
+    grid-auto-rows: auto;
+    align-items: center;
+    gap: 0.6rem 0.6rem;        /* row gap, col gap */
+  }
+
+  /* magnifier: fixed column */
+  .controls.container > .search > i.fa-magnifying-glass {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 1.05rem;
+    line-height: 1;
+    display: block;
+    margin-left: 4px;          /* keeps it off the edge */
+  }
+
+  /* input: allow it to shrink properly instead of pushing the icon down */
+  .controls.container > .search > input {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;              /* CRUCIAL: lets flex/grid shrink the input */
+    width: 100%;
+    flex: 0 1 auto;            /* don’t fight grid sizing */
+  }
+
+  /* tip: always becomes a full-width row under the input on mobile */
+  .controls.container > .search > .tip {
+    grid-column: 1 / -1;       /* span both columns */
+    grid-row: 2;
+    text-align: left;          /* left-align on mobile for readability */
+    margin-left: 0;
+    max-width: 100%;
+  }
+}
+
+/* Small phones: tighten spacing a touch */
+@media (max-width: 420px) {
+  .controls.container > .search {
+    grid-template-columns: 24px 1fr;
+    gap: 0.5rem 0.5rem;
+  }
+}
+

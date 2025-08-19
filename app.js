@@ -1402,16 +1402,6 @@ askBtn.addEventListener('click', async () => {
 
 
 
-async function askAI(question) {
-  const res = await fetch(`${API_BASE}/api/ask`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question })
-  });
-  const data = await res.json();
-  return data.answer;
-}
-
 
 
 

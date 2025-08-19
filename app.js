@@ -1,14 +1,13 @@
-/* -----------------------------------------------------------
-   Album Gallery + Overlay + Viewer + (AI Ask & Captions + Expert Q&A)
-   Works on static hosting (GitHub Pages) with a remote API.
-   ----------------------------------------------------------- */
-
-/* ====== CONFIG (ONE LINE only) ======
-   For local dev (running server.js locally): 'http://localhost:8787'
-*/
-const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
+/* ====== CONFIG (ONE LINE only) ====== */
+/* For local dev use: window.__API_BASE__ = 'http://localhost:8787' before this script */
+const API_BASE = String(window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
 
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
+
+// Show any uncaught errors so we don’t silently fail
+window.addEventListener('error', (e) => {
+  console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
+});
 
 
 // FRONT-END ONLY

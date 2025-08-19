@@ -1390,12 +1390,6 @@ function renderAskImages(imgs){
 
 
 
-// current:
-askBtn.addEventListener('click', async () => {
-  const q = askInput.value.trim();
-  if (!q) return;
-  // ... existing code that POSTs to /api/ai-expert and renders text
-});
 
 
 

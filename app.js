@@ -4,28 +4,19 @@ const API_BASE = String(window.__API_BASE__ || 'https://album-ai-backend-new.ver
 
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
 
-// Show any uncaught errors so we don’t silently fail
+// Show any uncaught errors so we don’t silently fail (single handler)
 window.addEventListener('error', (e) => {
-  console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
+  console.error('[gallery] Uncaught error:', e.message, 'at', (e.filename || '') + ':' + (e.lineno || ''));
 });
 
-
-// FRONT-END ONLY
-const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
-
-// examples:
-await fetch(`${API_BASE}/api/ai`, { /* ... */ });
-await fetch(`${API_BASE}/api/ask`, { /* ... */ });
-await fetch(`${API_BASE}/api/img`, { /* ... */ });
-
-
-
-
-// Show any uncaught errors so we don’t silently fail
-window.addEventListener('error', (e) => {
-  console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
-});
-
+/* 
+// FRONT-END ONLY (examples; do NOT run at top-level)
+(async () => {
+  await fetch(`${API_BASE}/api/ai`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'ask', question:'Hi', context:'demo' }) });
+  await fetch(`${API_BASE}/api/ask`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ q:'Hi' }) });
+  await fetch(`${API_BASE}/api/img`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'search', query:'rainy highway' }) });
+})();
+*/
 
 /* ====== tiny helpers ====== */
 const $  = (s, p=document) => p.querySelector(s);
@@ -326,7 +317,7 @@ function openAlbum(id, index=0, push=false){
   if (window.AOS && typeof window.AOS.refresh === 'function') window.AOS.refresh();
 
   ensureAlbumFooter();
-  wireAskUI();                 // ensure AI input is wired on open
+  wireAskUI();                   // ensure AI input is wired on open
   insertAlbumAskHintBelowChat(); // centered responsive pill
 
   if(push){
@@ -874,6 +865,8 @@ async function captionImagesInAlbum(album){
     };
   }
 }
+
+/* ====== Misc UX
 
 /* ====== Misc UX ====== */
 function updateAllFooterYears() {

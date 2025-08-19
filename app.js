@@ -10,6 +10,18 @@ const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.ap
 
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
 
+
+// FRONT-END ONLY
+const API_BASE = (window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
+
+// examples:
+await fetch(`${API_BASE}/api/ai`, { /* ... */ });
+await fetch(`${API_BASE}/api/ask`, { /* ... */ });
+await fetch(`${API_BASE}/api/img`, { /* ... */ });
+
+
+
+
 // Show any uncaught errors so we don’t silently fail
 window.addEventListener('error', (e) => {
   console.error('[gallery] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);

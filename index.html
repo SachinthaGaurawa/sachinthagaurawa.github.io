@@ -68,6 +68,92 @@
         console.log('[cache-bust] active', stamp);
       })();
       </script>
+
+
+
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('#awards .award-card');
+        
+        // Simple confetti particles
+        function spawnConfetti(canvas) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.offsetWidth;
+            const h = canvas.height = canvas.offsetHeight;
+            const colors = ['#ffcc00','#ffd54f','#90caf9','#a5d6a7','#f48fb1'];
+            const parts = [];
+            const N = 60;
+        
+            for (let i = 0; i < N; i++) {
+            parts.push({
+                x: Math.random() * w,
+                y: -10 - Math.random()*h*0.3,
+                r: 2 + Math.random()*4,
+                c: colors[Math.floor(Math.random()*colors.length)],
+                vy: 1 + Math.random()*2,
+                vx: -1 + Math.random()*2,
+                rot: Math.random()*Math.PI*2,
+                vr: -0.1 + Math.random()*0.2
+            });
+            }
+        
+            let anim;
+            function draw() {
+            ctx.clearRect(0,0,w,h);
+            parts.forEach(p=>{
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot);
+                ctx.fillStyle = p.c;
+                ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+                ctx.restore();
+        
+                p.y += p.vy;
+                p.x += p.vx;
+                p.rot += p.vr;
+        
+                if (p.y > h + 12) {
+                p.y = -12;
+                p.x = Math.random()*w;
+                }
+            });
+            anim = requestAnimationFrame(draw);
+            }
+            draw();
+        
+            // Stop after 3s to save CPU
+            setTimeout(()=> cancelAnimationFrame(anim), 3000);
+        }
+        
+        // Trigger confetti when card first becomes visible
+        const io = new IntersectionObserver((entries)=>{
+            entries.forEach(entry=>{
+            if (entry.isIntersecting) {
+                const canvas = entry.target.querySelector('.award-confetti');
+                if (canvas && !canvas.dataset.fired) {
+                canvas.dataset.fired = '1';
+                spawnConfetti(canvas);
+                }
+            }
+            });
+        }, { threshold: 0.4 });
+        
+        cards.forEach(card=>{
+            io.observe(card);
+            // Re‑spark on hover for delight
+            card.addEventListener('mouseenter', ()=>{
+            const canvas = card.querySelector('.award-confetti');
+            if (canvas) spawnConfetti(canvas);
+            });
+        });
+        });
+    </script>
+        
+
+
     
 </head>
 
@@ -104,6 +190,9 @@
              
             <div class="navbar-nav me-auto py-0">
                 <a href="#project" class="nav-item nav-link">Projects</a>
+
+                <a href="#awards" class="nav-item nav-link">Awards</a>
+
                 <a href="#research" class="nav-item nav-link">Research</a>
                 <a href="#memberships" class="nav-item nav-link">Memberships</a>
                 <a href="gallery.html" class="nav-item nav-link" target="_blank">Gallery</a>
@@ -705,6 +794,86 @@
         </div>
     </div>
     <!-- Projects End -->
+
+
+
+    <br> <br> <br> <br>
+
+    <!-- Awards Start -->
+ 
+    <div class="container-xxl py-6 pb-5" id="awards" style="background:#f5f7fa;">
+        <div class="container">
+        <div class="row g-5 mb-5 wow fadeInUp" data-wow-delay="0.1s">
+            <div class="col-lg-6">
+            <h1 class="display-5 mb-0" data-aos="fade-right">Awards</h1>
+            </div>
+            <div class="col-lg-6 text-lg-end" data-aos="fade-left">
+            <p class="lead">Recognitions for academic excellence in engineering impact</p>
+            </div>
+        </div>
+    
+        <!-- Awards Grid -->
+        
+        <div class="row g-4">
+            <!-- Award 1: Academic Excellence Award (Primary) -->
+            <div class="col-lg-6 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+            <div class="award-card">
+                <div class="award-ribbon">
+                <i class="fas fa-trophy"></i>
+                </div>
+                <div class="award-media">
+                <!-- Replace with your certificate image -->
+                <a href="img/awards/team-1.jpg" data-lightbox="award-1" class="award-image-link">
+                    <img src="img/awards/team-1.jpg" alt="Academic Excellence Award Certificate" class="img-fluid award-image">
+                </a>
+                <!-- Hidden gallery item: trophy -->
+                
+                </div>
+                <div class="award-content">
+                <div class="d-flex align-items-start gap-2 flex-wrap">
+                    <h4 class="mb-1">Academic Excellence Award</h4>
+                    <span class="badge rounded-pill bg-warning text-dark">2025</span>
+                </div>
+                <p class="text-muted mb-2">Best Undergraduate Project — BEng(Hons) Electrical & Electronic Engineering Top‑Up</p>
+                <p class="mb-3">Study World Lanka Campus · Dr. Vidhya Vinod Academic Excellence Award · Convocation 2025</p>
+    
+                <div class="award-meta">
+                    <span class="me-3"><i class="fas fa-university me-2 text-primary"></i>Study World Lanka Campus</span>
+                    <span class="me-3"><i class="fas fa-certificate me-2 text-primary"></i>Official Recognition</span>
+                    <span class=""><i class="fas fa-star me-2 text-primary"></i>Merit: Best Project</span>
+                </div>
+    
+                <div class="d-flex gap-2 mt-3">
+                    <a href="img/awards/academic-excellence-certificate.jpg" data-lightbox="award-1" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye me-2"></i>View Certificate
+                    </a>
+                    <a href="img/awards/academic-excellence-trophy.jpg" data-lightbox="award-1" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-medal me-2"></i>View Trophy
+                    </a>
+                    <!-- Optional: evidence PDF if available -->
+                    <!-- <a href="files/award-letter.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-file-pdf me-2"></i>Evidence PDF
+                    </a> -->
+                </div>
+                </div>
+                <!-- Decorative confetti canvas -->
+                <canvas class="award-confetti"></canvas>
+            </div>
+            </div>
+    
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    
+    <!-- Awards End -->
+  
+
+
+
+
+
     <br> <br>
     <!-- Research Start -->
     <div class="container-xxl py-6 pb-5" id="research">
@@ -714,7 +883,7 @@
                     <h1 class="display-5 mb-0" data-aos="fade-right">Research & Publications</h1>
                 </div>
                 <div class="col-lg-6 text-lg-end" data-aos="fade-left">
-                    <p class="lead">Contributing to the advancement of AI, robotics, and safety systems</p>
+                    <p class="lead">Contributing to the advancement of AI, robotics and safety systems</p>
                 </div>
             </div>
             <div class="row g-4">

@@ -410,3 +410,102 @@ async function triggerDownload(type) {
   `;
   document.head.appendChild(styleTag);
   
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('#awards .award-card');
+
+    cards.forEach(card => {
+        const canvas = card.querySelector('.award-confetti');
+        const media = card.querySelector('.award-media');
+        if (!canvas || !media) return;
+
+        // Move canvas inside the media container to cover the image
+        media.appendChild(canvas);
+
+        let animationFrameId;
+        let fadeOutTimeout;
+
+        // The function that draws the confetti
+        function spawnConfetti() {
+            if (animationFrameId) return; // Don't start a new animation if one is running
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = media.clientWidth;
+            const h = canvas.height = media.clientHeight;
+            const colors = ['#ffcc00', '#ffd54f', '#90caf9', '#a5d6a7', '#f48fb1'];
+            const particles = Array.from({ length: 60 }, () => ({
+                x: Math.random() * w,
+                y: -10 - Math.random() * h * 0.3,
+                r: 2 + Math.random() * 4,
+                c: colors[Math.floor(Math.random() * colors.length)],
+                vy: 1 + Math.random() * 2,
+                vx: -1 + Math.random() * 2,
+                rot: Math.random() * Math.PI * 2,
+                vr: -0.1 + Math.random() * 0.2
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, w, h);
+                particles.forEach(p => {
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.c;
+                    ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+                    ctx.restore();
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    p.rot += p.vr;
+                    if (p.y > h + 12) {
+                        p.y = -12;
+                        p.x = Math.random() * w;
+                    }
+                });
+                animationFrameId = requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // Mouse enters the image area
+        media.addEventListener('mouseenter', () => {
+            clearTimeout(fadeOutTimeout); // Cancel any pending fade-out
+            canvas.style.opacity = '0.85'; // Make canvas visible
+            spawnConfetti(); // Start the animation
+        });
+
+        // Mouse leaves the image area
+        media.addEventListener('mouseleave', () => {
+            // Wait 500ms before starting to fade out
+            fadeOutTimeout = setTimeout(() => {
+                canvas.style.opacity = '0'; // Trigger the CSS fade-out
+                // After the fade transition is complete, stop the animation
+                setTimeout(() => {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+                }, 500); // This must match the CSS transition duration
+            }, 500);
+        });
+
+        // Initial animation on scroll
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !canvas.dataset.fired) {
+                canvas.dataset.fired = '1';
+                media.dispatchEvent(new Event('mouseenter')); // Simulate a hover to start
+                setTimeout(() => media.dispatchEvent(new Event('mouseleave')), 2500); // Simulate a mouse leave to fade out
+            }
+        }, { threshold: 0.4 });
+
+        observer.observe(card);
+    });
+});
+
+
+

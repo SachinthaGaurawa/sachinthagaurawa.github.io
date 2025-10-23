@@ -29,6 +29,18 @@ body {
 
 
 
+@media (min-width:992px){  
+  /* Loading Screen Enhancement */
+.loading-text {
+    font-family: 'Orbitron', monospace;
+    font-weight: 500;
+    animation: pulse 1.5s ease-in-out infinite alternate;
+    position: absolute;
+    right: 500px; 
+}
+
+
+
 /* Loading Screen Enhancement */
 .loading-text {
     font-family: 'Orbitron', monospace;

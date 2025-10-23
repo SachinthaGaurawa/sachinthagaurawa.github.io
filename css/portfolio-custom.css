@@ -24,7 +24,12 @@ body {
     background: var(--bg-color);
 }
 
-/* Loading Screen Enhancement */
+
+
+
+
+@media (min-width:992px){  
+  /* Loading Screen Enhancement */
 .loading-text {
     font-family: 'Orbitron', monospace;
     font-weight: 500;
@@ -32,6 +37,21 @@ body {
     position: absolute;
     right: 500px; 
 }
+
+
+@media (max-width: 768px) {
+/* Loading Screen Enhancement */
+.loading-text {
+    font-family: 'Orbitron', monospace;
+    font-weight: 500;
+    animation: pulse 1.5s ease-in-out infinite alternate;
+
+}
+
+
+
+
+
 
 /* Hero Section */
 /* Mobile hero text fixes */

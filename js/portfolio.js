@@ -509,3 +509,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Find the input field and the verify button inside your modal
+    const captchaInput = document.getElementById('captchaInput');
+    const verifyButton = document.getElementById('verifyCaptcha');
+
+    // Ensure both elements exist before adding the event listener
+    if (captchaInput && verifyButton) {
+        // Listen for a key being pressed down inside the input field
+        captchaInput.addEventListener('keydown', function(event) {
+            // Check if the key pressed was 'Enter'
+            if (event.key === 'Enter' || event.keyCode === 13) {
+                // Prevent the default 'Enter' behavior (like a form submitting)
+                event.preventDefault();
+
+                // Programmatically click the 'Verify & Download' button
+                verifyButton.click();
+            }
+        });
+    }
+});

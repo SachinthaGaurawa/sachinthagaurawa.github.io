@@ -556,6 +556,117 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+document.addEventListener('DOMContentLoaded', function() {
+    const captchaModalEl = document.getElementById('captchaModal');
+    if (!captchaModalEl) return;
+
+    const captchaModal = new bootstrap.Modal(captchaModalEl);
+    const captchaMath = document.getElementById('captchaMath');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaAnswer = document.getElementById('captchaAnswer');
+    const verifyButton = document.getElementById('verifyCaptcha');
+
+    // Device detection function
+    function isMobileOrTablet() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // Download trigger function
+    function triggerDownload(fileUrl, fileName) {
+        if (isMobileOrTablet()) {
+            // For mobile/tablets: Use fetch + blob + createObjectURL method
+            // This is the ONLY reliable way to trigger automatic download prompt on iOS/Android
+            fetch(fileUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = fileName;
+                    
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Cleanup
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Download failed:', error);
+                    // Fallback: direct navigation
+                    window.location.href = fileUrl;
+                });
+        } else {
+            // For PC/Laptops: Simple download method
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = fileUrl;
+            a.download = fileName;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    }
+
+    // Setup download buttons
+    document.querySelectorAll('.download-trigger').forEach(button => {
+        button.addEventListener('click', function() {
+            const filePath = this.getAttribute('data-file');
+            if (filePath) {
+                // Generate math question
+                const num1 = Math.floor(Math.random() * 20) + 1;
+                const num2 = Math.floor(Math.random() * 20) + 1;
+                captchaMath.textContent = `${num1} + ${num2} = ?`;
+                captchaAnswer.value = num1 + num2;
+                
+                // Store file path
+                captchaModalEl.dataset.file = filePath;
+                captchaInput.value = '';
+                
+                // Show modal
+                captchaModal.show();
+            }
+        });
+    });
+
+    // Verification handler
+    function handleVerification() {
+        const userAnswer = parseInt(captchaInput.value, 10);
+        const correctAnswer = parseInt(captchaAnswer.value, 10);
+        const fileToDownload = captchaModalEl.dataset.file;
+
+        if (userAnswer === correctAnswer && fileToDownload) {
+            // Close modal
+            captchaModal.hide();
+            
+            // Extract filename from path
+            const fileName = fileToDownload.split('/').pop();
+            
+            // Trigger download
+            triggerDownload(fileToDownload, fileName);
+        } else {
+            // Wrong answer animation
+            captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
+            setTimeout(() => {
+                captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
+            }, 800);
+            captchaInput.value = '';
+        }
+    }
+
+    // Button click handler
+    verifyButton.addEventListener('click', handleVerification);
+    
+    // Enter key handler
+    captchaInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.keyCode === 13) {
+            event.preventDefault();
+            handleVerification();
+        }
+    });
+});
 
 
 

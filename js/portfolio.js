@@ -558,6 +558,81 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+document.addEventListener('DOMContentLoaded', function() {
+    const captchaModalEl = document.getElementById('captchaModal');
+    if (!captchaModalEl) return;
+
+    const captchaModal = new bootstrap.Modal(captchaModalEl);
+    const captchaMath = document.getElementById('captchaMath');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaAnswer = document.getElementById('captchaAnswer');
+    const verifyButton = document.getElementById('verifyCaptcha');
+
+    // This is the final and correct download function
+    function triggerDownload(fileUrl) {
+        const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isMobileOrTablet) {
+            // On mobile, navigate the current window to the file.
+            // This is the ONLY way to make iOS/Android show the download prompt without opening a new tab.
+            window.location.href = fileUrl;
+        } else {
+            // On PC, create a temporary link to force a download.
+            const link = document.createElement('a');
+            link.style.display = 'none';
+            link.href = fileUrl;
+            link.download = fileUrl.split('/').pop(); // Extracts filename from URL
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    // This part remains the same: it sets up the download buttons
+    document.querySelectorAll('.download-trigger').forEach(button => {
+        button.addEventListener('click', function() {
+            const filePath = this.getAttribute('data-file');
+            if (filePath) {
+                const num1 = Math.floor(Math.random() * 20) + 1;
+                const num2 = Math.floor(Math.random() * 20) + 1;
+                captchaMath.textContent = `${num1} + ${num2} = ?`;
+                captchaAnswer.value = num1 + num2;
+                captchaModalEl.dataset.file = filePath;
+                captchaInput.value = '';
+                captchaModal.show();
+            }
+        });
+    });
+
+    // This function handles the verification
+    function handleVerification() {
+        const userAnswer = parseInt(captchaInput.value, 10);
+        const correctAnswer = parseInt(captchaAnswer.value, 10);
+        const fileToDownload = captchaModalEl.dataset.file;
+
+        if (userAnswer === correctAnswer && fileToDownload) {
+            captchaModal.hide();
+            // Once verified, call the download function
+            triggerDownload(fileToDownload);
+        } else {
+            captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
+            setTimeout(() => {
+                captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
+            }, 800);
+            captchaInput.value = '';
+        }
+    }
+
+    verifyButton.addEventListener('click', handleVerification);
+    captchaInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            handleVerification();
+        }
+    });
+});
+
 
 
 

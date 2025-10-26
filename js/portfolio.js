@@ -553,83 +553,86 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
 document.addEventListener('DOMContentLoaded', function() {
     const captchaModalEl = document.getElementById('captchaModal');
+    if (!captchaModalEl) return;
+
     const captchaModal = new bootstrap.Modal(captchaModalEl);
     const captchaMath = document.getElementById('captchaMath');
     const captchaInput = document.getElementById('captchaInput');
     const captchaAnswer = document.getElementById('captchaAnswer');
     const verifyButton = document.getElementById('verifyCaptcha');
 
-    // 1. Function to detect if the device is a mobile or tablet
-    function isMobileOrTablet() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-
-    // 2. Function to trigger the file download correctly for each device
-    function triggerDownload(filePath) {
+    // This is the core download function - it works on all devices
+    function triggerDownload(fileUrl, fileName) {
+        // Create a temporary link element
         const link = document.createElement('a');
-        link.href = filePath;
+        link.style.display = 'none';
+        link.href = fileUrl;
 
-        if (isMobileOrTablet()) {
-            // For mobile/tablet, open in a new tab to trigger the native OS prompt
+        // Detect if it's a mobile or tablet
+        const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isMobileOrTablet) {
+            // On mobile, opening in a new tab is the most reliable way to trigger the native 'Download/View' prompt
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
         } else {
-            // For PC/Laptops, force a direct download
-            const fileName = filePath.split('/').pop();
+            // On PC/Laptops, use the 'download' attribute to force a file save dialog
             link.download = fileName;
         }
 
+        // Add the link to the page, click it, and then remove it
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
-    // 3. Set up all download buttons on the page
+    // Set up all download buttons that have the 'download-trigger' class
     document.querySelectorAll('.download-trigger').forEach(button => {
         button.addEventListener('click', function() {
-            const fileToDownload = this.getAttribute('data-file');
-            if (fileToDownload) {
-                // Generate a new math problem
-                const num1 = Math.floor(Math.random() * 10) + 1;
-                const num2 = Math.floor(Math.random() * 10) + 1;
+            const filePath = this.getAttribute('data-file');
+            if (filePath) {
+                // Generate and display a new math problem
+                const num1 = Math.floor(Math.random() * 20) + 1;
+                const num2 = Math.floor(Math.random() * 20) + 1;
                 captchaMath.textContent = `${num1} + ${num2} = ?`;
                 captchaAnswer.value = num1 + num2;
                 
-                // Store the file path on the modal itself to remember it
-                captchaModalEl.dataset.file = fileToDownload;
-
-                // Show the modal
-                captchaModal.show();
+                // Store the file path on the modal to remember what to download
+                captchaModalEl.dataset.file = filePath;
+                captchaInput.value = ''; // Clear previous answer
+                captchaModal.show(); // Show the verification modal
             }
         });
     });
 
-    // 4. Handle the verification logic
+    // This function runs when the user tries to verify their answer
     function handleVerification() {
         const userAnswer = parseInt(captchaInput.value, 10);
         const correctAnswer = parseInt(captchaAnswer.value, 10);
         const fileToDownload = captchaModalEl.dataset.file;
+        const fileName = fileToDownload.split('/').pop();
 
         if (userAnswer === correctAnswer && fileToDownload) {
             captchaModal.hide();
-            triggerDownload(fileToDownload);
+            // Call the reliable download function
+            triggerDownload(fileToDownload, fileName);
         } else {
-            captchaInput.style.borderColor = 'red';
+            // Shake effect for wrong answer
+            captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
             setTimeout(() => {
-                captchaInput.style.borderColor = '';
-            }, 1500);
+                captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
+            }, 800);
+            captchaInput.value = '';
         }
-        captchaInput.value = ''; // Clear input field
     }
 
-    // Verify when the "Verify & Download" button is clicked
+    // Assign the verification function to the button click and 'Enter' key press
     verifyButton.addEventListener('click', handleVerification);
-
-    // Also verify when the "Enter" key is pressed in the input field
     captchaInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter' || event.keyCode === 13) {
+        if (event.key === 'Enter') {
             event.preventDefault();
             handleVerification();
         }

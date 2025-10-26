@@ -556,6 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
 document.addEventListener('DOMContentLoaded', function() {
     const captchaModalEl = document.getElementById('captchaModal');
     if (!captchaModalEl) return;
@@ -566,66 +567,72 @@ document.addEventListener('DOMContentLoaded', function() {
     const captchaAnswer = document.getElementById('captchaAnswer');
     const verifyButton = document.getElementById('verifyCaptcha');
 
-    // Device detection function
+    // Device detection
     function isMobileOrTablet() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // Download trigger function
-    function triggerDownload(fileUrl, fileName) {
-        if (isMobileOrTablet()) {
-            // For mobile/tablets: Use fetch + blob + createObjectURL method
-            // This is the ONLY reliable way to trigger automatic download prompt on iOS/Android
-            fetch(fileUrl)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = fileName;
-                    
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    // Cleanup
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                })
-                .catch(error => {
-                    console.error('Download failed:', error);
-                    // Fallback: direct navigation
-                    window.location.href = fileUrl;
-                });
-        } else {
-            // For PC/Laptops: Simple download method
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = fileUrl;
-            a.download = fileName;
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
+    // Download function using Fetch + Blob method (works on all devices)
+    function downloadFile(fileUrl, fileName) {
+        // Use fetch to get the file as a blob
+        fetch(fileUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create a blob URL
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                // Create a temporary anchor element
+                const link = document.createElement('a');
+                link.style.display = 'none';
+                link.href = blobUrl;
+                link.download = fileName;
+                
+                // Append to body, click, and remove
+                document.body.appendChild(link);
+                link.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 100);
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                // Fallback: try direct download
+                const link = document.createElement('a');
+                link.href = fileUrl;
+                link.download = fileName;
+                if (isMobileOrTablet()) {
+                    link.target = '_blank';
+                }
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
     }
 
-    // Setup download buttons
+    // Setup all download buttons with class 'download-trigger'
     document.querySelectorAll('.download-trigger').forEach(button => {
         button.addEventListener('click', function() {
             const filePath = this.getAttribute('data-file');
             if (filePath) {
-                // Generate math question
+                // Generate random math question
                 const num1 = Math.floor(Math.random() * 20) + 1;
                 const num2 = Math.floor(Math.random() * 20) + 1;
                 captchaMath.textContent = `${num1} + ${num2} = ?`;
                 captchaAnswer.value = num1 + num2;
                 
-                // Store file path
+                // Store file path in modal
                 captchaModalEl.dataset.file = filePath;
                 captchaInput.value = '';
                 
-                // Show modal
+                // Show verification modal
                 captchaModal.show();
             }
         });
@@ -641,25 +648,33 @@ document.addEventListener('DOMContentLoaded', function() {
             // Close modal
             captchaModal.hide();
             
-            // Extract filename from path
+            // Extract filename
             const fileName = fileToDownload.split('/').pop();
             
-            // Trigger download
-            triggerDownload(fileToDownload, fileName);
-        } else {
-            // Wrong answer animation
-            captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
+            // Small delay to ensure modal is fully closed
             setTimeout(() => {
-                captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
-            }, 800);
+                downloadFile(fileToDownload, fileName);
+            }, 300);
+        } else {
+            // Wrong answer - shake animation
+            if (window.animate || captchaModalEl.classList.contains('animate__animated')) {
+                captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
+                setTimeout(() => {
+                    captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
+                }, 800);
+            }
             captchaInput.value = '';
+            captchaInput.style.borderColor = 'red';
+            setTimeout(() => {
+                captchaInput.style.borderColor = '';
+            }, 1500);
         }
     }
 
-    // Button click handler
+    // Verify button click
     verifyButton.addEventListener('click', handleVerification);
     
-    // Enter key handler
+    // Enter key press
     captchaInput.addEventListener('keydown', function(event) {
         if (event.key === 'Enter' || event.keyCode === 13) {
             event.preventDefault();
@@ -667,6 +682,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
 
 
 

@@ -557,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
 document.addEventListener('DOMContentLoaded', function() {
     // === Get all necessary elements from the DOM ===
     const captchaModalEl = document.getElementById('captchaModal');
@@ -567,100 +568,79 @@ document.addEventListener('DOMContentLoaded', function() {
     const captchaInput = document.getElementById('captchaInput');
     const captchaAnswer = document.getElementById('captchaAnswer');
     const verifyButton = document.getElementById('verifyCaptcha');
-
-    // === The Correct and Final Download Function ===
-    function downloadFile(fileUrl, fileName) {
-        // Use the modern Fetch API to get the file as a 'blob'
-        // This is the industry-standard and most reliable method
-        fetch(fileUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                return response.blob(); // Convert the response to a blob
-            })
-            .then(blob => {
-                // Create a temporary URL for the blob
-                const blobUrl = window.URL.createObjectURL(blob);
-                
-                // Create a hidden link to trigger the download
-                const link = document.createElement('a');
-                link.style.display = 'none';
-                link.href = blobUrl;
-                link.download = fileName;
-                
-                // Add the link to the page, click it, then remove it
-                document.body.appendChild(link);
-                link.click();
-                
-                // Clean up by revoking the blob URL
-                window.URL.revokeObjectURL(blobUrl);
-                document.body.removeChild(link);
-            })
-            .catch(error => {
-                console.error('Download failed:', error);
-                // Fallback for any unexpected errors: open the file directly
-                // On mobile, this will still prompt for download/view
-                window.open(fileUrl, '_blank');
+        
+        // Simple confetti particles
+        function spawnConfetti(canvas) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.offsetWidth;
+            const h = canvas.height = canvas.offsetHeight;
+            const colors = ['#ffcc00','#ffd54f','#90caf9','#a5d6a7','#f48fb1'];
+            const parts = [];
+            const N = 60;
+        
+            for (let i = 0; i < N; i++) {
+            parts.push({
+                x: Math.random() * w,
+                y: -10 - Math.random()*h*0.3,
+                r: 2 + Math.random()*4,
+                c: colors[Math.floor(Math.random()*colors.length)],
+                vy: 1 + Math.random()*2,
+                vx: -1 + Math.random()*2,
+                rot: Math.random()*Math.PI*2,
+                vr: -0.1 + Math.random()*0.2
             });
-    }
-
-    // === Set up all download buttons on your page ===
-    document.querySelectorAll('.download-trigger').forEach(button => {
-        button.addEventListener('click', function() {
-            const filePath = this.getAttribute('data-file');
-            if (filePath) {
-                // Generate a new math problem for verification
-                const num1 = Math.floor(Math.random() * 20) + 1;
-                const num2 = Math.floor(Math.random() * 20) + 1;
-                captchaMath.textContent = `${num1} + ${num2} = ?`;
-                captchaAnswer.value = num1 + num2;
-                
-                captchaModalEl.dataset.file = filePath;
-                captchaInput.value = ''; // Clear previous answers
-                
-                // Show the human verification modal
-                captchaModal.show();
             }
+        
+            let anim;
+            function draw() {
+            ctx.clearRect(0,0,w,h);
+            parts.forEach(p=>{
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot);
+                ctx.fillStyle = p.c;
+                ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+                ctx.restore();
+        
+                p.y += p.vy;
+                p.x += p.vx;
+                p.rot += p.vr;
+        
+                if (p.y > h + 12) {
+                p.y = -12;
+                p.x = Math.random()*w;
+                }
+            });
+            anim = requestAnimationFrame(draw);
+            }
+            draw();
+        
+            // Stop after 3s to save CPU
+            setTimeout(()=> cancelAnimationFrame(anim), 3000);
+        }
+        
+        // Trigger confetti when card first becomes visible
+        const io = new IntersectionObserver((entries)=>{
+            entries.forEach(entry=>{
+            if (entry.isIntersecting) {
+                const canvas = entry.target.querySelector('.award-confetti');
+                if (canvas && !canvas.dataset.fired) {
+                canvas.dataset.fired = '1';
+                spawnConfetti(canvas);
+                }
+            }
+            });
+        }, { threshold: 0.4 });
+        
+        cards.forEach(card=>{
+            io.observe(card);
+            // Re‑spark on hover for delight
+            card.addEventListener('mouseenter', ()=>{
+            const canvas = card.querySelector('.award-confetti');
+            if (canvas) spawnConfetti(canvas);
+            });
         });
-    });
-
-    // === Handle the verification logic ===
-    function handleVerification() {
-        const userAnswer = parseInt(captchaInput.value, 10);
-        const correctAnswer = parseInt(captchaAnswer.value, 10);
-        const fileToDownload = captchaModalEl.dataset.file;
-
-        if (userAnswer === correctAnswer && fileToDownload) {
-            captchaModal.hide(); // Hide the modal on success
-            
-            const fileName = fileToDownload.split('/').pop();
-            
-            // Wait a moment for the modal to close, then start the download
-            setTimeout(() => {
-                downloadFile(fileToDownload, fileName);
-            }, 300);
-        } else {
-            // Show a shake animation for wrong answers
-            captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
-            setTimeout(() => {
-                captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
-            }, 800);
-            captchaInput.value = '';
-        }
-    }
-
-    // === Wire up the verification button and Enter key ===
-    verifyButton.addEventListener('click', handleVerification);
-    captchaInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            handleVerification();
-        }
-    });
-});
-
-
+        });
 
 
 

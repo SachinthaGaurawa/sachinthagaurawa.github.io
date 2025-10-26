@@ -536,3 +536,64 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // --- 1. Function to Detect Mobile/Tablet Devices ---
+    function isMobileOrTablet() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // --- 2. Handle the Main "Download CV" Button ---
+    const downloadCvBtn = document.getElementById('downloadCV');
+    if (downloadCvBtn) {
+        downloadCvBtn.addEventListener('click', function(event) {
+            if (isMobileOrTablet()) {
+                event.preventDefault(); // Stop the default action
+                // Manually open the CV in a new tab
+                window.open('files/Sachintha_Gaurawa_CV.pdf', '_blank');
+            }
+            // On desktop, the default download behavior will proceed
+        });
+    }
+
+    // --- 3. Handle All "Download PDF" Buttons for Research Papers ---
+    const researchDownloadBtns = document.querySelectorAll('.download-research');
+    researchDownloadBtns.forEach(button => {
+        button.addEventListener('click', function(event) {
+            // This assumes the human verification is handled elsewhere and this click
+            // is for the actual download after verification.
+            if (isMobileOrTablet()) {
+                event.preventDefault();
+                const paperFile = this.getAttribute('data-paper'); // e.g., 'av-safety-framework'
+                if (paperFile) {
+                    // Construct the file path and open in a new tab
+                    const filePath = `files/research/${paperFile}.pdf`;
+                    window.open(filePath, '_blank');
+                }
+            }
+            // On desktop, the default download will proceed after verification
+        });
+    });
+});
+

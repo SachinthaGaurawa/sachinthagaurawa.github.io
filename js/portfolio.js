@@ -558,16 +558,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-document.addEventListener('DOMContentLoaded', function() {
-    // === Get all necessary elements from the DOM ===
-    const captchaModalEl = document.getElementById('captchaModal');
-    if (!captchaModalEl) return; // Stop if the modal doesn't exist
-
-    const captchaModal = new bootstrap.Modal(captchaModalEl);
-    const captchaMath = document.getElementById('captchaMath');
-    const captchaInput = document.getElementById('captchaInput');
-    const captchaAnswer = document.getElementById('captchaAnswer');
-    const verifyButton = document.getElementById('verifyCaptcha');
+        document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('#awards .award-card');
         
         // Simple confetti particles
         function spawnConfetti(canvas) {
@@ -641,6 +633,4 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         });
-
-
 

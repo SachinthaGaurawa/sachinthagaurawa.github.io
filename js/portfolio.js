@@ -558,8 +558,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    // === Get all necessary elements from the DOM ===
     const captchaModalEl = document.getElementById('captchaModal');
-    if (!captchaModalEl) return;
+    if (!captchaModalEl) return; // Stop if the modal doesn't exist
 
     const captchaModal = new bootstrap.Modal(captchaModalEl);
     const captchaMath = document.getElementById('captchaMath');
@@ -567,116 +568,92 @@ document.addEventListener('DOMContentLoaded', function() {
     const captchaAnswer = document.getElementById('captchaAnswer');
     const verifyButton = document.getElementById('verifyCaptcha');
 
-    // Device detection
-    function isMobileOrTablet() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-
-    // Download function using Fetch + Blob method (works on all devices)
+    // === The Correct and Final Download Function ===
     function downloadFile(fileUrl, fileName) {
-        // Use fetch to get the file as a blob
+        // Use the modern Fetch API to get the file as a 'blob'
+        // This is the industry-standard and most reliable method
         fetch(fileUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error('Network response was not ok: ' + response.statusText);
                 }
-                return response.blob();
+                return response.blob(); // Convert the response to a blob
             })
             .then(blob => {
-                // Create a blob URL
+                // Create a temporary URL for the blob
                 const blobUrl = window.URL.createObjectURL(blob);
                 
-                // Create a temporary anchor element
+                // Create a hidden link to trigger the download
                 const link = document.createElement('a');
                 link.style.display = 'none';
                 link.href = blobUrl;
                 link.download = fileName;
                 
-                // Append to body, click, and remove
+                // Add the link to the page, click it, then remove it
                 document.body.appendChild(link);
                 link.click();
                 
-                // Cleanup
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(blobUrl);
-                }, 100);
+                // Clean up by revoking the blob URL
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(link);
             })
             .catch(error => {
-                console.error('Download error:', error);
-                // Fallback: try direct download
-                const link = document.createElement('a');
-                link.href = fileUrl;
-                link.download = fileName;
-                if (isMobileOrTablet()) {
-                    link.target = '_blank';
-                }
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                console.error('Download failed:', error);
+                // Fallback for any unexpected errors: open the file directly
+                // On mobile, this will still prompt for download/view
+                window.open(fileUrl, '_blank');
             });
     }
 
-    // Setup all download buttons with class 'download-trigger'
+    // === Set up all download buttons on your page ===
     document.querySelectorAll('.download-trigger').forEach(button => {
         button.addEventListener('click', function() {
             const filePath = this.getAttribute('data-file');
             if (filePath) {
-                // Generate random math question
+                // Generate a new math problem for verification
                 const num1 = Math.floor(Math.random() * 20) + 1;
                 const num2 = Math.floor(Math.random() * 20) + 1;
                 captchaMath.textContent = `${num1} + ${num2} = ?`;
                 captchaAnswer.value = num1 + num2;
                 
-                // Store file path in modal
                 captchaModalEl.dataset.file = filePath;
-                captchaInput.value = '';
+                captchaInput.value = ''; // Clear previous answers
                 
-                // Show verification modal
+                // Show the human verification modal
                 captchaModal.show();
             }
         });
     });
 
-    // Verification handler
+    // === Handle the verification logic ===
     function handleVerification() {
         const userAnswer = parseInt(captchaInput.value, 10);
         const correctAnswer = parseInt(captchaAnswer.value, 10);
         const fileToDownload = captchaModalEl.dataset.file;
 
         if (userAnswer === correctAnswer && fileToDownload) {
-            // Close modal
-            captchaModal.hide();
+            captchaModal.hide(); // Hide the modal on success
             
-            // Extract filename
             const fileName = fileToDownload.split('/').pop();
             
-            // Small delay to ensure modal is fully closed
+            // Wait a moment for the modal to close, then start the download
             setTimeout(() => {
                 downloadFile(fileToDownload, fileName);
             }, 300);
         } else {
-            // Wrong answer - shake animation
-            if (window.animate || captchaModalEl.classList.contains('animate__animated')) {
-                captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
-                setTimeout(() => {
-                    captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
-                }, 800);
-            }
-            captchaInput.value = '';
-            captchaInput.style.borderColor = 'red';
+            // Show a shake animation for wrong answers
+            captchaModalEl.classList.add('animate__animated', 'animate__shakeX');
             setTimeout(() => {
-                captchaInput.style.borderColor = '';
-            }, 1500);
+                captchaModalEl.classList.remove('animate__animated', 'animate__shakeX');
+            }, 800);
+            captchaInput.value = '';
         }
     }
 
-    // Verify button click
+    // === Wire up the verification button and Enter key ===
     verifyButton.addEventListener('click', handleVerification);
-    
-    // Enter key press
     captchaInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter' || event.keyCode === 13) {
+        if (event.key === 'Enter') {
             event.preventDefault();
             handleVerification();
         }

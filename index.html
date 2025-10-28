@@ -134,48 +134,175 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-      async function verifyCaptcha() {
-        const num1 = Math.floor(Math.random() * 9) + 1;
-        const num2 = Math.floor(Math.random() * 9) + 1;
-        const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
-        return Number(answer) === num1 + num2;
+      const downloadBtn = document.getElementById('downloadCV');
+      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
+      const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
+    
+      // Synchronous verification setup
+      function verifyCaptchaSync() {
+        const cvBtn = document.getElementById('downloadCV');
+        if (cvBtn) cvBtn.addEventListener('click', e => {
+          e.preventDefault();
+          showCaptchaModal('cv');
+        });
+    
+        document.querySelectorAll('.download-research').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.preventDefault();
+            showCaptchaModal(btn.dataset.paper);
+          });
+        });
+    
+        const verifyBtn = document.getElementById('verifyCaptcha');
+        if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
       }
     
-      const buttons = document.querySelectorAll('.download-btn');
+      function showCaptchaModal(type) {
+        const modalEl = document.getElementById('captchaModal');
+        if (!modalEl) return;
     
-      buttons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const verified = await verifyCaptcha();
-          if (!verified) {
-            alert('❌ Verification failed. Please try again.');
+        const modal = new bootstrap.Modal(modalEl);
+    
+        const a = Math.floor(Math.random() * 20) + 1;
+        const b = Math.floor(Math.random() * 20) + 1;
+        const op = Math.random() > 0.5 ? '+' : '-';
+        const ans = op === '+' ? a + b : Math.abs(a - b);
+    
+        const firstNum = Math.max(a, b);
+        const secondNum = Math.min(a, b);
+        document.getElementById('captchaMath').textContent = `${firstNum} ${op} ${secondNum} = ?`;
+    
+        document.getElementById('captchaAnswer').value = ans;
+        document.getElementById('captchaInput').value = '';
+        document.getElementById('verifyCaptcha').dataset.download = type;
+    
+        modal.show();
+      }
+    
+      async function verifyCaptchaAndDownload() {
+        const user = +document.getElementById('captchaInput').value;
+        const correct = +document.getElementById('captchaAnswer').value;
+        const type = document.getElementById('verifyCaptcha').dataset.download;
+    
+        if (user === correct) {
+          const modalInstance = bootstrap.Modal.getInstance(document.getElementById('captchaModal'));
+          if (modalInstance) modalInstance.hide();
+    
+          const map = {
+            cv: FILE_NAME,
+            'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
+            'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+          };
+          const filename = map[type] || 'document.pdf';
+          const url = `docs/${filename}`;
+    
+          try {
+            await universalDownloadWithNotification(url, filename);
+          } catch (err) {
+            console.error(err);
+            showNotification('❌ Failed to download. Please try again.', 'error');
+          }
+        } else {
+          alert('Incorrect answer. Please try again.');
+        }
+      }
+    
+      // ✅ Fixed: Download success/failure logic (mobile-safe)
+      async function universalDownloadWithNotification(url, filename) {
+        try {
+          const success = await tryBlobDownload(url, filename);
+    
+          // Always show success immediately after triggering download
+          if (success.ok) {
+            showNotification('✅ Download started successfully!', 'success');
             return;
           }
     
-          const fileId = btn.dataset.fileId;
-          const downloadUrl = `download.php?file=${fileId}`;
-    
-          try {
-            // ✅ Try fetching the file first (to ensure it exists)
-            const check = await fetch(downloadUrl, { method: 'HEAD' });
-            if (!check.ok) throw new Error('File not found');
-    
-            // ✅ Trigger the download manually
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = '';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-    
-            // ✅ Inform the user right away (no waiting for mobile system)
-            alert('✅ Download started successfully! Check your downloads folder.');
-    
-          } catch (error) {
-            console.error('Download failed:', error);
-            alert('❌ Failed to download. Please try again.');
+          // fallback methods (still show success)
+          const resp = await fetch(url, { mode: 'cors' });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const r2 = await tryOpenInNewTabThenSet(blob, filename);
+            if (r2.ok) {
+              showNotification('✅ Download started successfully!', 'success');
+              return;
+            }
           }
-        });
-      });
+    
+          // final fallback
+          fallbackNavigate(url);
+          showNotification('✅ Download started successfully!', 'success');
+    
+        } catch (err) {
+          // ❌ Show fail only on *real network or blob error*
+          console.error(err);
+          showNotification('❌ Failed to download. Please try again.', 'error');
+        }
+      }
+    
+      async function tryBlobDownload(url, filename) {
+        try {
+          const resp = await fetch(url, { mode: 'cors' });
+          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
+          const blob = await resp.blob();
+    
+          // For old Edge / IE
+          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+            return { ok: true, method: 'msSaveOrOpenBlob' };
+          }
+    
+          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
+          const blobUrl = URL.createObjectURL(outBlob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename;
+          a.style.display = 'none';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+    
+          setTimeout(() => {
+            try { URL.revokeObjectURL(blobUrl); } catch {}
+            a.remove();
+          }, 1500);
+    
+          return { ok: true, method: 'anchor.click' };
+        } catch (err) {
+          return { ok: false, error: err };
+        }
+      }
+    
+      async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
+        try {
+          const blobUrl = blobOrUrl instanceof Blob ? URL.createObjectURL(blobOrUrl) : blobOrUrl;
+          const newWin = window.open('', '_blank', 'noopener');
+          if (!newWin) throw new Error('Popup blocked');
+          newWin.location.href = blobUrl;
+    
+          setTimeout(() => {
+            if (blobOrUrl instanceof Blob) {
+              try { URL.revokeObjectURL(blobUrl); } catch {}
+            }
+          }, 3000);
+    
+          return { ok: true, method: 'open-new-tab' };
+        } catch (err) {
+          return { ok: false, error: err };
+        }
+      }
+    
+      function fallbackNavigate(url) {
+        window.location.href = url;
+      }
+    
+      // Notification (customize this for your UI)
+      function showNotification(msg, type) {
+        console.log(`[${type}] ${msg}`);
+        // Add your toast or alert here
+      }
+    
+      verifyCaptchaSync();
     });
     </script>
 

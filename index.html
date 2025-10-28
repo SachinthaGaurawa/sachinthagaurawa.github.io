@@ -138,207 +138,237 @@
       const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
-      // --- Setup: use delegated listeners for download buttons to avoid duplicate handlers ---
-      function setupDownloadTriggers() {
-        // Delegate clicks for all download buttons (.download-research and #downloadCV)
-        document.body.addEventListener('click', (e) => {
-          const target = e.target.closest ? e.target.closest('[data-download-type], #downloadCV, .download-research') : null;
-          if (!target) return;
+      // Keep one modal instance reference so we always hide the same instance and remove backdrop
+      let modalInstance = null;
+      const modalEl = document.getElementById('captchaModal');
     
-          // Normalize types: if element has data-download-type use it, else if id==downloadCV treat as cv
-          let type = null;
-          if (target.id === 'downloadCV') type = 'cv';
-          if (target.dataset && target.dataset.paper) type = target.dataset.paper;
-          if (target.dataset && target.dataset.downloadType) type = target.dataset.downloadType; // flexible hook
-    
-          if (!type) return; // not a download button we care about
-    
-          e.preventDefault();
-          showCaptchaModal(type);
-        });
+      // Simple single-toast notification system (so notifications are consistent & not duplicated)
+      const toastContainerId = '__dl_toast_container__';
+      function ensureToastContainer() {
+        let c = document.getElementById(toastContainerId);
+        if (!c) {
+          c = document.createElement('div');
+          c.id = toastContainerId;
+          c.style.position = 'fixed';
+          c.style.zIndex = '2147483647';
+          c.style.right = '16px';
+          c.style.bottom = '16px';
+          c.style.display = 'flex';
+          c.style.flexDirection = 'column';
+          c.style.gap = '8px';
+          document.body.appendChild(c);
+        }
+        return c;
       }
     
-      // --- Show captcha modal and populate values ---
+      function showNotification(msg, type = 'info', duration = 3000) {
+        // type can be 'success'|'error'|'info'
+        const container = ensureToastContainer();
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.padding = '10px 14px';
+        t.style.borderRadius = '8px';
+        t.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+        t.style.fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+        t.style.fontSize = '14px';
+        t.style.color = '#fff';
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(8px)';
+        t.style.transition = 'opacity .18s ease, transform .18s ease';
+    
+        if (type === 'success') {
+          t.style.background = '#198754'; // bootstrap success green
+        } else if (type === 'error') {
+          t.style.background = '#dc3545'; // bootstrap danger red
+        } else {
+          t.style.background = '#0d6efd'; // bootstrap primary blue
+        }
+    
+        container.appendChild(t);
+        // trigger enter animation
+        requestAnimationFrame(() => {
+          t.style.opacity = '1';
+          t.style.transform = 'translateY(0)';
+        });
+    
+        // remove after duration
+        setTimeout(() => {
+          t.style.opacity = '0';
+          t.style.transform = 'translateY(8px)';
+          setTimeout(() => t.remove(), 220);
+        }, duration);
+      }
+    
+      // Clean leftover modal backdrop if any (in case of weird states)
+      function removeModalBackdropIfExists() {
+        // Remove modal-open body class and any leftover backdrops
+        if (document.body.classList.contains('modal-open')) {
+          document.body.classList.remove('modal-open');
+        }
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+      }
+    
+      // Synchronous verification setup (use single assignment handlers to avoid duplicates)
+      function verifyCaptchaSync() {
+        const cvBtn = document.getElementById('downloadCV');
+        if (cvBtn) {
+          cvBtn.onclick = function (e) {
+            e.preventDefault();
+            showCaptchaModal('cv');
+          };
+        }
+    
+        document.querySelectorAll('.download-research').forEach(btn => {
+          btn.onclick = function (e) {
+            e.preventDefault();
+            showCaptchaModal(btn.dataset.paper);
+          };
+        });
+    
+        const verifyBtn = document.getElementById('verifyCaptcha');
+        if (verifyBtn) {
+          // Ensure single handler (overwrite any previous)
+          verifyBtn.onclick = verifyCaptchaAndDownload;
+        }
+      }
+    
       function showCaptchaModal(type) {
-        const modalEl = document.getElementById('captchaModal');
         if (!modalEl) return;
     
-        // Create/get bootstrap modal instance
-        const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+        // create or reuse modal instance
+        modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
     
-        // Generate simple math
+        // Generate math and store the correct answer in dataset (safe and simple)
         const a = Math.floor(Math.random() * 20) + 1;
         const b = Math.floor(Math.random() * 20) + 1;
         const op = Math.random() > 0.5 ? '+' : '-';
-    
-        // For subtraction, order numbers so result is non-negative and readable
+        const ans = op === '+' ? a + b : Math.abs(a - b);
         const firstNum = Math.max(a, b);
         const secondNum = Math.min(a, b);
-        const ans = op === '+' ? firstNum + secondNum : firstNum - secondNum;
     
-        // Populate modal fields
         const mathEl = document.getElementById('captchaMath');
-        const answerHidden = document.getElementById('captchaAnswer');
+        const answerEl = document.getElementById('captchaAnswer');
         const inputEl = document.getElementById('captchaInput');
         const verifyBtn = document.getElementById('verifyCaptcha');
     
         if (mathEl) mathEl.textContent = `${firstNum} ${op} ${secondNum} = ?`;
-        if (answerHidden) answerHidden.value = ans;
+        if (answerEl) answerEl.value = ans;
         if (inputEl) {
           inputEl.value = '';
-          // focus for quick input if modal input is visible
-          setTimeout(() => {
-            try { inputEl.focus(); } catch (e) {}
-          }, 250);
+          // focus the input after short delay so keyboard opens on mobile when modal fully shown
+          setTimeout(() => inputEl.focus?.(), 300);
         }
         if (verifyBtn) verifyBtn.dataset.download = type;
     
-        // Show modal
-        modal.show();
+        // ensure any leftover backdrops are removed before showing
+        removeModalBackdropIfExists();
+        modalInstance.show();
       }
     
-      // --- Attach single verification handler (overwrite previous to avoid duplicates) ---
-      function attachVerifyHandler() {
+      async function verifyCaptchaAndDownload() {
+        if (!modalEl) return;
+    
+        const inputEl = document.getElementById('captchaInput');
+        const answerEl = document.getElementById('captchaAnswer');
         const verifyBtn = document.getElementById('verifyCaptcha');
-        if (!verifyBtn) return;
     
-        // Replace any previous onclick to ensure single invocation
-        verifyBtn.onclick = async function () {
-          // Read values
-          const inputEl = document.getElementById('captchaInput');
-          const answerHidden = document.getElementById('captchaAnswer');
-          const downloadType = verifyBtn.dataset.download;
+        // read values
+        const user = inputEl ? inputEl.value.trim() : '';
+        const correct = answerEl ? ('' + answerEl.value).trim() : '';
+        const type = verifyBtn ? verifyBtn.dataset.download : '';
     
-          const user = inputEl ? Number(inputEl.value) : NaN;
-          const correct = answerHidden ? Number(answerHidden.value) : NaN;
+        // single "incorrect" feedback (no duplicates)
+        if (user === '' || user !== correct) {
+          // show a single in-page notification instead of default alert (less intrusive and won't double)
+          showNotification('Incorrect answer. Please try again.', 'error', 2500);
     
-          // Simple check
-          if (Number.isFinite(user) && user === correct) {
-            // Hide modal cleanly and remove any stray backdrops
-            const modalEl = document.getElementById('captchaModal');
-            const inst = bootstrap.Modal.getInstance(modalEl);
-            try { if (inst) inst.hide(); } catch (e) { /* ignore */ }
+          // keep modal open, re-focus input and return
+          inputEl && setTimeout(() => inputEl.focus?.(), 200);
+          return;
+        }
     
-            // Extra cleanup: remove any leftover .modal-backdrop and restore body state
-            setTimeout(() => {
-              document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-              document.body.classList.remove('modal-open');
-              // ARIA cleanup if any
-              document.querySelectorAll('.modal').forEach(m => m.setAttribute('aria-hidden', 'true'));
-            }, 50);
-    
-            // Trigger download mapped to file names
-            const map = {
-              cv: FILE_NAME,
-              'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
-              'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
-            };
-            const filename = map[downloadType] || 'document.pdf';
-            const url = `docs/${filename}`;
-    
-            // Start the download flow (only show fail when real network/blob error occurs)
-            try {
-              await universalDownloadWithNotification(url, filename);
-            } catch (err) {
-              // network/blob error handled inside; keep this catch to avoid unhandled rejections
-              console.error('Download flow error:', err);
-            }
-          } else {
-            // Show single alert only (no duplicates)
-            // Use a small custom UI if you prefer instead of alert()
-            alert('Incorrect answer. Please try again.');
-          }
-        };
-      }
-    
-      // --- Unified download logic with proper mobile-safe notifications ---
-      async function universalDownloadWithNotification(url, filename) {
+        // correct answer
+        // hide modal safely and remove any leftover backdrop
         try {
-          const r = await tryBlobDownload(url, filename);
+          const inst = bootstrap.Modal.getInstance(modalEl);
+          if (inst) inst.hide();
+        } catch (e) {
+          // ignore
+        }
+        // ensure backdrop is removed (handle cases where bootstrap leaves it)
+        setTimeout(removeModalBackdropIfExists, 200);
     
-          // If tryBlobDownload returned ok=true -> the download action was triggered
-          if (r && r.ok) {
-            showNotification('✅ Download started successfully!', 'success');
-            return;
-          }
+        // Compose file mapping
+        const map = {
+          cv: FILE_NAME,
+          'av-safety-framework': 'AI_Enhanced_Predictive_SAFETY_Framework.pdf',
+          'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+        };
+        const filename = map[type] || 'document.pdf';
+        const url = `docs/${filename}`;
     
-          // If primary failed, fallback to fetching blob then opening in new tab
-          const resp = await fetch(url, { mode: 'cors' });
-          if (resp && resp.ok) {
-            const blob = await resp.blob();
-            const r2 = await tryOpenInNewTabThenSet(blob, filename);
-            if (r2 && r2.ok) {
-              showNotification('✅ Download started successfully!', 'success');
-              return;
-            }
-          }
-    
-          // Final fallback: navigate directly (user will be shown the file or save dialog)
-          fallbackNavigate(url);
-          showNotification('✅ Download started successfully!', 'success');
+        // Trigger download flow; show success or failure based on real errors only
+        try {
+          await universalDownloadWithNotification(url, filename);
         } catch (err) {
-          // Only show error message for real network/blob errors
-          console.error('universalDownloadWithNotification error:', err);
-          showNotification('❌ Failed to download. Please try again.', 'error');
+          console.error('Download flow error:', err);
+          showNotification('❌ Failed to download. Please try again.', 'error', 4000);
         }
       }
     
-      // --- Try blob download via fetch + anchor click ---
+      // Primary blob download attempt
       async function tryBlobDownload(url, filename) {
         try {
           const resp = await fetch(url, { mode: 'cors' });
-          if (!resp || !resp.ok) throw new Error('Network response not ok: ' + (resp ? resp.status : 'no response'));
+          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
           const blob = await resp.blob();
     
-          // IE / old Edge
+          // IE / old Edge fallback
           if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, filename);
             return { ok: true, method: 'msSaveOrOpenBlob' };
           }
     
-          // Create octet-stream blob to encourage download rather than inline preview
+          // Build octet-stream blob to reduce inline preview
           const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
           const blobUrl = URL.createObjectURL(outBlob);
     
-          // Create anchor and click (within user gesture because this function is called after verification)
           const a = document.createElement('a');
           a.href = blobUrl;
           a.download = filename;
-          a.rel = 'noopener';
           a.style.display = 'none';
+          a.rel = 'noopener';
           document.body.appendChild(a);
     
-          // Trigger click
+          // Trigger download (this is the user-gesture chain because we show modal before)
           a.click();
     
-          // Clean up shortly after
+          // show success immediately after starting the download (correct behavior)
+          // revoke and cleanup shortly after
           setTimeout(() => {
             try { URL.revokeObjectURL(blobUrl); } catch (e) {}
-            try { a.remove(); } catch (e) {}
+            a.remove();
           }, 1500);
     
           return { ok: true, method: 'anchor.click' };
         } catch (err) {
-          // Return structured error to let caller decide how to proceed
           return { ok: false, error: err };
         }
       }
     
-      // --- Try opening blob/url in a new tab (popup must be allowed) ---
+      // Fallback: open blob in new tab then navigate to blob (helps some browsers)
       async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
         try {
           const blobUrl = blobOrUrl instanceof Blob ? URL.createObjectURL(blobOrUrl) : blobOrUrl;
           const newWin = window.open('', '_blank', 'noopener');
-          if (!newWin) return { ok: false, error: new Error('Popup blocked') };
-    
+          if (!newWin) throw new Error('Popup blocked');
           newWin.location.href = blobUrl;
     
-          // revoke object URL if created
-          if (blobOrUrl instanceof Blob) {
-            setTimeout(() => {
+          setTimeout(() => {
+            if (blobOrUrl instanceof Blob) {
               try { URL.revokeObjectURL(blobUrl); } catch (e) {}
-            }, 3000);
-          }
+            }
+          }, 3000);
     
           return { ok: true, method: 'open-new-tab' };
         } catch (err) {
@@ -346,27 +376,48 @@
         }
       }
     
-      // --- Final fallback navigation ---
       function fallbackNavigate(url) {
-        try { window.location.href = url; } catch (e) { window.open(url, '_blank'); }
+        window.location.href = url;
       }
     
-      // --- Notification - replace with your UI toast / animation; kept simple here ---
-      function showNotification(msg, type) {
-        // Kept unobtrusive: still call your animation routines if present
-        // Example: you may call your existing toast code here instead of console.log
-        console.log(`[${type}] ${msg}`);
+      // Unified download with notifications:
+      // - show success immediately after starting the download
+      // - show failure only on real fetch/blob errors
+      async function universalDownloadWithNotification(url, filename) {
+        try {
+          // Attempt primary blob download
+          const r1 = await tryBlobDownload(url, filename);
+          if (r1.ok) {
+            showNotification('✅ Download started successfully!', 'success', 3000);
+            return;
+          }
     
-        // If you have a toast element or animation, call it here.
-        // This ensures the messages are seen on mobile too.
-        // Example placeholder: (uncomment and adapt to your UI)
-        // const toast = document.getElementById('myToast');
-        // toast.show(msg, type);
+          // If primary failed, attempt fallback using fetch + open new tab
+          const resp = await fetch(url, { mode: 'cors' });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const r2 = await tryOpenInNewTabThenSet(blob, filename);
+            if (r2.ok) {
+              showNotification('✅ Download started successfully!', 'success', 3000);
+              return;
+            }
+          }
+    
+          // final fallback - navigate current window
+          fallbackNavigate(url);
+          showNotification('✅ Download started successfully!', 'success', 3000);
+        } catch (err) {
+          // Only show failure on actual network/blob error:
+          console.error('universalDownloadWithNotification error:', err);
+          throw err;
+        }
       }
     
-      // --- Initialize everything ---
-      setupDownloadTriggers();
-      attachVerifyHandler();
+      // Initialize once
+      verifyCaptchaSync();
+    
+      // safety: on page show, remove stale backdrops (handles SPA/hot reload cases)
+      window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
 

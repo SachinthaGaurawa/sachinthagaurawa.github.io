@@ -127,52 +127,39 @@
     
 
 
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
-      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
+    
+      const FILE_URL = 'docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
-      // Synchronous verification to keep user activation (do NOT return a Promise).
-
-
-    // Download verification and triggering
-      function verifyCaptchaSync() {
-        const cvBtn = document.getElementById('downloadCV');
-        if (cvBtn) cvBtn.addEventListener('click', e => {
-          e.preventDefault();
-          showCaptchaModal('cv');
-        });
-        document.querySelectorAll('.download-research').forEach(btn => {
-          btn.addEventListener('click', e => {
-            e.preventDefault();
-            showCaptchaModal(btn.dataset.paper);
-          });
-        });
-        const verifyBtn = document.getElementById('verifyCaptcha');
-        if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
-      }
-      
+      // ------------------------- Captcha Handling -------------------------
       function showCaptchaModal(type) {
         const modalEl = document.getElementById('captchaModal');
         if (!modalEl) return;
+    
         const modal = new bootstrap.Modal(modalEl);
+    
         const a = Math.floor(Math.random() * 20) + 1;
         const b = Math.floor(Math.random() * 20) + 1;
         const op = Math.random() > 0.5 ? '+' : '-';
         const ans = op === '+' ? a + b : Math.abs(a - b);
-        document.getElementById('captchaMath').textContent = `${op==='+'?Math.max(a,b):Math.max(a,b)} ${op} ${op==='+'?Math.min(a,b):Math.min(a,b)} = ?`;
+    
+        // Ensure numbers display correctly for subtraction
+        document.getElementById('captchaMath').textContent = `${op === '+' ? a : Math.max(a, b)} ${op} ${op === '+' ? b : Math.min(a, b)} = ?`;
         document.getElementById('captchaAnswer').value = ans;
         document.getElementById('captchaInput').value = '';
         document.getElementById('verifyCaptcha').dataset.download = type;
+    
         modal.show();
       }
-      
+    
       function verifyCaptchaAndDownload() {
         const user = +document.getElementById('captchaInput').value;
         const correct = +document.getElementById('captchaAnswer').value;
         const type = document.getElementById('verifyCaptcha').dataset.download;
+    
         if (user === correct) {
           bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
           triggerDownload(type);
@@ -180,181 +167,69 @@
           alert('Incorrect answer. Please try again.');
         }
       }
-      
-    async function triggerDownload(type) {
-      const map = {
-        cv: 'Sachintha_Gaurawa_CV.pdf',
-        'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
-        'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
-      };
-      const filename = map[type] || 'document.pdf';
-      const url = `docs/${filename}`;
     
-      try {
-        // Fetch the file as a blob
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const blob = await response.blob();
+      document.getElementById('verifyCaptcha').addEventListener('click', verifyCaptchaAndDownload);
     
-        // Create a local URL for the blob and force download
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      // ------------------------- Trigger Download -------------------------
+      async function triggerDownload(type) {
+        const map = {
+          cv: 'Sachintha_Gaurawa_CV.pdf',
+          'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
+          'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+        };
     
-        // Release the object URL
-        window.URL.revokeObjectURL(blobUrl);
+        const filename = map[type] || 'document.pdf';
+        const url = `docs/${filename}`;
     
-        showNotification('✅ Download started successfully!', 'success');
-      } catch (err) {
-        console.error('Download error:', err);
-        showNotification('❌ Failed to download. Please try again.', 'error');
-      }
-    }
-        
-    
-      // Primary method: fetch -> blob -> anchor.click
-      async function tryBlobDownload(url, filename) {
         try {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
-          const blob = await resp.blob();
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Network response not ok');
     
-          // If browser supports msSaveOrOpenBlob (IE / old Edge)
-          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveOrOpenBlob(blob, filename);
-            return { ok: true, method: 'msSaveOrOpenBlob' };
-          }
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
     
-          // Make octet-stream to avoid inline preview in some browsers
-          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
+          // Release URL
+          URL.revokeObjectURL(blobUrl);
     
-          const blobUrl = URL.createObjectURL(outBlob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = filename;
-          a.style.display = 'none';
-          a.rel = 'noopener'; // safety
-          document.body.appendChild(a);
-    
-          // Try clicking the anchor
-          a.click();
-    
-          // cleanup
-          setTimeout(() => {
-            try { URL.revokeObjectURL(blobUrl); } catch (e) {}
-            a.remove();
-          }, 1500);
-    
-          return { ok: true, method: 'anchor.click', blobUrl };
+          showNotification('✅ Download started successfully!', 'success');
         } catch (err) {
-          return { ok: false, error: err };
+          console.error('Download error:', err);
+          showNotification('❌ Failed to download. Please try again.', 'error');
         }
       }
     
-      // Fallback: open blob URL in a new tab, then set its location to blob (helps in some browsers)
-      async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
-        try {
-          let blobUrl;
-          if (blobOrUrl instanceof Blob) {
-            blobUrl = URL.createObjectURL(blobOrUrl);
-          } else {
-            // assume URL string
-            blobUrl = blobOrUrl;
-          }
-    
-          // Open a new window/tab (must be called in response to user gesture to avoid popup blockers).
-          const newWin = window.open('', '_blank', 'noopener');
-    
-          if (!newWin) {
-            // pop-up blocked
-            return { ok: false, error: new Error('Popup blocked') };
-          }
-    
-          // We navigate that tab to the blob URL. Many browsers will allow the user to download from there.
-          newWin.location.href = blobUrl;
-    
-          // After giving it a little time, revoke the object url if it was a generated blob
-          setTimeout(() => {
-            if (blobOrUrl instanceof Blob) {
-              try { URL.revokeObjectURL(blobUrl); } catch (e) {}
-            }
-          }, 3000);
-    
-          return { ok: true, method: 'open-new-tab' };
-        } catch (err) {
-          return { ok: false, error: err };
-        }
+      // ------------------------- Notification Placeholder -------------------------
+      function showNotification(msg, type) {
+        // Replace with your existing animation/notification logic
+        console.log(type, msg);
       }
     
-      // Final fallback: navigate current window to file URL (will either download or open)
-      function fallbackNavigate(url) {
-        window.location.href = url;
-      }
+      // ------------------------- Attach Buttons -------------------------
+      downloadBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showCaptchaModal('cv');
+      });
     
-      // Unified download attempt with fallbacks
-      async function universalDownload(url, filename) {
-        // First attempt: normal blob download
-        const r1 = await tryBlobDownload(url, filename);
-        if (r1.ok) {
-          // Some browsers may still open preview despite anchor.click.
-          // Heuristic: if method is anchor.click and we're on iOS, often anchor.click works.
-          // Return success anyway. If user reports preview, we'll continue to fallback.
-          return r1;
-        }
-    
-        // If primary failed, try to fetch blob then open in new tab
-        try {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (resp.ok) {
-            const blob = await resp.blob();
-            const r2 = await tryOpenInNewTabThenSet(blob, filename);
-            if (r2.ok) return r2;
-          }
-        } catch (err) {
-          // ignore and fallback
-        }
-    
-        // Final fallback: navigate current window to URL (least preferred)
-        fallbackNavigate(url);
-        return { ok: true, method: 'navigate' };
-      }
-    
-      downloadBtn.addEventListener('click', async (e) => {
-        // Do verification synchronously here — keeps user activation
-        const ok = verifyCaptchaSync();
-        if (!ok) {
-          alert('Verification failed or cancelled.');
-          return;
-        }
-    
-        // Attempt download with robust fallback chain
-        const result = await universalDownload(FILE_URL, FILE_NAME);
-    
-        // Inform user politely depending on method
-        if (result.ok) {
-          const method = result.method || 'unknown';
-          if (method === 'anchor.click' || method === 'msSaveOrOpenBlob') {
-            // Likely success (download triggered)
-            // no UI required; but show short hint
-            console.log('Download attempt via:', method);
-          } else if (method === 'open-new-tab') {
-            alert('A new tab was opened to complete the download. If it opened the file, use the browser menu / long-press to save.');
-          } else if (method === 'navigate') {
-            alert('If the file opened in the browser, use the browser menu or long-press to save it.');
-          }
-        } else {
-          console.error('Download failed completely:', result.error);
-          alert('Unable to start automated download. The file will open; please use the browser menu to save the file.');
-          // Final attempt: open direct link
-          window.open(FILE_URL, '_blank');
-        }
+      document.querySelectorAll('.download-research').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          showCaptchaModal(btn.dataset.paper);
+        });
       });
     });
     </script>
+
+
+
+
+
+    
 
 
 

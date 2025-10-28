@@ -128,27 +128,25 @@
 
 
 
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Simple human verification
       async function verifyCaptcha() {
         const num1 = Math.floor(Math.random() * 9) + 1;
         const num2 = Math.floor(Math.random() * 9) + 1;
         const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
         return Number(answer) === num1 + num2;
       }
-
+    
       const buttons = document.querySelectorAll('.download-btn');
-
+    
       buttons.forEach(btn => {
         btn.addEventListener('click', async () => {
           const ok = await verifyCaptcha();
           if (!ok) return alert('Verification failed.');
-
+    
           const fileId = btn.dataset.fileId;
           const downloadUrl = `download.php?file=${fileId}`;
-
+    
           // Trigger download
           const a = document.createElement('a');
           a.href = downloadUrl;
@@ -160,7 +158,6 @@
       });
     });
     </script>
-
 
 
 

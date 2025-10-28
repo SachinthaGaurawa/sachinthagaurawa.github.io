@@ -135,14 +135,86 @@
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
       // Synchronous verification to keep user activation (do NOT return a Promise).
-      function verifyCaptchaSync() {
-        // simple human math verification; this is synchronous (prompt is blocking)
-        const a = Math.floor(Math.random()*9) + 1;
-        const b = Math.floor(Math.random()*9) + 1;
-        const ans = prompt(`Human verification — what is ${a} + ${b}?`);
-        if (ans === null) return false; // cancelled
-        return Number(ans) === a + b;
+
+
+    // Download verification and triggering
+      function initializeDownloadVerification() {
+        const cvBtn = document.getElementById('downloadCV');
+        if (cvBtn) cvBtn.addEventListener('click', e => {
+          e.preventDefault();
+          showCaptchaModal('cv');
+        });
+        document.querySelectorAll('.download-research').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.preventDefault();
+            showCaptchaModal(btn.dataset.paper);
+          });
+        });
+        const verifyBtn = document.getElementById('verifyCaptcha');
+        if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
       }
+      
+      function showCaptchaModal(type) {
+        const modalEl = document.getElementById('captchaModal');
+        if (!modalEl) return;
+        const modal = new bootstrap.Modal(modalEl);
+        const a = Math.floor(Math.random() * 20) + 1;
+        const b = Math.floor(Math.random() * 20) + 1;
+        const op = Math.random() > 0.5 ? '+' : '-';
+        const ans = op === '+' ? a + b : Math.abs(a - b);
+        document.getElementById('captchaMath').textContent = `${op==='+'?Math.max(a,b):Math.max(a,b)} ${op} ${op==='+'?Math.min(a,b):Math.min(a,b)} = ?`;
+        document.getElementById('captchaAnswer').value = ans;
+        document.getElementById('captchaInput').value = '';
+        document.getElementById('verifyCaptcha').dataset.download = type;
+        modal.show();
+      }
+      
+      function verifyCaptchaAndDownload() {
+        const user = +document.getElementById('captchaInput').value;
+        const correct = +document.getElementById('captchaAnswer').value;
+        const type = document.getElementById('verifyCaptcha').dataset.download;
+        if (user === correct) {
+          bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
+          triggerDownload(type);
+        } else {
+          alert('Incorrect answer. Please try again.');
+        }
+      }
+      
+    async function triggerDownload(type) {
+      const map = {
+        cv: 'Sachintha_Gaurawa_CV.pdf',
+        'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
+        'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+      };
+      const filename = map[type] || 'document.pdf';
+      const url = `docs/${filename}`;
+    
+      try {
+        // Fetch the file as a blob
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const blob = await response.blob();
+    
+        // Create a local URL for the blob and force download
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    
+        // Release the object URL
+        window.URL.revokeObjectURL(blobUrl);
+    
+        showNotification('✅ Download started successfully!', 'success');
+      } catch (err) {
+        console.error('Download error:', err);
+        showNotification('❌ Failed to download. Please try again.', 'error');
+      }
+    }
+        
     
       // Primary method: fetch -> blob -> anchor.click
       async function tryBlobDownload(url, filename) {

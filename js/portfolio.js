@@ -655,8 +655,8 @@ document.getElementById('downloadCV').addEventListener('click', async (ev) => {
     await performHumanVerification(); // wait for human verification success
     btn.innerText = 'Preparing download...';
 
-    const downloadUrl = '/files/my-cv.pdf'; // <--- change to your CV path (same-origin recommended)
-    const fallbackName = 'Sachintha_CV.pdf';
+    const downloadUrl = '/docs/my-cv.pdf'; // <--- change to your CV path (same-origin recommended)
+    const fallbackName = 'Sachintha_Gaurawa_CV.pdf';
 
     // Attempt: fetch and download
     const result = await fetchAndForceDownload(downloadUrl, fallbackName);

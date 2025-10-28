@@ -2,7 +2,7 @@
 // Map file IDs to actual files
 $files = [
     'cv' => 'docs/Sachintha_Gaurawa_CV.pdf',
-    'research1' => 'files/Research_01.pdf',
+    'research1' => 'docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf',
     'research2' => 'files/Research_02.pdf'
 ];
 

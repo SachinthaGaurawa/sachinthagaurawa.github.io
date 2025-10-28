@@ -127,6 +127,11 @@
     
 
 
+
+
+
+
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
@@ -183,7 +188,6 @@
           const modalInstance = bootstrap.Modal.getInstance(document.getElementById('captchaModal'));
           if (modalInstance) modalInstance.hide();
     
-          // ✅ Only trigger download AFTER verification success
           const map = {
             cv: FILE_NAME,
             'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
@@ -192,6 +196,7 @@
           const filename = map[type] || 'document.pdf';
           const url = `docs/${filename}`;
     
+          // ✅ Trigger download with proper notifications
           try {
             await universalDownloadWithNotification(url, filename);
           } catch (err) {
@@ -209,10 +214,12 @@
         try {
           const r = await tryBlobDownload(url, filename);
           if (r.ok) {
+            // ✅ Success: show immediately after starting download
             showNotification('✅ Download started successfully!', 'success');
             return;
           }
     
+          // Fallback: open blob in new tab
           const resp = await fetch(url, { mode: 'cors' });
           if (resp.ok) {
             const blob = await resp.blob();
@@ -223,9 +230,12 @@
             }
           }
     
+          // Final fallback: navigate current window
           fallbackNavigate(url);
           showNotification('✅ Download started successfully!', 'success');
+    
         } catch (err) {
+          // ❌ Only show on real fetch/network/blob errors
           showNotification('❌ Failed to download. Please try again.', 'error');
           throw err;
         }
@@ -237,6 +247,7 @@
           if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
           const blob = await resp.blob();
     
+          // IE / old Edge
           if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, filename);
             return { ok: true, method: 'msSaveOrOpenBlob' };
@@ -265,7 +276,7 @@
     
       async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
         try {
-          let blobUrl = blobOrUrl instanceof Blob ? URL.createObjectURL(blobOrUrl) : blobOrUrl;
+          const blobUrl = blobOrUrl instanceof Blob ? URL.createObjectURL(blobOrUrl) : blobOrUrl;
           const newWin = window.open('', '_blank', 'noopener');
           if (!newWin) throw new Error('Popup blocked');
           newWin.location.href = blobUrl;
@@ -286,17 +297,17 @@
         window.location.href = url;
       }
     
-      // Dummy placeholder for your notification system
+      // Notification function (replace with your animation/toast)
       function showNotification(msg, type) {
-        // Keep your animations intact
         console.log(`[${type}] ${msg}`);
-        // You can replace this with your actual UI toast/animation
+        // You can replace with your toast/modal animation
       }
     
       // Initialize captcha listeners
       verifyCaptchaSync();
     });
     </script>
+    
 
 
 

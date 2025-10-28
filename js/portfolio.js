@@ -559,84 +559,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
 document.addEventListener('DOMContentLoaded', () => {
-  // All download buttons share the same logic
-  const buttons = document.querySelectorAll('.download-btn');
-
-  // === Synchronous verification ===
-  function verifyCaptchaSync() {
-    const a = Math.floor(Math.random()*9) + 1;
-    const b = Math.floor(Math.random()*9) + 1;
-    const ans = prompt(`Human verification — what is ${a} + ${b}?`);
-    if (ans === null) return false;
-    return Number(ans) === a + b;
+  // --- CAPTCHa: minimal numeric prompt (you can replace with modal or real CAPTCHA) ---
+  async function verifyCaptcha() {
+    const num1 = Math.floor(Math.random() * 9) + 1;
+    const num2 = Math.floor(Math.random() * 9) + 1;
+    const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
+    return Number(answer) === num1 + num2;
   }
 
-  async function tryBlobDownload(url, filename) {
+  // --- download routine that tries fetch+blob and falls back gracefully ---
+  async function downloadFile(url, filename) {
     try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) throw new Error('Network error ' + resp.status);
-      const blob = await resp.blob();
+      // Try fetch first (returns a blob we can force-download)
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Network response not ok: ' + response.status);
 
+      const blob = await response.blob();
+
+      // IE / Edge (legacy) support
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveOrOpenBlob(blob, filename);
-        return true;
+        return window.navigator.msSaveOrOpenBlob(blob, filename);
       }
 
-      const arrayBuf = await blob.arrayBuffer();
-      const octetBlob = new Blob([arrayBuf], { type: 'application/octet-stream' });
-      const blobUrl = URL.createObjectURL(octetBlob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        a.remove();
-        URL.revokeObjectURL(blobUrl);
-      }, 1500);
-      return true;
-    } catch (e) {
-      console.error('Primary download failed:', e);
-      return false;
-    }
-  }
+      const blobUrl = URL.createObjectURL(blob);
 
-  async function fallbackDownload(url, filename) {
-    try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (resp.ok) {
-        const blob = await resp.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const newTab = window.open('', '_blank', 'noopener');
-        if (newTab) newTab.location.href = blobUrl;
-        return true;
-      }
-    } catch (e) {}
-    window.location.href = url;
-    return true;
-  }
+      // iOS detection (iPhone/iPad/iPod). iOS cannot download blobs to disk programmatically.
+      const isIOS = /iP(hone|od|ad)/.test(navigator.platform) ||
+                    (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
 
-  async function handleDownload(url, filename) {
-    const ok1 = await tryBlobDownload(url, filename);
-    if (!ok1) await fallbackDownload(url, filename);
-  }
-
-  buttons.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const fileUrl = btn.dataset.file;
-      const fileName = btn.dataset.name;
-
-      const verified = verifyCaptchaSync();
-      if (!verified) {
-        alert('Verification failed or cancelled.');
+      if (isIOS) {
+        // Open blob in a new tab — user must use share/save from the PDF viewer
+        window.open(blobUrl, '_blank');
+        // revoke after a short timeout to avoid issues
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
         return;
       }
 
-      await handleDownload(fileUrl, fileName);
-    });
+      // Normal path (desktop & android chrome etc.)
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || '';
+      // some browsers require element be in the DOM for click to work reliably
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // revoke to free memory
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+      return;
+    } catch (err) {
+      console.warn('Fetch+blob failed, falling back to opening URL directly:', err);
+
+      // Fallback: open the direct URL in a new tab/window — browser decides whether to display or download
+      try {
+        window.open(url, '_blank');
+      } catch (e) {
+        // last-ditch: navigate to URL (this will replace page)
+        window.location.href = url;
+      }
+    }
+  }
+
+  // Event delegation for any .download-btn button
+  document.body.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('.download-btn');
+    if (!btn) return; // not a download button
+
+    ev.preventDefault();
+
+    const fileUrl = btn.dataset.fileUrl;
+    const fileName = btn.dataset.fileName || (fileUrl ? fileUrl.split('/').pop() : 'download');
+
+    // run verification
+    const ok = await verifyCaptcha();
+    if (!ok) {
+      alert('Verification failed. Please try again.');
+      return;
+    }
+
+    // trigger download (best-effort)
+    await downloadFile(fileUrl, fileName);
   });
 });
+
 
 

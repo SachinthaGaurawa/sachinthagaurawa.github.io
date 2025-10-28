@@ -558,50 +558,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
 document.addEventListener('DOMContentLoaded', function() {
   const downloadBtn = document.getElementById('downloadCV');
-  const CV_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
+  const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
   const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
 
-  // Math Verification Function (simple example)
-  async function verifyMathCaptcha() {
-    const num1 = Math.floor(Math.random() * 10) + 1;
-    const num2 = Math.floor(Math.random() * 10) + 1;
+  async function verifyCaptcha() {
+    const num1 = Math.floor(Math.random() * 9) + 1;
+    const num2 = Math.floor(Math.random() * 9) + 1;
     const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
     return Number(answer) === num1 + num2;
   }
 
-  // Universal Force Download
-  async function forceDownload(url, filename) {
+  async function forceDownloadUniversal(url, filename) {
     try {
-      const response = await fetch(url, { mode: 'cors' });
+      // Fetch as binary data
+      const response = await fetch(url);
       const blob = await response.blob();
 
-      // Create a temporary blob link to force download
-      const blobUrl = window.URL.createObjectURL(blob);
+      // Convert blob to ArrayBuffer
+      const arrayBuffer = await blob.arrayBuffer();
+
+      // Create a new Blob disguised as an octet-stream
+      const newBlob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+
+      // Create hidden download link
       const a = document.createElement('a');
-      a.href = blobUrl;
+      const downloadUrl = URL.createObjectURL(newBlob);
+      a.href = downloadUrl;
       a.download = filename;
+      a.style.display = 'none';
       document.body.appendChild(a);
+
+      // Trigger the download
       a.click();
-      document.body.removeChild(a);
 
       // Clean up
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
-    } catch (err) {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
       alert('Error downloading file. Please try again.');
-      console.error(err);
     }
   }
 
   downloadBtn.addEventListener('click', async () => {
-    const verified = await verifyMathCaptcha();
+    const verified = await verifyCaptcha();
     if (!verified) {
       alert('Verification failed. Please try again.');
       return;
     }
 
-    // ✅ This method works across PC, Laptop, iPhone, Android & tablets
-    await forceDownload(CV_URL, FILE_NAME);
+    // ✅ Force download after verification (cross-browser)
+    await forceDownloadUniversal(FILE_URL, FILE_NAME);
   });
 });
+

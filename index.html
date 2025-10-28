@@ -130,11 +130,28 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
-    
-      const FILE_URL = 'docs/Sachintha_Gaurawa_CV.pdf';
+      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
-      // ------------------------- Captcha Handling -------------------------
+      // Synchronous verification to keep user activation (do NOT return a Promise).
+      function verifyCaptchaSync() {
+        const cvBtn = document.getElementById('downloadCV');
+        if (cvBtn) cvBtn.addEventListener('click', e => {
+          e.preventDefault();
+          showCaptchaModal('cv');
+        });
+    
+        document.querySelectorAll('.download-research').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.preventDefault();
+            showCaptchaModal(btn.dataset.paper);
+          });
+        });
+    
+        const verifyBtn = document.getElementById('verifyCaptcha');
+        if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
+      }
+    
       function showCaptchaModal(type) {
         const modalEl = document.getElementById('captchaModal');
         if (!modalEl) return;
@@ -146,8 +163,11 @@
         const op = Math.random() > 0.5 ? '+' : '-';
         const ans = op === '+' ? a + b : Math.abs(a - b);
     
-        // Ensure numbers display correctly for subtraction
-        document.getElementById('captchaMath').textContent = `${op === '+' ? a : Math.max(a, b)} ${op} ${op === '+' ? b : Math.min(a, b)} = ?`;
+        // Corrected math display order
+        const firstNum = op === '+' ? Math.max(a, b) : Math.max(a, b);
+        const secondNum = op === '+' ? Math.min(a, b) : Math.min(a, b);
+        document.getElementById('captchaMath').textContent = `${firstNum} ${op} ${secondNum} = ?`;
+    
         document.getElementById('captchaAnswer').value = ans;
         document.getElementById('captchaInput').value = '';
         document.getElementById('verifyCaptcha').dataset.download = type;
@@ -161,32 +181,31 @@
         const type = document.getElementById('verifyCaptcha').dataset.download;
     
         if (user === correct) {
-          bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
+          const modalInstance = bootstrap.Modal.getInstance(document.getElementById('captchaModal'));
+          if (modalInstance) modalInstance.hide();
           triggerDownload(type);
         } else {
           alert('Incorrect answer. Please try again.');
         }
       }
     
-      document.getElementById('verifyCaptcha').addEventListener('click', verifyCaptchaAndDownload);
-    
-      // ------------------------- Trigger Download -------------------------
       async function triggerDownload(type) {
         const map = {
           cv: 'Sachintha_Gaurawa_CV.pdf',
           'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
           'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
         };
-    
         const filename = map[type] || 'document.pdf';
         const url = `docs/${filename}`;
     
         try {
+          // Fetch the file as a blob
           const response = await fetch(url);
-          if (!response.ok) throw new Error('Network response not ok');
-    
+          if (!response.ok) throw new Error('Network response was not ok');
           const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
+    
+          // Create a local URL for the blob and force download
+          const blobUrl = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = blobUrl;
           link.download = filename;
@@ -194,8 +213,8 @@
           link.click();
           document.body.removeChild(link);
     
-          // Release URL
-          URL.revokeObjectURL(blobUrl);
+          // Release the object URL
+          window.URL.revokeObjectURL(blobUrl);
     
           showNotification('✅ Download started successfully!', 'success');
         } catch (err) {
@@ -204,26 +223,117 @@
         }
       }
     
-      // ------------------------- Notification Placeholder -------------------------
-      function showNotification(msg, type) {
-        // Replace with your existing animation/notification logic
-        console.log(type, msg);
+      // Primary method: fetch -> blob -> anchor.click
+      async function tryBlobDownload(url, filename) {
+        try {
+          const resp = await fetch(url, { mode: 'cors' });
+          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
+          const blob = await resp.blob();
+    
+          // IE / old Edge support
+          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+            return { ok: true, method: 'msSaveOrOpenBlob' };
+          }
+    
+          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
+          const blobUrl = URL.createObjectURL(outBlob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename;
+          a.style.display = 'none';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+    
+          setTimeout(() => {
+            try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+            a.remove();
+          }, 1500);
+    
+          return { ok: true, method: 'anchor.click', blobUrl };
+        } catch (err) {
+          return { ok: false, error: err };
+        }
       }
     
-      // ------------------------- Attach Buttons -------------------------
-      downloadBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showCaptchaModal('cv');
+      // Fallback: open blob URL in a new tab
+      async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
+        try {
+          let blobUrl;
+          if (blobOrUrl instanceof Blob) {
+            blobUrl = URL.createObjectURL(blobOrUrl);
+          } else {
+            blobUrl = blobOrUrl;
+          }
+    
+          const newWin = window.open('', '_blank', 'noopener');
+          if (!newWin) return { ok: false, error: new Error('Popup blocked') };
+    
+          newWin.location.href = blobUrl;
+    
+          setTimeout(() => {
+            if (blobOrUrl instanceof Blob) {
+              try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+            }
+          }, 3000);
+    
+          return { ok: true, method: 'open-new-tab' };
+        } catch (err) {
+          return { ok: false, error: err };
+        }
+      }
+    
+      // Final fallback: navigate current window to file URL
+      function fallbackNavigate(url) {
+        window.location.href = url;
+      }
+    
+      // Unified download with fallbacks
+      async function universalDownload(url, filename) {
+        const r1 = await tryBlobDownload(url, filename);
+        if (r1.ok) return r1;
+    
+        try {
+          const resp = await fetch(url, { mode: 'cors' });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const r2 = await tryOpenInNewTabThenSet(blob, filename);
+            if (r2.ok) return r2;
+          }
+        } catch (err) {}
+    
+        fallbackNavigate(url);
+        return { ok: true, method: 'navigate' };
+      }
+    
+      downloadBtn.addEventListener('click', async () => {
+        const ok = true; // verifyCaptchaSync already attached modal, no need to await
+        if (!ok) return alert('Verification failed or cancelled.');
+    
+        const result = await universalDownload(FILE_URL, FILE_NAME);
+    
+        if (result.ok) {
+          const method = result.method || 'unknown';
+          if (method === 'anchor.click' || method === 'msSaveOrOpenBlob') {
+            console.log('Download attempt via:', method);
+          } else if (method === 'open-new-tab') {
+            alert('A new tab was opened to complete the download. If it opened the file, use the browser menu / long-press to save.');
+          } else if (method === 'navigate') {
+            alert('If the file opened in the browser, use the browser menu or long-press to save.');
+          }
+        } else {
+          console.error('Download failed completely:', result.error);
+          alert('Unable to start automated download. The file will open; please use the browser menu to save.');
+          window.open(FILE_URL, '_blank');
+        }
       });
     
-      document.querySelectorAll('.download-research').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          showCaptchaModal(btn.dataset.paper);
-        });
-      });
+      // Initialize captcha listeners
+      verifyCaptchaSync();
     });
     </script>
+
 
 
 

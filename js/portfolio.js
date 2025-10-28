@@ -558,156 +558,132 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-/**
- * Example stub for your human verification check.
- * Replace with your real verification flow which must return a Promise that resolves on success.
- */
+/* -------------------------
+   Replace this with your real human verification flow.
+   This function must return a Promise that resolves on success:
+   e.g. resolve(true) when the user solves the math captcha.
+   ------------------------- */
 function performHumanVerification() {
-  // Example: return grecaptchaPromise or your math-check promise
   return new Promise((resolve, reject) => {
-    // Simulate async verification success after 1s
-    setTimeout(() => resolve(true), 1000);
+    // demo: show a simple math prompt (replace with your UI)
+    const a = Math.floor(Math.random()*10)+1;
+    const b = Math.floor(Math.random()*10)+1;
+    const ans = prompt(`Please solve to verify: ${a} + ${b} = ?`);
+    if (ans === null) return reject(new Error('User cancelled'));
+    if (parseInt(ans,10) === a+b) return resolve(true);
+    return reject(new Error('Wrong answer'));
   });
 }
 
-/**
- * Force-download a file from `url` and use `filename` as the suggested file name.
- * Best-effort across desktop and mobile.
- */
-async function forceDownload(url, filename = 'download') {
+/* Utility: extract filename from Content-Disposition header */
+function filenameFromContentDisposition(header) {
+  if (!header) return null;
+  // RFC5987/regular filename detection
+  const fnStar = header.match(/filename\*\=UTF-8''([^;]+)/i);
+  if (fnStar && fnStar[1]) return decodeURIComponent(fnStar[1]);
+
+  const fn = header.match(/filename=\"?([^\";]+)\"?/i);
+  if (fn && fn[1]) return fn[1];
+
+  return null;
+}
+
+/* Core download worker: accepts Response object (already fetched) */
+async function downloadFromResponse(response, fallbackName = 'download.bin') {
+  const blob = await response.blob();
+  // determine filename
+  const cd = response.headers.get('Content-Disposition');
+  let filename = filenameFromContentDisposition(cd) || fallbackName;
+
+  // IE / Edge legacy
+  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+    window.navigator.msSaveOrOpenBlob(blob, filename);
+    return { method: 'msSaveOrOpenBlob' };
+  }
+
+  // Create blob URL
+  const blobUrl = URL.createObjectURL(blob);
   try {
-    const resp = await fetch(url, { credentials: 'same-origin' }); // change mode/credentials if needed
-    if (!resp.ok) throw new Error('Network response was not ok');
-
-    const blob = await resp.blob();
-
-    // IE / Edge (legacy)
-    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveOrOpenBlob(blob, filename);
-      return;
-    }
-
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Create invisible anchor and click it.
     const a = document.createElement('a');
-    a.style.display = 'none';
     a.href = blobUrl;
     a.download = filename;
-
-    // For Safari iOS: setting target may help in some versions
+    a.style.display = 'none';
+    // Some mobile browsers treat target=_blank differently — set it to blank.
     a.target = '_blank';
     document.body.appendChild(a);
 
-    // Try programmatic click
+    // Programmatic click
     a.click();
 
-    // Cleanup
+    // Cleanup after short time
     setTimeout(() => {
       URL.revokeObjectURL(blobUrl);
       a.remove();
     }, 1500);
 
-    // Extra fallback: If the browser opened a new tab instead of saving, we also open blob URL
-    // (This gives user the native viewer where they can long-press to save)
-    // Only run fallback after a short delay (so we don't open an extra tab unnecessarily)
-    setTimeout(() => {
-      // If the document has focus again, consider the download attempted; otherwise open a new tab
-      // Note: we can't detect reliably whether download succeeded, so this is a polite fallback.
-      // You may remove this if it causes a double-open in some browsers.
-      if (!document.hasFocus && !document.hasFocus()) {
-        window.open(blobUrl, '_blank');
-      }
-    }, 1200);
-
+    return { method: 'a.click', filename };
   } catch (err) {
-    console.error('Download failed:', err);
-    // Final fallback: navigate to URL (browser default behaviour)
-    window.location.href = url;
+    // final fallback: open blob in new tab (user can long-press to save)
+    window.open(blobUrl, '_blank');
+    return { method: 'open-new-tab' };
   }
 }
 
-/**
- * Utility: derive filename from Content-Disposition or fallback to name
- */
-async function getFilenameFromResponse(response, fallbackName) {
-  const cd = response.headers.get('Content-Disposition') || '';
-  const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/i);
-  if (match && match[1]) return decodeURIComponent(match[1]);
-  return fallbackName;
+/* Best-effort routine that fetches file, respects CORS, checks Content-Disposition */
+async function fetchAndForceDownload(url, suggestedName = 'CV.pdf') {
+  // By default we use credentials 'same-origin' — change to 'include' if cookie auth required cross-site
+  const fetchOptions = { method: 'GET', credentials: 'same-origin' };
+  const response = await fetch(url, fetchOptions);
+
+  if (!response.ok) throw new Error('Failed to fetch file: ' + response.status);
+
+  // If server provided Content-Disposition with attachment, browser is more likely to save
+  return downloadFromResponse(response, suggestedName);
 }
 
-/* Main click handler wiring verification -> download */
-document.getElementById('downloadCV').addEventListener('click', async (e) => {
-  e.preventDefault();
-
-  // UI: disable button, show verification UI, etc.
-  const btn = e.currentTarget;
+/* Main: click handler wiring verification -> download */
+document.getElementById('downloadCV').addEventListener('click', async (ev) => {
+  ev.preventDefault();
+  const btn = ev.currentTarget;
+  const status = document.getElementById('status');
+  const originalText = btn.innerText;
   btn.disabled = true;
-  const originalText = btn.innerHTML;
-  btn.innerHTML = 'Verifying...';
+  btn.innerText = 'Verifying...';
+  status.textContent = '';
 
   try {
-    const ok = await performHumanVerification(); // your verification flow
-    if (!ok) throw new Error('Verification failed');
+    await performHumanVerification(); // wait for human verification success
+    btn.innerText = 'Preparing download...';
 
-    btn.innerHTML = 'Preparing download...';
+    const downloadUrl = '/files/my-cv.pdf'; // <--- change to your CV path (same-origin recommended)
+    const fallbackName = 'Sachintha_CV.pdf';
 
-    // Prefer fetch first to read headers (for filename) then download blob
-    const url = '/files/my-cv.pdf'; // <-- change to your CV URL (same origin recommended)
-    // If you want to extract filename from headers, fetch once and then call forceDownload using a blob response
-    const resp = await fetch(url, { credentials: 'same-origin' });
-    if (!resp.ok) throw new Error('Failed to fetch file');
+    // Attempt: fetch and download
+    const result = await fetchAndForceDownload(downloadUrl, fallbackName);
 
-    // Prefer reading filename from headers:
-    let filename = 'CV.pdf';
-    const cd = resp.headers.get('Content-Disposition');
-    if (cd) {
-      const m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/i);
-      if (m && m[1]) filename = decodeURIComponent(m[1]);
-    }
+    // Provide user-friendly messaging based on platform
+    const ua = navigator.userAgent || '';
+    const isIOS = /iP(hone|od|ad)/.test(ua);
+    const isAndroid = /Android/.test(ua);
 
-    // Read blob and perform download using same logic (we already have response)
-    const blob = await resp.blob();
-
-    // IE / Edge
-    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveOrOpenBlob(blob, filename);
+    if (result.method === 'a.click' && !isIOS) {
+      status.textContent = 'Download started. Check your Downloads folder or notifications.';
+    } else if (isAndroid && result.method === 'a.click') {
+      status.textContent = 'If the file opened, check the Downloads folder or the top-right menu.';
+    } else if (isIOS) {
+      // iOS: Safari commonly shows "View / Download" prompt. We can't bypass it.
+      status.innerHTML = 'On iOS Safari a prompt may appear: choose <strong>Download</strong> to save to Files. If it opened in viewer, long-press the image and tap "Save".';
     } else {
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
-        a.remove();
-      }, 1500);
-
-      // Fallback open for some mobile browsers (gives user viewer + long-press save)
-      setTimeout(() => {
-        // If user-agent is iOS Safari or some mobile browsers, opening the blob in a new tab sometimes
-        // is more reliable for letting them save. We do a polite fallback open.
-        const ua = navigator.userAgent || '';
-        const isIOS = /iP(hone|od|ad)/.test(ua);
-        if (isIOS) window.open(blobUrl, '_blank');
-      }, 1200);
+      status.textContent = 'If the file opened instead of saving, long-press or use the browser menu to save.';
     }
 
-    btn.innerHTML = 'Downloaded ✓';
   } catch (err) {
     console.error(err);
-    btn.innerHTML = 'Download failed — try opening';
-    // Fallback: open url in new tab so user can long-press save on mobile
-    window.open('/files/my-cv.pdf', '_blank');
+    status.innerHTML = 'Verification failed or download failed. <a id="openDirect" href="/files/my-cv.pdf" target="_blank">Open file</a>';
   } finally {
-    setTimeout(() => {
+    setTimeout(()=> {
       btn.disabled = false;
-      btn.innerHTML = originalText;
-    }, 2000);
+      btn.innerText = originalText;
+    }, 1200);
   }
 });

@@ -560,58 +560,104 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-  const downloadBtn = document.getElementById('downloadCV');
-  const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
-  const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
+    
+    const downloadButton = document.getElementById('downloadCV');
+    
+    // Check if the button actually exists on the page
+    if (downloadButton) {
+        // Store the button's original content
+        const originalButtonHTML = downloadButton.innerHTML;
 
-  async function verifyCaptcha() {
-    const num1 = Math.floor(Math.random() * 9) + 1;
-    const num2 = Math.floor(Math.random() * 9) + 1;
-    const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
-    return Number(answer) === num1 + num2;
-  }
+        // --- THIS IS THE MAIN DOWNLOAD FUNCTION ---
+        // This function fetches the file and forces a download prompt
+        async function forceFileDownload() {
+            // Show a loading state on the button
+            downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Preparing...';
+            downloadButton.disabled = true;
 
-  async function forceDownloadUniversal(url, filename) {
-    try {
-      // Fetch as binary data
-      const response = await fetch(url);
-      const blob = await response.blob();
+            // Use the relative path to your file from your GitHub Pages root
+            const fileUrl = '/docs/Sachintha_Gaurawa_CV.pdf';
+            const filename = 'Sachintha_Gaurawa_CV.pdf';
 
-      // Convert blob to ArrayBuffer
-      const arrayBuffer = await blob.arrayBuffer();
+            try {
+                // Step 1: Fetch the file from your server
+                const response = await fetch(fileUrl);
 
-      // Create a new Blob disguised as an octet-stream
-      const newBlob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
 
-      // Create hidden download link
-      const a = document.createElement('a');
-      const downloadUrl = URL.createObjectURL(newBlob);
-      a.href = downloadUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
+                // Step 2: Get the file data as a Blob
+                const blob = await response.blob();
 
-      // Trigger the download
-      a.click();
+                // Step 3: Create a temporary URL for this blob data
+                const blobUrl = window.URL.createObjectURL(blob);
 
-      // Clean up
-      document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Error downloading file. Please try again.');
+                // Step 4: Create a new, invisible link element
+                const link = document.createElement('a');
+                link.style.display = 'none';
+                link.href = blobUrl;
+                link.download = filename; // The 'download' attribute is key
+
+                // Step 5: Add the link to the page and programmatically click it
+                document.body.appendChild(link);
+                link.click();
+
+                // Step 6: Clean up by removing the link and revoking the URL
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Sorry, the download could not be completed. Please try again.');
+            } finally {
+                // Step 7: Restore the button to its original state
+                downloadButton.innerHTML = originalButtonHTML;
+                downloadButton.disabled = false;
+            }
+        }
+
+        // --- THIS IS YOUR VERIFICATION PLACEHOLDER ---
+        // Replace this function with your *actual* math verification logic.
+        // It MUST return `true` for success or `false` for failure.
+        async function runMathVerification() {
+            // **TODO: Replace this 'prompt' with your real verification modal/logic**
+            const answer = prompt("HUMAN VERIFICATION:\nWhat is 5 + 3?");
+            
+            if (answer === "8") {
+                return true; // Verification passed
+            } else if (answer !== null) { // User entered wrong answer
+                alert("Verification failed. Please try again.");
+                return false; // Verification failed
+            } else {
+                // User clicked "Cancel"
+                return false;
+            }
+        }
+
+
+        // --- THIS TIES IT ALL TOGETHER ---
+        // Add the click listener to your main download button
+        downloadButton.addEventListener('click', async function(event) {
+            event.preventDefault(); // Stop any default browser action
+
+            // 1. Run your verification
+            const isVerified = await runMathVerification();
+
+            // 2. If verification is successful, start the download
+            if (isVerified) {
+                console.log("Verification successful! Starting download...");
+                await forceFileDownload();
+            } else {
+                console.log("Verification failed or was cancelled.");
+            }
+        });
     }
-  }
 
-  downloadBtn.addEventListener('click', async () => {
-    const verified = await verifyCaptcha();
-    if (!verified) {
-      alert('Verification failed. Please try again.');
-      return;
-    }
+    // --- YOUR OTHER CODE ---
+    // Your confetti JavaScript can go here.
+    // It will not conflict with this download logic.
+    // const cards = document.querySelectorAll('#awards .award-card');
+    // ... (rest of your confetti code) ...
 
-    // ✅ Force download after verification (cross-browser)
-    await forceDownloadUniversal(FILE_URL, FILE_NAME);
-  });
 });
-

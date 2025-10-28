@@ -558,132 +558,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-/* -------------------------
-   Replace this with your real human verification flow.
-   This function must return a Promise that resolves on success:
-   e.g. resolve(true) when the user solves the math captcha.
-   ------------------------- */
-function performHumanVerification() {
-  return new Promise((resolve, reject) => {
-    // demo: show a simple math prompt (replace with your UI)
-    const a = Math.floor(Math.random()*10)+1;
-    const b = Math.floor(Math.random()*10)+1;
-    const ans = prompt(`Please solve to verify: ${a} + ${b} = ?`);
-    if (ans === null) return reject(new Error('User cancelled'));
-    if (parseInt(ans,10) === a+b) return resolve(true);
-    return reject(new Error('Wrong answer'));
-  });
-}
+document.addEventListener('DOMContentLoaded', function() {
+  const downloadBtn = document.getElementById('downloadCV');
+  const CV_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
+  const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
 
-/* Utility: extract filename from Content-Disposition header */
-function filenameFromContentDisposition(header) {
-  if (!header) return null;
-  // RFC5987/regular filename detection
-  const fnStar = header.match(/filename\*\=UTF-8''([^;]+)/i);
-  if (fnStar && fnStar[1]) return decodeURIComponent(fnStar[1]);
-
-  const fn = header.match(/filename=\"?([^\";]+)\"?/i);
-  if (fn && fn[1]) return fn[1];
-
-  return null;
-}
-
-/* Core download worker: accepts Response object (already fetched) */
-async function downloadFromResponse(response, fallbackName = 'download.bin') {
-  const blob = await response.blob();
-  // determine filename
-  const cd = response.headers.get('Content-Disposition');
-  let filename = filenameFromContentDisposition(cd) || fallbackName;
-
-  // IE / Edge legacy
-  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-    window.navigator.msSaveOrOpenBlob(blob, filename);
-    return { method: 'msSaveOrOpenBlob' };
+  // Math Verification Function (simple example)
+  async function verifyMathCaptcha() {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
+    return Number(answer) === num1 + num2;
   }
 
-  // Create blob URL
-  const blobUrl = URL.createObjectURL(blob);
-  try {
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    a.style.display = 'none';
-    // Some mobile browsers treat target=_blank differently — set it to blank.
-    a.target = '_blank';
-    document.body.appendChild(a);
+  // Universal Force Download
+  async function forceDownload(url, filename) {
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      const blob = await response.blob();
 
-    // Programmatic click
-    a.click();
+      // Create a temporary blob link to force download
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
-    // Cleanup after short time
-    setTimeout(() => {
-      URL.revokeObjectURL(blobUrl);
-      a.remove();
-    }, 1500);
-
-    return { method: 'a.click', filename };
-  } catch (err) {
-    // final fallback: open blob in new tab (user can long-press to save)
-    window.open(blobUrl, '_blank');
-    return { method: 'open-new-tab' };
+      // Clean up
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      alert('Error downloading file. Please try again.');
+      console.error(err);
+    }
   }
-}
 
-/* Best-effort routine that fetches file, respects CORS, checks Content-Disposition */
-async function fetchAndForceDownload(url, suggestedName = 'CV.pdf') {
-  // By default we use credentials 'same-origin' — change to 'include' if cookie auth required cross-site
-  const fetchOptions = { method: 'GET', credentials: 'same-origin' };
-  const response = await fetch(url, fetchOptions);
-
-  if (!response.ok) throw new Error('Failed to fetch file: ' + response.status);
-
-  // If server provided Content-Disposition with attachment, browser is more likely to save
-  return downloadFromResponse(response, suggestedName);
-}
-
-/* Main: click handler wiring verification -> download */
-document.getElementById('downloadCV').addEventListener('click', async (ev) => {
-  ev.preventDefault();
-  const btn = ev.currentTarget;
-  const status = document.getElementById('status');
-  const originalText = btn.innerText;
-  btn.disabled = true;
-  btn.innerText = 'Verifying...';
-  status.textContent = '';
-
-  try {
-    await performHumanVerification(); // wait for human verification success
-    btn.innerText = 'Preparing download...';
-
-    const downloadUrl = '/docs/my-cv.pdf'; // <--- change to your CV path (same-origin recommended)
-    const fallbackName = 'Sachintha_Gaurawa_CV.pdf';
-
-    // Attempt: fetch and download
-    const result = await fetchAndForceDownload(downloadUrl, fallbackName);
-
-    // Provide user-friendly messaging based on platform
-    const ua = navigator.userAgent || '';
-    const isIOS = /iP(hone|od|ad)/.test(ua);
-    const isAndroid = /Android/.test(ua);
-
-    if (result.method === 'a.click' && !isIOS) {
-      status.textContent = 'Download started. Check your Downloads folder or notifications.';
-    } else if (isAndroid && result.method === 'a.click') {
-      status.textContent = 'If the file opened, check the Downloads folder or the top-right menu.';
-    } else if (isIOS) {
-      // iOS: Safari commonly shows "View / Download" prompt. We can't bypass it.
-      status.innerHTML = 'On iOS Safari a prompt may appear: choose <strong>Download</strong> to save to Files. If it opened in viewer, long-press the image and tap "Save".';
-    } else {
-      status.textContent = 'If the file opened instead of saving, long-press or use the browser menu to save.';
+  downloadBtn.addEventListener('click', async () => {
+    const verified = await verifyMathCaptcha();
+    if (!verified) {
+      alert('Verification failed. Please try again.');
+      return;
     }
 
-  } catch (err) {
-    console.error(err);
-    status.innerHTML = 'Verification failed or download failed. <a id="openDirect" href="/files/my-cv.pdf" target="_blank">Open file</a>';
-  } finally {
-    setTimeout(()=> {
-      btn.disabled = false;
-      btn.innerText = originalText;
-    }, 1200);
-  }
+    // ✅ This method works across PC, Laptop, iPhone, Android & tablets
+    await forceDownload(CV_URL, FILE_NAME);
+  });
 });

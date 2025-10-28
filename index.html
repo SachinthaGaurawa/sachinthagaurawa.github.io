@@ -132,138 +132,138 @@
 
 
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const FILE_MAP = {
-    cv: 'Sachintha_Gaurawa_CV.pdf',
-    'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
-    'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
-  };
-
-  function setupListeners() {
-    const cvBtn = document.getElementById('downloadCV');
-    if (cvBtn) cvBtn.addEventListener('click', e => { e.preventDefault(); showCaptchaModal('cv'); });
-
-    document.querySelectorAll('.download-research').forEach(btn => {
-      btn.addEventListener('click', e => { e.preventDefault(); showCaptchaModal(btn.dataset.paper); });
-    });
-
-    const verifyBtn = document.getElementById('verifyCaptcha');
-    if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
-  }
-
-  // Show the captcha modal
-  function showCaptchaModal(type) {
-    const modalEl = document.getElementById('captchaModal');
-    if (!modalEl) return;
-    const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
-
-    const a = Math.floor(Math.random() * 20) + 1;
-    const b = Math.floor(Math.random() * 20) + 1;
-    const op = Math.random() > 0.5 ? '+' : '-';
-    const ans = op === '+' ? a + b : Math.abs(a - b);
-
-    document.getElementById('captchaMath').textContent = `${Math.max(a,b)} ${op} ${Math.min(a,b)} = ?`;
-    document.getElementById('captchaAnswer').value = ans;
-    document.getElementById('captchaInput').value = '';
-    document.getElementById('verifyCaptcha').dataset.download = type;
-
-    modal.show();
-
-    // Reset overlay fix
-    modalEl.addEventListener('hidden.bs.modal', () => {
-      document.body.classList.remove('modal-open');
-      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    });
-  }
-
-  // Verify captcha and start download
-  async function verifyCaptchaAndDownload() {
-    const user = +document.getElementById('captchaInput').value;
-    const correct = +document.getElementById('captchaAnswer').value;
-    const type = document.getElementById('verifyCaptcha').dataset.download;
-    const modalEl = document.getElementById('captchaModal');
-    const modalInstance = bootstrap.Modal.getInstance(modalEl);
-
-    if (user === correct) {
-      if (modalInstance) modalInstance.hide();
-
-      const filename = FILE_MAP[type] || 'document.pdf';
-      const url = `docs/${filename}`;
-
-      try {
-        await startDownload(url, filename);
-        showToast('✅ Download started successfully!', 'success');
-      } catch (err) {
-        console.error(err);
-        showToast('❌ Failed to download. Please try again.', 'error');
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const FILE_MAP = {
+        cv: 'Sachintha_Gaurawa_CV.pdf',
+        'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
+        'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+      };
+    
+      function setupListeners() {
+        const cvBtn = document.getElementById('downloadCV');
+        if (cvBtn) cvBtn.addEventListener('click', e => { e.preventDefault(); showCaptchaModal('cv'); });
+    
+        document.querySelectorAll('.download-research').forEach(btn => {
+          btn.addEventListener('click', e => { e.preventDefault(); showCaptchaModal(btn.dataset.paper); });
+        });
+    
+        const verifyBtn = document.getElementById('verifyCaptcha');
+        if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
       }
-    } else {
-      if (modalInstance) modalInstance.hide();
-      showToast('❌ Incorrect answer. Please try again.', 'error');
-    }
-  }
-
-  // Universal download logic
-  async function startDownload(url, filename) {
-    try {
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) throw new Error('Network issue: ' + resp.status);
-      const blob = await resp.blob();
-
-      const a = document.createElement('a');
-      const blobUrl = URL.createObjectURL(blob);
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
-        a.remove();
-      }, 2000);
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  // Toast message display
-  function showToast(message, type = 'info') {
-    let toastBox = document.getElementById('toastBox');
-    if (!toastBox) {
-      toastBox = document.createElement('div');
-      toastBox.id = 'toastBox';
-      toastBox.style.position = 'fixed';
-      toastBox.style.bottom = '20px';
-      toastBox.style.right = '20px';
-      toastBox.style.zIndex = '9999';
-      document.body.appendChild(toastBox);
-    }
-
-    const toast = document.createElement('div');
-    toast.textContent = message;
-    toast.style.background = type === 'success' ? '#198754' : '#dc3545';
-    toast.style.color = 'white';
-    toast.style.padding = '10px 16px';
-    toast.style.marginTop = '8px';
-    toast.style.borderRadius = '8px';
-    toast.style.boxShadow = '0 3px 8px rgba(0,0,0,0.2)';
-    toast.style.fontWeight = '500';
-    toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.4s ease';
-
-    toastBox.appendChild(toast);
-    requestAnimationFrame(() => { toast.style.opacity = '1'; });
-
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 400);
-    }, 3500);
-  }
-
-  setupListeners();
-});
-</script>
+    
+      // Show the captcha modal
+      function showCaptchaModal(type) {
+        const modalEl = document.getElementById('captchaModal');
+        if (!modalEl) return;
+        const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+    
+        const a = Math.floor(Math.random() * 20) + 1;
+        const b = Math.floor(Math.random() * 20) + 1;
+        const op = Math.random() > 0.5 ? '+' : '-';
+        const ans = op === '+' ? a + b : Math.abs(a - b);
+    
+        document.getElementById('captchaMath').textContent = `${Math.max(a,b)} ${op} ${Math.min(a,b)} = ?`;
+        document.getElementById('captchaAnswer').value = ans;
+        document.getElementById('captchaInput').value = '';
+        document.getElementById('verifyCaptcha').dataset.download = type;
+    
+        modal.show();
+    
+        // Reset overlay fix
+        modalEl.addEventListener('hidden.bs.modal', () => {
+          document.body.classList.remove('modal-open');
+          document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        });
+      }
+    
+      // Verify captcha and start download
+      async function verifyCaptchaAndDownload() {
+        const user = +document.getElementById('captchaInput').value;
+        const correct = +document.getElementById('captchaAnswer').value;
+        const type = document.getElementById('verifyCaptcha').dataset.download;
+        const modalEl = document.getElementById('captchaModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    
+        if (user === correct) {
+          if (modalInstance) modalInstance.hide();
+    
+          const filename = FILE_MAP[type] || 'document.pdf';
+          const url = `docs/${filename}`;
+    
+          try {
+            await startDownload(url, filename);
+            showToast('✅ Download started successfully!', 'success');
+          } catch (err) {
+            console.error(err);
+            showToast('❌ Failed to download. Please try again.', 'error');
+          }
+        } else {
+          if (modalInstance) modalInstance.hide();
+          showToast('❌ Incorrect answer. Please try again.', 'error');
+        }
+      }
+    
+      // Universal download logic
+      async function startDownload(url, filename) {
+        try {
+          const resp = await fetch(url, { mode: 'cors' });
+          if (!resp.ok) throw new Error('Network issue: ' + resp.status);
+          const blob = await resp.blob();
+    
+          const a = document.createElement('a');
+          const blobUrl = URL.createObjectURL(blob);
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+    
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+            a.remove();
+          }, 2000);
+        } catch (err) {
+          throw err;
+        }
+      }
+    
+      // Toast message display
+      function showToast(message, type = 'info') {
+        let toastBox = document.getElementById('toastBox');
+        if (!toastBox) {
+          toastBox = document.createElement('div');
+          toastBox.id = 'toastBox';
+          toastBox.style.position = 'fixed';
+          toastBox.style.bottom = '20px';
+          toastBox.style.right = '20px';
+          toastBox.style.zIndex = '9999';
+          document.body.appendChild(toastBox);
+        }
+    
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.background = type === 'success' ? '#198754' : '#dc3545';
+        toast.style.color = 'white';
+        toast.style.padding = '10px 16px';
+        toast.style.marginTop = '8px';
+        toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 3px 8px rgba(0,0,0,0.2)';
+        toast.style.fontWeight = '500';
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s ease';
+    
+        toastBox.appendChild(toast);
+        requestAnimationFrame(() => { toast.style.opacity = '1'; });
+    
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 400);
+        }, 3500);
+      }
+    
+      setupListeners();
+    });
+    </script>
 
 
 

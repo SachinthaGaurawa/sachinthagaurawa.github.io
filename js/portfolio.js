@@ -558,79 +558,156 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-        document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('#awards .award-card');
-        
-        // Simple confetti particles
-        function spawnConfetti(canvas) {
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width = canvas.offsetWidth;
-            const h = canvas.height = canvas.offsetHeight;
-            const colors = ['#ffcc00','#ffd54f','#90caf9','#a5d6a7','#f48fb1'];
-            const parts = [];
-            const N = 60;
-        
-            for (let i = 0; i < N; i++) {
-            parts.push({
-                x: Math.random() * w,
-                y: -10 - Math.random()*h*0.3,
-                r: 2 + Math.random()*4,
-                c: colors[Math.floor(Math.random()*colors.length)],
-                vy: 1 + Math.random()*2,
-                vx: -1 + Math.random()*2,
-                rot: Math.random()*Math.PI*2,
-                vr: -0.1 + Math.random()*0.2
-            });
-            }
-        
-            let anim;
-            function draw() {
-            ctx.clearRect(0,0,w,h);
-            parts.forEach(p=>{
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rot);
-                ctx.fillStyle = p.c;
-                ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
-                ctx.restore();
-        
-                p.y += p.vy;
-                p.x += p.vx;
-                p.rot += p.vr;
-        
-                if (p.y > h + 12) {
-                p.y = -12;
-                p.x = Math.random()*w;
-                }
-            });
-            anim = requestAnimationFrame(draw);
-            }
-            draw();
-        
-            // Stop after 3s to save CPU
-            setTimeout(()=> cancelAnimationFrame(anim), 3000);
-        }
-        
-        // Trigger confetti when card first becomes visible
-        const io = new IntersectionObserver((entries)=>{
-            entries.forEach(entry=>{
-            if (entry.isIntersecting) {
-                const canvas = entry.target.querySelector('.award-confetti');
-                if (canvas && !canvas.dataset.fired) {
-                canvas.dataset.fired = '1';
-                spawnConfetti(canvas);
-                }
-            }
-            });
-        }, { threshold: 0.4 });
-        
-        cards.forEach(card=>{
-            io.observe(card);
-            // Re‑spark on hover for delight
-            card.addEventListener('mouseenter', ()=>{
-            const canvas = card.querySelector('.award-confetti');
-            if (canvas) spawnConfetti(canvas);
-            });
-        });
-        });
 
+/**
+ * Example stub for your human verification check.
+ * Replace with your real verification flow which must return a Promise that resolves on success.
+ */
+function performHumanVerification() {
+  // Example: return grecaptchaPromise or your math-check promise
+  return new Promise((resolve, reject) => {
+    // Simulate async verification success after 1s
+    setTimeout(() => resolve(true), 1000);
+  });
+}
+
+/**
+ * Force-download a file from `url` and use `filename` as the suggested file name.
+ * Best-effort across desktop and mobile.
+ */
+async function forceDownload(url, filename = 'download') {
+  try {
+    const resp = await fetch(url, { credentials: 'same-origin' }); // change mode/credentials if needed
+    if (!resp.ok) throw new Error('Network response was not ok');
+
+    const blob = await resp.blob();
+
+    // IE / Edge (legacy)
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+      return;
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Create invisible anchor and click it.
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = blobUrl;
+    a.download = filename;
+
+    // For Safari iOS: setting target may help in some versions
+    a.target = '_blank';
+    document.body.appendChild(a);
+
+    // Try programmatic click
+    a.click();
+
+    // Cleanup
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+      a.remove();
+    }, 1500);
+
+    // Extra fallback: If the browser opened a new tab instead of saving, we also open blob URL
+    // (This gives user the native viewer where they can long-press to save)
+    // Only run fallback after a short delay (so we don't open an extra tab unnecessarily)
+    setTimeout(() => {
+      // If the document has focus again, consider the download attempted; otherwise open a new tab
+      // Note: we can't detect reliably whether download succeeded, so this is a polite fallback.
+      // You may remove this if it causes a double-open in some browsers.
+      if (!document.hasFocus && !document.hasFocus()) {
+        window.open(blobUrl, '_blank');
+      }
+    }, 1200);
+
+  } catch (err) {
+    console.error('Download failed:', err);
+    // Final fallback: navigate to URL (browser default behaviour)
+    window.location.href = url;
+  }
+}
+
+/**
+ * Utility: derive filename from Content-Disposition or fallback to name
+ */
+async function getFilenameFromResponse(response, fallbackName) {
+  const cd = response.headers.get('Content-Disposition') || '';
+  const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/i);
+  if (match && match[1]) return decodeURIComponent(match[1]);
+  return fallbackName;
+}
+
+/* Main click handler wiring verification -> download */
+document.getElementById('downloadCV').addEventListener('click', async (e) => {
+  e.preventDefault();
+
+  // UI: disable button, show verification UI, etc.
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'Verifying...';
+
+  try {
+    const ok = await performHumanVerification(); // your verification flow
+    if (!ok) throw new Error('Verification failed');
+
+    btn.innerHTML = 'Preparing download...';
+
+    // Prefer fetch first to read headers (for filename) then download blob
+    const url = '/files/my-cv.pdf'; // <-- change to your CV URL (same origin recommended)
+    // If you want to extract filename from headers, fetch once and then call forceDownload using a blob response
+    const resp = await fetch(url, { credentials: 'same-origin' });
+    if (!resp.ok) throw new Error('Failed to fetch file');
+
+    // Prefer reading filename from headers:
+    let filename = 'CV.pdf';
+    const cd = resp.headers.get('Content-Disposition');
+    if (cd) {
+      const m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/i);
+      if (m && m[1]) filename = decodeURIComponent(m[1]);
+    }
+
+    // Read blob and perform download using same logic (we already have response)
+    const blob = await resp.blob();
+
+    // IE / Edge
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+        a.remove();
+      }, 1500);
+
+      // Fallback open for some mobile browsers (gives user viewer + long-press save)
+      setTimeout(() => {
+        // If user-agent is iOS Safari or some mobile browsers, opening the blob in a new tab sometimes
+        // is more reliable for letting them save. We do a polite fallback open.
+        const ua = navigator.userAgent || '';
+        const isIOS = /iP(hone|od|ad)/.test(ua);
+        if (isIOS) window.open(blobUrl, '_blank');
+      }, 1200);
+    }
+
+    btn.innerHTML = 'Downloaded ✓';
+  } catch (err) {
+    console.error(err);
+    btn.innerHTML = 'Download failed — try opening';
+    // Fallback: open url in new tab so user can long-press save on mobile
+    window.open('/files/my-cv.pdf', '_blank');
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }, 2000);
+  }
+});

@@ -557,62 +557,158 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
   const downloadBtn = document.getElementById('downloadCV');
   const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
   const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
 
-  async function verifyCaptcha() {
-    const num1 = Math.floor(Math.random() * 9) + 1;
-    const num2 = Math.floor(Math.random() * 9) + 1;
-    const answer = prompt(`Human verification: What is ${num1} + ${num2}?`);
-    return Number(answer) === num1 + num2;
+  // Synchronous verification to keep user activation (do NOT return a Promise).
+  function verifyCaptchaSync() {
+    // simple human math verification; this is synchronous (prompt is blocking)
+    const a = Math.floor(Math.random()*9) + 1;
+    const b = Math.floor(Math.random()*9) + 1;
+    const ans = prompt(`Human verification — what is ${a} + ${b}?`);
+    if (ans === null) return false; // cancelled
+    return Number(ans) === a + b;
   }
 
-  async function forceDownloadUniversal(url, filename) {
+  // Primary method: fetch -> blob -> anchor.click
+  async function tryBlobDownload(url, filename) {
     try {
-      // Fetch as binary data
-      const response = await fetch(url);
-      const blob = await response.blob();
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
+      const blob = await resp.blob();
 
-      // Convert blob to ArrayBuffer
-      const arrayBuffer = await blob.arrayBuffer();
+      // If browser supports msSaveOrOpenBlob (IE / old Edge)
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, filename);
+        return { ok: true, method: 'msSaveOrOpenBlob' };
+      }
 
-      // Create a new Blob disguised as an octet-stream
-      const newBlob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+      // Make octet-stream to avoid inline preview in some browsers
+      const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
 
-      // Create hidden download link
+      const blobUrl = URL.createObjectURL(outBlob);
       const a = document.createElement('a');
-      const downloadUrl = URL.createObjectURL(newBlob);
-      a.href = downloadUrl;
+      a.href = blobUrl;
       a.download = filename;
       a.style.display = 'none';
+      a.rel = 'noopener'; // safety
       document.body.appendChild(a);
 
-      // Trigger the download
+      // Try clicking the anchor
       a.click();
 
-      // Clean up
-      document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Error downloading file. Please try again.');
+      // cleanup
+      setTimeout(() => {
+        try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+        a.remove();
+      }, 1500);
+
+      return { ok: true, method: 'anchor.click', blobUrl };
+    } catch (err) {
+      return { ok: false, error: err };
     }
   }
 
-  downloadBtn.addEventListener('click', async () => {
-    const verified = await verifyCaptcha();
-    if (!verified) {
-      alert('Verification failed. Please try again.');
+  // Fallback: open blob URL in a new tab, then set its location to blob (helps in some browsers)
+  async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
+    try {
+      let blobUrl;
+      if (blobOrUrl instanceof Blob) {
+        blobUrl = URL.createObjectURL(blobOrUrl);
+      } else {
+        // assume URL string
+        blobUrl = blobOrUrl;
+      }
+
+      // Open a new window/tab (must be called in response to user gesture to avoid popup blockers).
+      const newWin = window.open('', '_blank', 'noopener');
+
+      if (!newWin) {
+        // pop-up blocked
+        return { ok: false, error: new Error('Popup blocked') };
+      }
+
+      // We navigate that tab to the blob URL. Many browsers will allow the user to download from there.
+      newWin.location.href = blobUrl;
+
+      // After giving it a little time, revoke the object url if it was a generated blob
+      setTimeout(() => {
+        if (blobOrUrl instanceof Blob) {
+          try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+        }
+      }, 3000);
+
+      return { ok: true, method: 'open-new-tab' };
+    } catch (err) {
+      return { ok: false, error: err };
+    }
+  }
+
+  // Final fallback: navigate current window to file URL (will either download or open)
+  function fallbackNavigate(url) {
+    window.location.href = url;
+  }
+
+  // Unified download attempt with fallbacks
+  async function universalDownload(url, filename) {
+    // First attempt: normal blob download
+    const r1 = await tryBlobDownload(url, filename);
+    if (r1.ok) {
+      // Some browsers may still open preview despite anchor.click.
+      // Heuristic: if method is anchor.click and we're on iOS, often anchor.click works.
+      // Return success anyway. If user reports preview, we'll continue to fallback.
+      return r1;
+    }
+
+    // If primary failed, try to fetch blob then open in new tab
+    try {
+      const resp = await fetch(url, { mode: 'cors' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const r2 = await tryOpenInNewTabThenSet(blob, filename);
+        if (r2.ok) return r2;
+      }
+    } catch (err) {
+      // ignore and fallback
+    }
+
+    // Final fallback: navigate current window to URL (least preferred)
+    fallbackNavigate(url);
+    return { ok: true, method: 'navigate' };
+  }
+
+  downloadBtn.addEventListener('click', async (e) => {
+    // Do verification synchronously here — keeps user activation
+    const ok = verifyCaptchaSync();
+    if (!ok) {
+      alert('Verification failed or cancelled.');
       return;
     }
 
-    // ✅ Force download after verification (cross-browser)
-    await forceDownloadUniversal(FILE_URL, FILE_NAME);
+    // Attempt download with robust fallback chain
+    const result = await universalDownload(FILE_URL, FILE_NAME);
+
+    // Inform user politely depending on method
+    if (result.ok) {
+      const method = result.method || 'unknown';
+      if (method === 'anchor.click' || method === 'msSaveOrOpenBlob') {
+        // Likely success (download triggered)
+        // no UI required; but show short hint
+        console.log('Download attempt via:', method);
+      } else if (method === 'open-new-tab') {
+        alert('A new tab was opened to complete the download. If it opened the file, use the browser menu / long-press to save.');
+      } else if (method === 'navigate') {
+        alert('If the file opened in the browser, use the browser menu or long-press to save it.');
+      }
+    } else {
+      console.error('Download failed completely:', result.error);
+      alert('Unable to start automated download. The file will open; please use the browser menu to save the file.');
+      // Final attempt: open direct link
+      window.open(FILE_URL, '_blank');
+    }
   });
 });
+
 

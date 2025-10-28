@@ -559,3 +559,84 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+document.addEventListener('DOMContentLoaded', () => {
+  // All download buttons share the same logic
+  const buttons = document.querySelectorAll('.download-btn');
+
+  // === Synchronous verification ===
+  function verifyCaptchaSync() {
+    const a = Math.floor(Math.random()*9) + 1;
+    const b = Math.floor(Math.random()*9) + 1;
+    const ans = prompt(`Human verification — what is ${a} + ${b}?`);
+    if (ans === null) return false;
+    return Number(ans) === a + b;
+  }
+
+  async function tryBlobDownload(url, filename) {
+    try {
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) throw new Error('Network error ' + resp.status);
+      const blob = await resp.blob();
+
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, filename);
+        return true;
+      }
+
+      const arrayBuf = await blob.arrayBuffer();
+      const octetBlob = new Blob([arrayBuf], { type: 'application/octet-stream' });
+      const blobUrl = URL.createObjectURL(octetBlob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      }, 1500);
+      return true;
+    } catch (e) {
+      console.error('Primary download failed:', e);
+      return false;
+    }
+  }
+
+  async function fallbackDownload(url, filename) {
+    try {
+      const resp = await fetch(url, { mode: 'cors' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const newTab = window.open('', '_blank', 'noopener');
+        if (newTab) newTab.location.href = blobUrl;
+        return true;
+      }
+    } catch (e) {}
+    window.location.href = url;
+    return true;
+  }
+
+  async function handleDownload(url, filename) {
+    const ok1 = await tryBlobDownload(url, filename);
+    if (!ok1) await fallbackDownload(url, filename);
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const fileUrl = btn.dataset.file;
+      const fileName = btn.dataset.name;
+
+      const verified = verifyCaptchaSync();
+      if (!verified) {
+        alert('Verification failed or cancelled.');
+        return;
+      }
+
+      await handleDownload(fileUrl, fileName);
+    });
+  });
+});
+
+

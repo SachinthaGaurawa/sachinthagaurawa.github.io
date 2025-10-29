@@ -141,28 +141,30 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
+      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
+    
+      // Modal reference
+      let modalInstance = null;
       const modalEl = document.getElementById('captchaModal');
     
-      let modalInstance = null;
-    
-      // ---------------- Toast Notifications ----------------
+      // Toast container
       const toastContainerId = '__dl_toast_container__';
       function ensureToastContainer() {
-        let container = document.getElementById(toastContainerId);
-        if (!container) {
-          container = document.createElement('div');
-          container.id = toastContainerId;
-          container.style.position = 'fixed';
-          container.style.zIndex = '2147483647';
-          container.style.right = '16px';
-          container.style.bottom = '16px';
-          container.style.display = 'flex';
-          container.style.flexDirection = 'column';
-          container.style.gap = '8px';
-          document.body.appendChild(container);
+        let c = document.getElementById(toastContainerId);
+        if (!c) {
+          c = document.createElement('div');
+          c.id = toastContainerId;
+          c.style.position = 'fixed';
+          c.style.zIndex = '2147483647';
+          c.style.right = '16px';
+          c.style.bottom = '16px';
+          c.style.display = 'flex';
+          c.style.flexDirection = 'column';
+          c.style.gap = '8px';
+          document.body.appendChild(c);
         }
-        return container;
+        return c;
       }
     
       function showNotification(msg, type = 'info', duration = 3000) {
@@ -178,10 +180,16 @@
         t.style.opacity = '0';
         t.style.transform = 'translateY(8px)';
         t.style.transition = 'opacity .18s ease, transform .18s ease';
-        t.style.background = type === 'success' ? '#198754' : type === 'error' ? '#dc3545' : '#0d6efd';
+    
+        if (type === 'success') t.style.background = '#198754';
+        else if (type === 'error') t.style.background = '#dc3545';
+        else t.style.background = '#0d6efd';
     
         container.appendChild(t);
-        requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+        requestAnimationFrame(() => {
+          t.style.opacity = '1';
+          t.style.transform = 'translateY(0)';
+        });
     
         setTimeout(() => {
           t.style.opacity = '0';
@@ -190,13 +198,13 @@
         }, duration);
       }
     
-      // ---------------- Modal Cleanup ----------------
+      // Remove leftover modal/backdrop
       function removeModalBackdropIfExists() {
         if (document.body.classList.contains('modal-open')) document.body.classList.remove('modal-open');
         document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
       }
     
-      // ---------------- Captcha ----------------
+      // Single assignment for verification
       function verifyCaptchaSync() {
         if (downloadBtn) downloadBtn.onclick = e => { e.preventDefault(); showCaptchaModal('cv'); };
         document.querySelectorAll('.download-research').forEach(btn => {
@@ -214,13 +222,15 @@
         const b = Math.floor(Math.random() * 20) + 1;
         const op = Math.random() > 0.5 ? '+' : '-';
         const ans = op === '+' ? a + b : Math.abs(a - b);
+        const firstNum = Math.max(a, b);
+        const secondNum = Math.min(a, b);
     
         const mathEl = document.getElementById('captchaMath');
         const answerEl = document.getElementById('captchaAnswer');
         const inputEl = document.getElementById('captchaInput');
         const verifyBtn = document.getElementById('verifyCaptcha');
     
-        if (mathEl) mathEl.textContent = `${Math.max(a,b)} ${op} ${Math.min(a,b)} = ?`;
+        if (mathEl) mathEl.textContent = `${firstNum} ${op} ${secondNum} = ?`;
         if (answerEl) answerEl.value = ans;
         if (inputEl) { inputEl.value = ''; setTimeout(() => inputEl.focus?.(), 300); }
         if (verifyBtn) verifyBtn.dataset.download = type;
@@ -229,7 +239,6 @@
         modalInstance.show();
       }
     
-      // ---------------- Verification & Download ----------------
       async function verifyCaptchaAndDownload() {
         if (!modalEl) return;
         const inputEl = document.getElementById('captchaInput');
@@ -246,55 +255,84 @@
           return;
         }
     
+        // Correct
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
         const map = {
           cv: FILE_NAME,
-          'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
+          'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf', // FIXED
           'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
         };
         const filename = map[type] || 'document.pdf';
         const url = `docs/${filename}`;
     
-        // Accurate download notifications
-        try {
-          await triggerDownload(url, filename);
-        } catch (err) {
-          console.error('Download failed:', err);
-          showNotification('❌ Failed to download. Please try again.', 'error', 4000);
+        try { 
+          const success = await universalDownloadWithNotification(url, filename);
+          if (success) showNotification('✅ Download started successfully!', 'success', 3000);
+          else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
         }
+        catch (err) { console.error(err); showNotification('❌ Failed to download. Please try again.', 'error', 4000); }
       }
     
-      async function triggerDownload(url, filename) {
+      async function tryBlobDownload(url, filename) {
         try {
           const resp = await fetch(url, { mode: 'cors' });
           if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
-    
           const blob = await resp.blob();
-          const blobUrl = URL.createObjectURL(blob);
     
+          if (window.navigator?.msSaveOrOpenBlob) { window.navigator.msSaveOrOpenBlob(blob, filename); return true; }
+    
+          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
+          const blobUrl = URL.createObjectURL(outBlob);
           const a = document.createElement('a');
           a.href = blobUrl;
           a.download = filename;
-          a.rel = 'noopener';
           a.style.display = 'none';
+          a.rel = 'noopener';
           document.body.appendChild(a);
-    
-          // ✅ Success notification immediately after click
           a.click();
-          showNotification('✅ Download started successfully!', 'success', 3000);
+          setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
+          return true;
+        } catch (err) { return false; }
+      }
     
-          setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {}; a.remove(); }, 2000);
-        } catch (err) {
-          throw err; // triggers ❌ notification in caller
-        }
+      async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
+        try {
+          const blobUrl = blobOrUrl instanceof Blob ? URL.createObjectURL(blobOrUrl) : blobOrUrl;
+          const newWin = window.open('', '_blank', 'noopener');
+          if (!newWin) return false; // popup blocked
+          newWin.location.href = blobUrl;
+          setTimeout(() => { if (blobOrUrl instanceof Blob) try { URL.revokeObjectURL(blobUrl); } catch (e) {} }, 3000);
+          return true;
+        } catch (err) { return false; }
+      }
+    
+      function fallbackNavigate(url) { window.location.href = url; return true; }
+    
+      async function universalDownloadWithNotification(url, filename) {
+        // returns true if download triggered, false if failed
+        let success = await tryBlobDownload(url, filename);
+        if (success) return true;
+    
+        try {
+          const resp = await fetch(url, { mode: 'cors' });
+          if (resp.ok) { 
+            const blob = await resp.blob(); 
+            success = await tryOpenInNewTabThenSet(blob, filename);
+            if (success) return true;
+          }
+        } catch (err) { console.error('Fetch fallback error:', err); }
+    
+        // Final fallback
+        try { return fallbackNavigate(url); } catch (err) { return false; }
       }
     
       verifyCaptchaSync();
       window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
+
 
 
 

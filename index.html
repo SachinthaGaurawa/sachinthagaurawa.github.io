@@ -258,15 +258,16 @@
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
-        // 🔹 Absolute URLs for all downloads
+        // MAP: use server-side download.php endpoint (same-origin) — forces Content-Disposition: attachment
         const map = {
-          cv: 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf',
-          'av-safety-framework': 'https://sachinthagaurawa.github.io/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
-          'drone-disaster-response': 'https://sachinthagaurawa.github.io/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+          cv: 'download.php?file=cv',
+          'av-safety-framework': 'download.php?file=research1',
+          'drone-disaster-response': 'download.php?file=research2'
         };
     
-        const url = map[type] || 'https://sachinthagaurawa.github.io/docs/document.pdf';
-        const filename = url.split('/').pop();
+        const url = map[type] || 'download.php?file=cv';
+        // filename for display / download name (optional, server sets final name)
+        const filename = (type === 'cv') ? FILE_NAME : (type === 'av-safety-framework' ? 'AI_Enhanced_Predictive_Safety_Framework.pdf' : 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf');
     
         try { 
           const success = await universalDownloadWithNotification(url, filename);
@@ -278,7 +279,7 @@
     
       async function tryBlobDownload(url, filename) {
         try {
-          const resp = await fetch(url, { mode: 'cors' });
+          const resp = await fetch(url, { mode: 'same-origin' }); // same-origin ensures credentials & headers preserved
           if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
           const blob = await resp.blob();
     
@@ -298,18 +299,45 @@
         } catch (err) { return false; }
       }
     
-      function fallbackNavigate(url) { window.location.href = url; return true; }
+      function fallbackNavigate(url) { 
+        // final minimal fallback: navigate to server download endpoint (server will force attachment)
+        window.location.href = url;
+        return true;
+      }
     
       async function universalDownloadWithNotification(url, filename) {
         // returns true if download triggered, false if failed
         let success = await tryBlobDownload(url, filename);
-        return success;
+        if (success) return true;
+    
+        // try once more as a fallback to the same endpoint (server should respond with attachment)
+        try {
+          const resp = await fetch(url, { mode: 'same-origin' });
+          if (resp.ok) {
+            // attempt to download via blob again
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            a.style.display = 'none';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
+            return true;
+          }
+        } catch (err) { console.error('Fetch fallback error:', err); }
+    
+        // Final fallback: navigate to the same download endpoint (server will force Content-Disposition)
+        return fallbackNavigate(url);
       }
     
       verifyCaptchaSync();
       window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
+
 
 
 

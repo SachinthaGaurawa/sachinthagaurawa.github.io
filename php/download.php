@@ -1,46 +1,66 @@
 <?php
-// download.php - production-ready force-download handler
+// -----------------------------
+// Production-ready Download Script
+// -----------------------------
 
-// Map keys to files (relative to this script)
+// Map file IDs to actual files
 $files = [
-  'research1' => __DIR__ . '/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
-  'research2' => __DIR__ . '/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf',
-  // optional: map cv to local copy if you want; currently CV uses direct GitHub URL
+    'cv' => __DIR__ . '/docs/Sachintha_Gaurawa_CV.pdf',
+    'research1' => __DIR__ . '/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
+    'research2' => __DIR__ . '/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
 ];
 
-// Get requested file key
-$fileKey = $_GET['file'] ?? '';
-if (!isset($files[$fileKey])) {
-  http_response_code(404);
-  echo "File not found";
-  exit;
+// 1️⃣ Validate file ID
+$fileId = $_GET['file'] ?? '';
+if (!array_key_exists($fileId, $files)) {
+    http_response_code(404);
+    echo "File not found";
+    exit;
 }
 
-$filePath = $files[$fileKey];
+$filePath = $files[$fileId];
 
-// ensure file exists and is a file
-if (!is_file($filePath) || !file_exists($filePath)) {
-  http_response_code(404);
-  echo "File missing";
-  exit;
+// 2️⃣ Security: ensure the file exists and is a file
+if (!is_file($filePath)) {
+    http_response_code(404);
+    echo "File not found";
+    exit;
 }
 
 $fileName = basename($filePath);
 
-// Clear output buffers
-while (ob_get_level()) ob_end_clean();
-
-// Send headers to force download
+// 3️⃣ Set safe headers for download
 header('Content-Description: File Transfer');
-header('Content-Type: application/pdf');
+header('Content-Type: application/octet-stream');
 header('Content-Disposition: attachment; filename="' . $fileName . '"');
 header('Content-Transfer-Encoding: binary');
 header('Expires: 0');
-header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+header('Cache-Control: must-revalidate');
 header('Pragma: public');
 header('Content-Length: ' . filesize($filePath));
 
-// Read file and output
-readfile($filePath);
+// 4️⃣ Clear output buffer for large files
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
+// 5️⃣ Efficiently stream the file (avoid loading entire file into memory)
+$chunkSize = 8 * 1024 * 1024; // 8 MB per chunk
+$handle = fopen($filePath, 'rb');
+if ($handle === false) {
+    http_response_code(500);
+    echo "Failed to open file";
+    exit;
+}
+
+set_time_limit(0); // prevent script timeout for large files
+
+while (!feof($handle)) {
+    $buffer = fread($handle, $chunkSize);
+    echo $buffer;
+    flush(); // send to client
+}
+
+fclose($handle);
 exit;
 ?>

@@ -137,7 +137,7 @@
 
 
 
-
+    
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
@@ -261,7 +261,7 @@
     
         const map = {
           cv: FILE_NAME,
-          'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf', // FIXED
+          'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
           'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
         };
         const filename = map[type] || 'document.pdf';
@@ -297,41 +297,40 @@
         } catch (err) { return false; }
       }
     
-      async function tryOpenInNewTabThenSet(blobOrUrl, filename) {
-        try {
-          const blobUrl = blobOrUrl instanceof Blob ? URL.createObjectURL(blobOrUrl) : blobOrUrl;
-          const newWin = window.open('', '_blank', 'noopener');
-          if (!newWin) return false; // popup blocked
-          newWin.location.href = blobUrl;
-          setTimeout(() => { if (blobOrUrl instanceof Blob) try { URL.revokeObjectURL(blobUrl); } catch (e) {} }, 3000);
-          return true;
-        } catch (err) { return false; }
+      function fallbackNavigate(url) { 
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = url.split('/').pop();
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return true;
       }
     
-      function fallbackNavigate(url) { window.location.href = url; return true; }
-    
       async function universalDownloadWithNotification(url, filename) {
-        // returns true if download triggered, false if failed
         let success = await tryBlobDownload(url, filename);
         if (success) return true;
     
+        // Retry fetch and blob download if first attempt fails
         try {
           const resp = await fetch(url, { mode: 'cors' });
           if (resp.ok) { 
             const blob = await resp.blob(); 
-            success = await tryOpenInNewTabThenSet(blob, filename);
+            success = await tryBlobDownload(url, filename);
             if (success) return true;
           }
         } catch (err) { console.error('Fetch fallback error:', err); }
     
-        // Final fallback
-        try { return fallbackNavigate(url); } catch (err) { return false; }
+        // Final fallback: trigger direct download via <a download>
+        return fallbackNavigate(url);
       }
     
       verifyCaptchaSync();
       window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
+
 
 
 

@@ -142,8 +142,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
-      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
-      const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
       let modalInstance = null;
       const modalEl = document.getElementById('captchaModal');
@@ -166,7 +164,7 @@
         return c;
       }
     
-      function showNotification(msg, type = 'info', duration = 3000) {
+      function showNotification(msg, type='info', duration=3000){
         const container = ensureToastContainer();
         const t = document.createElement('div');
         t.textContent = msg;
@@ -179,171 +177,103 @@
         t.style.opacity = '0';
         t.style.transform = 'translateY(8px)';
         t.style.transition = 'opacity .18s ease, transform .18s ease';
-        t.style.background = type === 'success' ? '#198754' : (type === 'error' ? '#dc3545' : '#0d6efd');
-    
+        t.style.background = type==='success' ? '#198754' : (type==='error' ? '#dc3545' : '#0d6efd');
         container.appendChild(t);
-        requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
-    
-        setTimeout(() => {
-          t.style.opacity = '0';
-          t.style.transform = 'translateY(8px)';
-          setTimeout(() => t.remove(), 220);
-        }, duration);
+        requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateY(0)'; });
+        setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(8px)'; setTimeout(()=>t.remove(),220); }, duration);
       }
     
-      function removeModalBackdropIfExists() {
-        if (document.body.classList.contains('modal-open')) document.body.classList.remove('modal-open');
-        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+      function removeModalBackdropIfExists(){
+        document.body.classList.remove('modal-open');
+        document.querySelectorAll('.modal-backdrop').forEach(b=>b.remove());
       }
     
-      function verifyCaptchaSync() {
-        if (downloadBtn) downloadBtn.onclick = e => { e.preventDefault(); showCaptchaModal('cv'); };
-        document.querySelectorAll('.download-research').forEach(btn => {
-          btn.onclick = e => { e.preventDefault(); showCaptchaModal(btn.dataset.paper); };
+      function verifyCaptchaSync(){
+        if(downloadBtn) downloadBtn.onclick = e=>{ e.preventDefault(); showCaptchaModal('cv'); };
+        document.querySelectorAll('.download-research').forEach(btn=>{
+          btn.onclick = e=>{ e.preventDefault(); showCaptchaModal(btn.dataset.paper); };
         });
         const verifyBtn = document.getElementById('verifyCaptcha');
-        if (verifyBtn) verifyBtn.onclick = verifyCaptchaAndDownload;
+        if(verifyBtn) verifyBtn.onclick = verifyCaptchaAndDownload;
       }
     
-      function showCaptchaModal(type) {
-        if (!modalEl) return;
+      function showCaptchaModal(type){
+        if(!modalEl) return;
         modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    
-        const a = Math.floor(Math.random() * 20) + 1;
-        const b = Math.floor(Math.random() * 20) + 1;
-        const op = Math.random() > 0.5 ? '+' : '-';
-        const ans = op === '+' ? a + b : Math.abs(a - b);
-        const firstNum = Math.max(a, b);
-        const secondNum = Math.min(a, b);
+        const a = Math.floor(Math.random()*20)+1;
+        const b = Math.floor(Math.random()*20)+1;
+        const op = Math.random()>0.5 ? '+' : '-';
+        const ans = op==='+' ? a+b : Math.abs(a-b);
+        const firstNum = Math.max(a,b);
+        const secondNum = Math.min(a,b);
     
         const mathEl = document.getElementById('captchaMath');
         const answerEl = document.getElementById('captchaAnswer');
         const inputEl = document.getElementById('captchaInput');
         const verifyBtn = document.getElementById('verifyCaptcha');
     
-        if (mathEl) mathEl.textContent = `${firstNum} ${op} ${secondNum} = ?`;
-        if (answerEl) answerEl.value = ans;
-        if (inputEl) { inputEl.value = ''; setTimeout(() => inputEl.focus?.(), 300); }
-        if (verifyBtn) verifyBtn.dataset.download = type;
+        if(mathEl) mathEl.textContent = `${firstNum} ${op} ${secondNum} = ?`;
+        if(answerEl) answerEl.value = ans;
+        if(inputEl) { inputEl.value=''; setTimeout(()=>inputEl.focus?.(),300); }
+        if(verifyBtn) verifyBtn.dataset.download = type;
     
         removeModalBackdropIfExists();
         modalInstance.show();
       }
     
-      async function verifyCaptchaAndDownload() {
-        if (!modalEl) return;
+      async function verifyCaptchaAndDownload(){
         const inputEl = document.getElementById('captchaInput');
         const answerEl = document.getElementById('captchaAnswer');
         const verifyBtn = document.getElementById('verifyCaptcha');
     
         const user = inputEl ? inputEl.value.trim() : '';
-        const correct = answerEl ? ('' + answerEl.value).trim() : '';
+        const correct = answerEl ? (''+answerEl.value).trim() : '';
         const type = verifyBtn ? verifyBtn.dataset.download : '';
     
-        if (user === '' || user !== correct) {
+        if(user==='' || user!==correct){
           showNotification('Incorrect answer. Please try again.', 'error', 2500);
-          inputEl && setTimeout(() => inputEl.focus?.(), 200);
+          inputEl && setTimeout(()=>inputEl.focus?.(),200);
           return;
         }
     
-        if (verifyBtn) verifyBtn.disabled = true;
-        try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
-        setTimeout(removeModalBackdropIfExists, 200);
+        try{ bootstrap.Modal.getInstance(modalEl)?.hide(); } catch(e){}
+        setTimeout(removeModalBackdropIfExists,200);
     
+        // 🔹 Use same-origin PHP download for research PDFs
         const map = {
-          cv: FILE_URL,
+          cv: 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf',
           'av-safety-framework': 'download.php?file=research1',
           'drone-disaster-response': 'download.php?file=research2'
         };
     
         const url = map[type] || map['cv'];
-        const filename = (url.split('/').pop() || 'document.pdf').split('?')[0];
+        const filename = url.split('/').pop().split('?')[0];
     
         try {
-          const success = await universalDownloadWithNotification(url, filename);
-          if (success) showNotification('✅ Download started successfully!', 'success', 3000);
-          else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
-        } catch (err) {
-          console.error('Download flow error:', err);
-          showNotification('❌ Failed to download. Please try again.', 'error', 4000);
-        } finally {
-          if (verifyBtn) verifyBtn.disabled = false;
-        }
+          const success = await universalDownload(url, filename);
+          showNotification(success ? '✅ Download started successfully!' : '❌ Failed to download. Please try again.', success ? 'success':'error', 3000);
+        } catch(err){ console.error(err); showNotification('❌ Failed to download. Please try again.', 'error', 4000);}
       }
     
-      // If same-origin, use direct anchor click (most reliable to let server force Content-Disposition)
-      function isSameOrigin(url) {
-        try {
-          const u = new URL(url, location.href);
-          return u.origin === location.origin;
-        } catch (e) {
-          return false;
+      async function universalDownload(url, filename){
+        // If cross-origin (GitHub CV), use blob download
+        if(url.startsWith('http') && !url.includes(location.hostname)){
+          try{
+            const resp = await fetch(url);
+            if(!resp.ok) throw new Error('Network error');
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl; a.download = filename; a.style.display='none'; a.rel='noopener';
+            document.body.appendChild(a); a.click();
+            setTimeout(()=>{ URL.revokeObjectURL(blobUrl); a.remove(); },1500);
+            return true;
+          } catch(e){ console.error(e); return false; }
         }
-      }
-    
-      // Fetch + blob -> anchor (for cross-origin files like GitHub CV)
-      async function fetchBlobAndDownload(url, filename) {
-        let blobUrl = null;
-        try {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
-          const blob = await resp.blob();
-    
-          if (window.navigator?.msSaveOrOpenBlob) { window.navigator.msSaveOrOpenBlob(blob, filename); return true; }
-    
-          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
-          blobUrl = URL.createObjectURL(outBlob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = filename || '';
-          a.style.display = 'none';
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-    
-          setTimeout(() => {
-            try { if (blobUrl) URL.revokeObjectURL(blobUrl); } catch (e) {}
-            a.remove();
-          }, 1500);
-    
-          return true;
-        } catch (err) {
-          console.error('fetchBlobAndDownload error:', err);
-          try { if (blobUrl) URL.revokeObjectURL(blobUrl); } catch (e) {}
-          return false;
-        }
-      }
-    
-      // For same-origin PHP endpoint, simply create anchor href to that endpoint (server headers must force attachment)
-      function anchorDownload(url) {
-        try {
-          const a = document.createElement('a');
-          a.href = url;
-          // leave a.download blank so server's Content-Disposition filename is used
-          a.download = '';
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          return true;
-        } catch (err) {
-          console.error('anchorDownload error:', err);
-          return false;
-        }
-      }
-    
-      // unified download: pick best method
-      async function universalDownloadWithNotification(url, filename) {
-        // If URL is same-origin and looks like our PHP handler, prefer anchor download (server forces download)
-        if (isSameOrigin(url)) {
-          // direct anchor click should trigger server Content-Disposition attachment
-          const ok = anchorDownload(url);
-          if (ok) return true;
-          // if anchor failed (rare), fall back to fetching blob
-        }
-    
-        // Otherwise (cross-origin or anchor failed), try fetch->blob->download
-        return await fetchBlobAndDownload(url, filename);
+        // For same-origin (download.php), anchor click ensures forced download
+        const a = document.createElement('a');
+        a.href = url; a.download=''; a.style.display='none'; document.body.appendChild(a); a.click(); a.remove();
+        return true;
       }
     
       verifyCaptchaSync();

@@ -143,7 +143,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
-      const FILE_URL = '/download.php?file=cv';
+      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
       // Modal reference
@@ -261,18 +261,21 @@
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
-        // === Use same-origin download.php endpoints (absolute same-origin paths) ===
+        // ====== KEY CHANGE: use server-side download endpoint (forces Content-Disposition: attachment) ======
+        // Map file ids to server-side proxy endpoints. These endpoints MUST return the file with
+        // header: Content-Disposition: attachment; filename="..."
+        // Example: /download.php?file=cv
+        const downloadBase = '/download.php?file='; // <-- server-side script (must exist on same origin)
         const map = {
-          cv: '/download.php?file=cv',
-          'av-safety-framework': '/download.php?file=av-safety-framework',
-          'drone-disaster-response': '/download.php?file=drone-disaster-response'
+          cv: downloadBase + 'cv',
+          'av-safety-framework': downloadBase + 'research1',
+          'drone-disaster-response': downloadBase + 'research2'
         };
-    
-        const url = map[type] || '/download.php?file=unknown';
-        // filename derived from mapping if needed (download.php sets Content-Disposition)
-        const filename = (url.split('file=')[1] || 'document') + '.pdf';
+        const url = map[type] || downloadBase + 'cv'; // fallback to cv
+        const filename = (url.split('?file=')[1] || 'document');
     
         try { 
+          // Trigger the download via the proxy endpoint. The server should force attachment.
           const success = await universalDownloadWithNotification(url, filename);
           if (success) showNotification('✅ Download started successfully!', 'success', 3000);
           else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
@@ -282,13 +285,13 @@
     
       async function tryBlobDownload(url, filename) {
         try {
-          const resp = await fetch(url, { mode: 'same-origin' }); // same-origin for download.php
+          // Prefer same-origin proxy (no CORS problems)
+          const resp = await fetch(url, { credentials: 'same-origin' });
           if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
           const blob = await resp.blob();
     
           if (window.navigator?.msSaveOrOpenBlob) { window.navigator.msSaveOrOpenBlob(blob, filename); return true; }
     
-          // Use octet-stream to encourage download
           const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
           const blobUrl = URL.createObjectURL(outBlob);
           const a = document.createElement('a');
@@ -300,11 +303,16 @@
           a.click();
           setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
           return true;
-        } catch (err) { return false; }
+        } catch (err) { 
+          console.error('tryBlobDownload error:', err);
+          return false; 
+        }
       }
     
       function fallbackNavigate(url) { 
-        // Last resort: navigate to the endpoint (same-origin) — server must send Content-Disposition: attachment
+        // As a last-ditch attempt we still try to trigger browser download via direct navigation.
+        // Because this is a same-origin proxy that returns Content-Disposition: attachment,
+        // navigation will cause browser to download instead of opening inline.
         window.location.href = url;
         return true;
       }
@@ -314,14 +322,20 @@
         let success = await tryBlobDownload(url, filename);
         if (success) return true;
     
-        // If blob attempt failed, attempt final navigation fallback (server must force attachment)
-        try { return fallbackNavigate(url); } catch (err) { console.error('Final fallback failed:', err); return false; }
+        // If fetch->blob approach failed, fall back to direct navigation to proxy (server sends attachment header)
+        try { 
+          return fallbackNavigate(url);
+        } catch (err) { 
+          console.error('universalDownload failure:', err); 
+          return false; 
+        }
       }
     
       verifyCaptchaSync();
       window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
+
 
 
 

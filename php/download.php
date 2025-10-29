@@ -1,66 +1,65 @@
 <?php
 // -----------------------------
-// Production-ready Download Script
+// Safe and reliable PDF download
 // -----------------------------
 
-// Map file IDs to actual files
+// Map file IDs to actual files (keys match JS map)
 $files = [
-    'cv' => __DIR__ . '/docs/Sachintha_Gaurawa_CV.pdf',
     'research1' => __DIR__ . '/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
     'research2' => __DIR__ . '/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
 ];
 
-// 1️⃣ Validate file ID
+// 1️⃣ Get requested file ID
 $fileId = $_GET['file'] ?? '';
-if (!array_key_exists($fileId, $files)) {
+
+// 2️⃣ Validate
+if (!isset($files[$fileId])) {
     http_response_code(404);
-    echo "File not found";
+    echo "❌ File not found";
     exit;
 }
 
 $filePath = $files[$fileId];
 
-// 2️⃣ Security: ensure the file exists and is a file
+// 3️⃣ Check existence
 if (!is_file($filePath)) {
     http_response_code(404);
-    echo "File not found";
+    echo "❌ File not found";
     exit;
 }
 
 $fileName = basename($filePath);
 
-// 3️⃣ Set safe headers for download
+// 4️⃣ Force download headers
 header('Content-Description: File Transfer');
-header('Content-Type: application/octet-stream');
+header('Content-Type: application/pdf'); // PDF files
 header('Content-Disposition: attachment; filename="' . $fileName . '"');
 header('Content-Transfer-Encoding: binary');
 header('Expires: 0');
-header('Cache-Control: must-revalidate');
+header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 header('Pragma: public');
 header('Content-Length: ' . filesize($filePath));
 
-// 4️⃣ Clear output buffer for large files
-while (ob_get_level()) {
+// 5️⃣ Clean output buffer
+if (ob_get_level()) {
     ob_end_clean();
 }
 
-// 5️⃣ Efficiently stream the file (avoid loading entire file into memory)
-$chunkSize = 8 * 1024 * 1024; // 8 MB per chunk
+// 6️⃣ Stream file in chunks (efficient for large PDFs)
+$chunkSize = 8 * 1024 * 1024; // 8MB
 $handle = fopen($filePath, 'rb');
 if ($handle === false) {
     http_response_code(500);
-    echo "Failed to open file";
+    echo "❌ Failed to open file";
     exit;
 }
 
-set_time_limit(0); // prevent script timeout for large files
+set_time_limit(0);
 
 while (!feof($handle)) {
-    $buffer = fread($handle, $chunkSize);
-    echo $buffer;
-    flush(); // send to client
+    echo fread($handle, $chunkSize);
+    flush();
 }
 
 fclose($handle);
 exit;
-?>

@@ -142,15 +142,12 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
-      // keep these for CV (absolute hosted file) — left intact
       const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
-      // Modal reference
       let modalInstance = null;
       const modalEl = document.getElementById('captchaModal');
     
-      // Toast container
       const toastContainerId = '__dl_toast_container__';
       function ensureToastContainer() {
         let c = document.getElementById(toastContainerId);
@@ -182,16 +179,10 @@
         t.style.opacity = '0';
         t.style.transform = 'translateY(8px)';
         t.style.transition = 'opacity .18s ease, transform .18s ease';
-    
-        if (type === 'success') t.style.background = '#198754';
-        else if (type === 'error') t.style.background = '#dc3545';
-        else t.style.background = '#0d6efd';
+        t.style.background = type === 'success' ? '#198754' : (type === 'error' ? '#dc3545' : '#0d6efd');
     
         container.appendChild(t);
-        requestAnimationFrame(() => {
-          t.style.opacity = '1';
-          t.style.transform = 'translateY(0)';
-        });
+        requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
     
         setTimeout(() => {
           t.style.opacity = '0';
@@ -200,13 +191,11 @@
         }, duration);
       }
     
-      // Remove leftover modal/backdrop
       function removeModalBackdropIfExists() {
         if (document.body.classList.contains('modal-open')) document.body.classList.remove('modal-open');
         document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
       }
     
-      // Single assignment for verification (keeps handlers unique)
       function verifyCaptchaSync() {
         if (downloadBtn) downloadBtn.onclick = e => { e.preventDefault(); showCaptchaModal('cv'); };
         document.querySelectorAll('.download-research').forEach(btn => {
@@ -257,22 +246,18 @@
           return;
         }
     
-        // Prevent double submissions: disable verify button while we process
         if (verifyBtn) verifyBtn.disabled = true;
-    
-        // Correct: hide modal and cleanup
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
-        // ▶ IMPORTANT: same-origin download endpoints for research files (server must set Content-Disposition: attachment)
         const map = {
-          cv: FILE_URL, // CV stays the same
+          cv: FILE_URL,
           'av-safety-framework': 'download.php?file=research1',
           'drone-disaster-response': 'download.php?file=research2'
         };
-
+    
         const url = map[type] || map['cv'];
-        const filename = url.split('/').pop();
+        const filename = (url.split('/').pop() || 'document.pdf').split('?')[0];
     
         try {
           const success = await universalDownloadWithNotification(url, filename);
@@ -286,13 +271,21 @@
         }
       }
     
-      // Try to fetch + blob + anchor.click. Use same-origin mode to avoid CORS surprises.
-      async function tryBlobDownload(url, filename) {
+      // If same-origin, use direct anchor click (most reliable to let server force Content-Disposition)
+      function isSameOrigin(url) {
+        try {
+          const u = new URL(url, location.href);
+          return u.origin === location.origin;
+        } catch (e) {
+          return false;
+        }
+      }
+    
+      // Fetch + blob -> anchor (for cross-origin files like GitHub CV)
+      async function fetchBlobAndDownload(url, filename) {
         let blobUrl = null;
         try {
-          // Use same-origin for same-domain endpoints; for absolute CV URL fetch will work (mode 'cors' ok).
-          const mode = (new URL(url, location.href).origin === location.origin) ? 'same-origin' : 'cors';
-          const resp = await fetch(url, { mode: mode });
+          const resp = await fetch(url, { mode: 'cors' });
           if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
           const blob = await resp.blob();
     
@@ -308,7 +301,6 @@
           document.body.appendChild(a);
           a.click();
     
-          // revoke and cleanup after short delay
           setTimeout(() => {
             try { if (blobUrl) URL.revokeObjectURL(blobUrl); } catch (e) {}
             a.remove();
@@ -316,51 +308,49 @@
     
           return true;
         } catch (err) {
-          console.error('tryBlobDownload error for', url, err);
-          try { if (blobUrl) URL.revokeObjectURL(blobUrl); } catch(e) {}
+          console.error('fetchBlobAndDownload error:', err);
+          try { if (blobUrl) URL.revokeObjectURL(blobUrl); } catch (e) {}
           return false;
         }
       }
     
-      // Final fallback: force a same-origin anchor download (server must send Content-Disposition headers)
-      function fallbackNavigate(url) {
+      // For same-origin PHP endpoint, simply create anchor href to that endpoint (server headers must force attachment)
+      function anchorDownload(url) {
         try {
           const a = document.createElement('a');
           a.href = url;
-          a.download = url.split('/').pop() || '';
+          // leave a.download blank so server's Content-Disposition filename is used
+          a.download = '';
           a.style.display = 'none';
           document.body.appendChild(a);
           a.click();
           a.remove();
           return true;
         } catch (err) {
-          console.error('fallbackNavigate error:', err);
+          console.error('anchorDownload error:', err);
           return false;
         }
       }
     
-      // Main unified download flow
+      // unified download: pick best method
       async function universalDownloadWithNotification(url, filename) {
-        // Attempt blob download (best cross-browser)
-        let success = await tryBlobDownload(url, filename);
-        if (success) return true;
-    
-        // If first attempt failed, retry once (sometimes transient)
-        try {
-          success = await tryBlobDownload(url, filename);
-          if (success) return true;
-        } catch (err) {
-          console.error('Retry failed:', err);
+        // If URL is same-origin and looks like our PHP handler, prefer anchor download (server forces download)
+        if (isSameOrigin(url)) {
+          // direct anchor click should trigger server Content-Disposition attachment
+          const ok = anchorDownload(url);
+          if (ok) return true;
+          // if anchor failed (rare), fall back to fetching blob
         }
     
-        // Final attempt: same-origin anchor click (server must force attachment)
-        return fallbackNavigate(url);
+        // Otherwise (cross-origin or anchor failed), try fetch->blob->download
+        return await fetchBlobAndDownload(url, filename);
       }
     
       verifyCaptchaSync();
       window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
+
 
 
 

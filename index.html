@@ -266,11 +266,11 @@
     
         // ▶ IMPORTANT: same-origin download endpoints for research files (server must set Content-Disposition: attachment)
         const map = {
-          cv: FILE_URL, // absolute URL hosted (unchanged)
+          cv: FILE_URL, // CV stays the same
           'av-safety-framework': 'download.php?file=research1',
           'drone-disaster-response': 'download.php?file=research2'
         };
-    
+
         const url = map[type] || map['cv'];
         const filename = url.split('/').pop();
     

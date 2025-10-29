@@ -1,41 +1,42 @@
 <?php
-// download.php
-
-if (!isset($_GET['file'])) {
-    http_response_code(400);
-    echo "No file specified.";
-    exit;
-}
-
-$files = [
-    'research1' => 'AI_Enhanced_Predictive_Safety_Framework.pdf',
-    'research2' => 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf',
+// Allowed files mapping (same keys as JS dataset)
+$allowedFiles = [
+    'cv' => 'docs/Sachintha_Gaurawa_CV.pdf',
+    'av-safety-framework' => 'docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
+    'drone-disaster-response' => 'docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
 ];
 
-$key = $_GET['file'];
+// Get 'file' parameter from GET
+$fileKey = isset($_GET['file']) ? $_GET['file'] : '';
 
-if (!isset($files[$key])) {
+if (!array_key_exists($fileKey, $allowedFiles)) {
     http_response_code(404);
-    echo "File not found.";
+    echo "❌ File not found!";
     exit;
 }
 
-$filename = $files[$key];
-$filepath = __DIR__ . '/docs/' . $filename; // Make sure PDFs are inside 'docs/' folder
+$filePath = $allowedFiles[$fileKey];
 
-if (!file_exists($filepath)) {
+// Security check: ensure the file exists and is under allowed directory
+if (!file_exists($filePath) || strpos(realpath($filePath), realpath('docs')) !== 0) {
     http_response_code(404);
-    echo "File not found on server.";
+    echo "❌ File not found!";
     exit;
 }
 
-// Force download
+// Force download headers
 header('Content-Description: File Transfer');
 header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
 header('Expires: 0');
 header('Cache-Control: must-revalidate');
 header('Pragma: public');
-header('Content-Length: ' . filesize($filepath));
-readfile($filepath);
+header('Content-Length: ' . filesize($filePath));
+
+// Clear output buffer
+ob_clean();
+flush();
+
+// Read the file
+readfile($filePath);
 exit;

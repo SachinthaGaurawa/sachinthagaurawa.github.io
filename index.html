@@ -137,10 +137,10 @@
 
 
 
-
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const downloadBtn = document.getElementById('downloadCV');
+      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
       const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
     
       // Modal reference
@@ -203,7 +203,7 @@
         document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
       }
     
-      // Assign events
+      // Single assignment for verification
       function verifyCaptchaSync() {
         if (downloadBtn) downloadBtn.onclick = e => { e.preventDefault(); showCaptchaModal('cv'); };
         document.querySelectorAll('.download-research').forEach(btn => {
@@ -258,18 +258,18 @@
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
-        // Absolute URLs for all files
+        // 🔹 Absolute URLs for all downloads
         const map = {
           cv: 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf',
           'av-safety-framework': 'https://sachinthagaurawa.github.io/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
           'drone-disaster-response': 'https://sachinthagaurawa.github.io/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
         };
     
-        const url = map[type];
-        if (!url) { showNotification('❌ File not found.', 'error', 4000); return; }
+        const url = map[type] || 'https://sachinthagaurawa.github.io/docs/document.pdf';
+        const filename = url.split('/').pop();
     
         try { 
-          const success = await tryBlobDownload(url, url.split('/').pop());
+          const success = await universalDownloadWithNotification(url, filename);
           if (success) showNotification('✅ Download started successfully!', 'success', 3000);
           else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
         }
@@ -296,6 +296,14 @@
           setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
           return true;
         } catch (err) { return false; }
+      }
+    
+      function fallbackNavigate(url) { window.location.href = url; return true; }
+    
+      async function universalDownloadWithNotification(url, filename) {
+        // returns true if download triggered, false if failed
+        let success = await tryBlobDownload(url, filename);
+        return success;
       }
     
       verifyCaptchaSync();
@@ -1083,7 +1091,7 @@
                                 <span class="research-status">Published</span>
                                 <span class="research-year">2025</span>
                             </div>
-                            <button class="btn btn-primary download-research" data-paper="av-safety-framework">
+                            <button class="btn btn-primary download-research" data-paper="av-safety-framework" data-file-url="https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf" data-file-name="Sachintha_Gaurawa_CV.pdf">
                                 <i class="fas fa-download me-2"></i>Download PDF
                             </button>
                         </div>

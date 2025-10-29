@@ -138,7 +138,6 @@
 
 
 
-
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -261,35 +260,39 @@
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
-        // ▶ IMPORTANT: use the server-side download endpoint (same-origin) so browser MUST download
         const map = {
-          cv: 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf', // CV absolute URL (works)
-          'av-safety-framework': 'download.php?file=research1',     // <-- same-origin endpoint
-          'drone-disaster-response': 'download.php?file=research2'  // <-- same-origin endpoint
+          cv: FILE_URL, // Absolute URL for CV
+          'av-safety-framework': 'docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
+          'drone-disaster-response': 'docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
         };
     
-        const url = map[type] || 'download.php?file=default';
-        // filename for toast only (not used to control browser)
-        const filename = url.split('/').pop();
+        const url = map[type] || '';
+        const filename = url.split('/').pop() || 'document.pdf';
+    
+        if (!url) { showNotification('❌ File URL not found!', 'error', 4000); return; }
     
         try { 
-          const success = await universalDownloadWithNotification(url, filename);
+          const success = await downloadPDF(url, filename);
           if (success) showNotification('✅ Download started successfully!', 'success', 3000);
           else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
+        } catch (err) { 
+          console.error(err); 
+          showNotification('❌ Failed to download. Please try again.', 'error', 4000); 
         }
-        catch (err) { console.error(err); showNotification('❌ Failed to download. Please try again.', 'error', 4000); }
       }
     
-      async function tryBlobDownload(url, filename) {
+      async function downloadPDF(url, filename) {
         try {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
-          const blob = await resp.blob();
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Network response not ok: ' + response.status);
+          const blob = await response.blob();
     
-          if (window.navigator?.msSaveOrOpenBlob) { window.navigator.msSaveOrOpenBlob(blob, filename); return true; }
+          if (window.navigator?.msSaveOrOpenBlob) { // IE/Edge
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+            return true;
+          }
     
-          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
-          const blobUrl = URL.createObjectURL(outBlob);
+          const blobUrl = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = blobUrl;
           a.download = filename;
@@ -297,49 +300,16 @@
           a.rel = 'noopener';
           document.body.appendChild(a);
           a.click();
-          setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
+          setTimeout(() => { 
+            try { URL.revokeObjectURL(blobUrl); } catch(e){} 
+            a.remove(); 
+          }, 1500);
+    
           return true;
-        } catch (err) { return false; }
-      }
-    
-      function fallbackNavigate(url) { 
-        // final attempt - navigate to same-origin download endpoint (server will send Content-Disposition)
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = url.split('/').pop();
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        return true;
-      }
-    
-      async function universalDownloadWithNotification(url, filename) {
-        // returns true if download triggered, false if failed
-        let success = await tryBlobDownload(url, filename);
-        if (success) return true;
-    
-        // retry once (server may block first request); tryBlobDownload already did fetch+blob
-        try {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (resp.ok) { 
-            const blob = await resp.blob(); 
-            // attempt blob download again using the same blob
-            const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
-            const blobUrl = URL.createObjectURL(outBlob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = filename;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
-            return true;
-          }
-        } catch (err) { console.error('Fetch fallback error:', err); }
-    
-        // Final fallback: trigger download via <a> (same-origin download.php must set headers)
-        return fallbackNavigate(url);
+        } catch (err) {
+          console.error('Download error:', err);
+          return false;
+        }
       }
     
       verifyCaptchaSync();

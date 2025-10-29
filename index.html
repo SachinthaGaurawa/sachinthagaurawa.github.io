@@ -258,79 +258,114 @@
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
-        // MAP: use server-side download.php endpoint (same-origin) — forces Content-Disposition: attachment
-        const map = {
-          cv: 'download.php?file=cv',
-          'av-safety-framework': 'download.php?file=research1',
-          'drone-disaster-response': 'download.php?file=research2'
+        // ---------- IMPORTANT: use server-side download endpoint (same-origin) ----------
+        // Map file keys to server-side download IDs. These IDs must match your download.php mapping.
+        const serverMap = {
+          cv: 'cv',
+          'av-safety-framework': 'research1',
+          'drone-disaster-response': 'research2'
         };
     
-        const url = map[type] || 'download.php?file=cv';
-        // filename for display / download name (optional, server sets final name)
-        const filename = (type === 'cv') ? FILE_NAME : (type === 'av-safety-framework' ? 'AI_Enhanced_Predictive_Safety_Framework.pdf' : 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf');
+        // Absolute fallback mapping (public urls on GitHub) - used only if server endpoint fails
+        const publicMap = {
+          cv: 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf',
+          'av-safety-framework': 'https://sachinthagaurawa.github.io/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
+          'drone-disaster-response': 'https://sachinthagaurawa.github.io/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
+        };
     
-        try { 
-          const success = await universalDownloadWithNotification(url, filename);
-          if (success) showNotification('✅ Download started successfully!', 'success', 3000);
-          else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
+        // Prefer same-origin download endpoint (download.php). This MUST be deployed on the same domain as the page.
+        const fileId = serverMap[type] || serverMap['cv'];
+        const serverDownloadUrl = `/download.php?file=${encodeURIComponent(fileId)}`;
+    
+        // Fallback public url
+        const publicUrl = publicMap[type] || publicMap['cv'];
+    
+        try {
+          // Try server-side download first (same-origin). This allows server to set Content-Disposition: attachment.
+          const triggered = await tryServerDownload(serverDownloadUrl, publicUrl);
+          if (triggered) {
+            showNotification('✅ Download started successfully!', 'success', 3000);
+          } else {
+            showNotification('❌ Failed to download. Please try again.', 'error', 4000);
+          }
+        } catch (err) {
+          console.error('Download final error:', err);
+          showNotification('❌ Failed to download. Please try again.', 'error', 4000);
         }
-        catch (err) { console.error(err); showNotification('❌ Failed to download. Please try again.', 'error', 4000); }
       }
     
-      async function tryBlobDownload(url, filename) {
+      // Try server endpoint; if it fails (non-2xx or network/CORS), fallback to public blob download
+      async function tryServerDownload(serverUrl, publicUrl) {
         try {
-          const resp = await fetch(url, { mode: 'same-origin' }); // same-origin ensures credentials & headers preserved
-          if (!resp.ok) throw new Error('Network response not ok: ' + resp.status);
+          // Attempt fetch from same-origin server endpoint
+          const resp = await fetch(serverUrl, { method: 'GET', credentials: 'same-origin' });
+          if (!resp.ok) {
+            // server responded but not OK -> fallback to public blob
+            return await tryPublicBlobDownload(publicUrl);
+          }
+          // Server responded OK — we stream blob and force download
           const blob = await resp.blob();
-    
-          if (window.navigator?.msSaveOrOpenBlob) { window.navigator.msSaveOrOpenBlob(blob, filename); return true; }
-    
-          const outBlob = new Blob([await blob.arrayBuffer()], { type: 'application/octet-stream' });
-          const blobUrl = URL.createObjectURL(outBlob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = filename;
-          a.style.display = 'none';
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
-          return true;
-        } catch (err) { return false; }
+          return forceDownloadBlob(blob, deriveFilenameFromResponse(resp) || publicUrl.split('/').pop());
+        } catch (err) {
+          // network error / CORS / server not present -> fallback to public blob
+          return await tryPublicBlobDownload(publicUrl);
+        }
       }
     
-      function fallbackNavigate(url) { 
-        // final minimal fallback: navigate to server download endpoint (server will force attachment)
-        window.location.href = url;
-        return true;
-      }
-    
-      async function universalDownloadWithNotification(url, filename) {
-        // returns true if download triggered, false if failed
-        let success = await tryBlobDownload(url, filename);
-        if (success) return true;
-    
-        // try once more as a fallback to the same endpoint (server should respond with attachment)
+      // Try public blob download (fetch public url and force download)
+      async function tryPublicBlobDownload(url) {
         try {
-          const resp = await fetch(url, { mode: 'same-origin' });
-          if (resp.ok) {
-            // attempt to download via blob again
-            const blob = await resp.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = filename;
-            a.style.display = 'none';
-            a.rel = 'noopener';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch (e) {} a.remove(); }, 1500);
+          const resp = await fetch(url, { mode: 'cors' });
+          if (!resp.ok) return false;
+          const blob = await resp.blob();
+          return forceDownloadBlob(blob, url.split('/').pop());
+        } catch (err) {
+          console.error('Public blob download error:', err);
+          return false;
+        }
+      }
+    
+      // Force the browser to download a blob via an anchor click. Returns true if no exception thrown.
+      function forceDownloadBlob(blob, filename) {
+        try {
+          if (window.navigator?.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
             return true;
           }
-        } catch (err) { console.error('Fetch fallback error:', err); }
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename || '';
+          a.rel = 'noopener';
+          a.style.display = 'none';
+          document.body.appendChild(a);
     
-        // Final fallback: navigate to the same download endpoint (server will force Content-Disposition)
-        return fallbackNavigate(url);
+          // Trigger download
+          a.click();
+    
+          // Cleanup
+          setTimeout(() => {
+            try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+            a.remove();
+          }, 1500);
+    
+          return true;
+        } catch (err) {
+          console.error('forceDownloadBlob error:', err);
+          return false;
+        }
+      }
+    
+      // Derive filename from response headers if available (Content-Disposition)
+      function deriveFilenameFromResponse(response) {
+        try {
+          const cd = response.headers.get('Content-Disposition') || '';
+          const match = cd.match(/filename\*=UTF-8''(.+)|filename="([^"]+)"|filename=([^;]+)/i);
+          if (match) {
+            return decodeURIComponent(match[1] || match[2] || match[3]);
+          }
+        } catch (e) { /* ignore */ }
+        return null;
       }
     
       verifyCaptchaSync();

@@ -6,8 +6,8 @@
 // Map file IDs to actual files
 $files = [
     'cv' => __DIR__ . '/docs/Sachintha_Gaurawa_CV.pdf',
-    'research1' => __DIR__ . '/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf',
-    'research2' => __DIR__ . '/files/Research_02.pdf'
+    'research1' => __DIR__ . '/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
+    'research2' => __DIR__ . '/docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
 ];
 
 // 1️⃣ Validate file ID

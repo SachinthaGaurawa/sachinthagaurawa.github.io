@@ -796,108 +796,101 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 
 
 
-
-/* Experience Section Styles */
+/* Experience Card Styling */
 .experience-card {
     background: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 32px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
 }
 
 .experience-card:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-    border-color: var(--color-primary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     transform: translateY(-4px);
 }
 
-.experience-header {
+.exp-icon-section {
+    width: 60px;
+    height: 60px;
+    background: var(--color-primary);
+    border-radius: 12px;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #f0f0f0;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 28px;
+    color: white;
 }
 
-.experience-title-group h5 {
-    margin: 0;
+.exp-content h5 {
+    margin: 0 0 8px 0;
     font-size: 20px;
     font-weight: 600;
     color: var(--color-text);
 }
 
-.experience-company {
-    margin: 4px 0 0 0;
-    color: var(--color-primary);
-    font-weight: 500;
-    font-size: 16px;
-}
-
-.experience-date {
-    background: var(--color-bg-1);
-    color: var(--color-primary);
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.experience-content {
-    margin-top: 20px;
-}
-
-.experience-bullets {
-    margin-bottom: 24px;
-}
-
-.experience-item {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.experience-item i {
-    color: var(--color-primary);
-    font-size: 18px;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
-.experience-item p {
+.exp-company {
     margin: 0;
-    color: var(--color-text-secondary);
-    line-height: 1.6;
+    color: var(--color-primary);
+    font-weight: 500;
     font-size: 15px;
 }
 
-.experience-skills {
+.exp-date {
+    margin: 8px 0 20px 0;
+    color: var(--color-primary);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.exp-description {
+    margin: 20px 0;
+}
+
+.exp-point {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.exp-point i {
+    color: var(--color-primary);
+    font-size: 10px;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.exp-point p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.exp-skills {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 24px;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
     border-top: 1px solid #f0f0f0;
 }
 
-.skill-badge {
-    background: var(--color-bg-1);
-    color: var(--color-primary);
-    padding: 8px 16px;
+.skill-tag {
+    background: var(--color-primary);
+    color: white;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     transition: all 0.3s ease;
-    border: 1px solid transparent;
 }
 
-.skill-badge:hover {
-    background: var(--color-primary);
-    color: #ffffff;
-    border-color: var(--color-primary);
+.skill-tag:hover {
+    background: var(--color-primary-hover);
+    transform: scale(1.05);
 }
 
 /* Responsive */
@@ -906,22 +899,35 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
         padding: 24px;
     }
 
-    .experience-header {
-        flex-direction: column;
-        gap: 16px;
+    .exp-icon-section {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
     }
 
-    .experience-date {
-        align-self: flex-start;
+    .exp-point {
+        gap: 10px;
     }
 
-    .experience-item {
-        gap: 12px;
+    .exp-skills {
+        gap: 8px;
     }
 
-    .experience-item i {
-        font-size: 16px;
+    .skill-tag {
+        padding: 4px 12px;
+        font-size: 11px;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 

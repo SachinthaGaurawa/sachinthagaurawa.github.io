@@ -984,6 +984,22 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 
 
 
+/* Experience bullets text */
+.exp-achievements li {
+    font-size: 14px;
+}
+
+/* Experience date line (e.g., 2025 - Present) */
+.exp-duration {
+    font-size: 14px;
+}
+
+
+
+
+
+
+
 
 
 

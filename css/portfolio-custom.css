@@ -796,8 +796,10 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 
 
 
+/* ============================================
+   EXPERIENCE SECTION STYLES - CONSOLIDATED
+   ============================================ */
 
-/* Experience Section Styles */
 .experience-card {
     background: #ffffff;
     border: 1px solid #e9ecef;
@@ -807,6 +809,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     position: relative;
     overflow: hidden;
+    animation-duration: 0.6s;
 }
 
 .experience-card::before {
@@ -825,6 +828,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     border-color: var(--color-primary);
 }
 
+/* Experience Header */
 .exp-header {
     display: flex;
     align-items: center;
@@ -834,34 +838,24 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     border-bottom: 2px solid #f8f9fa;
 }
 
-.exp-icon i {
-    font-size: 34px;              /* increase icon size */
-    color: #ffffff;
-}
-
-/* optional tweak for small screens */
-@media (max-width: 768px) {
-    .exp-icon {
-        width: 60px;
-        height: 60px;
-    }
-    .exp-icon i {
-        font-size: 30px;
-    }
-}
-
-
+/* Experience Icon Box */
 .exp-icon {
-    width: 70px;                  /* slightly bigger box */
+    width: 70px;
     height: 70px;
     background: var(--gradient-primary);
     border-radius: 16px;
     display: flex;
-    align-items: center;          /* perfect vertical centering */
-    justify-content: center;      /* perfect horizontal centering */
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
+.exp-icon i {
+    font-size: 34px;
+    color: #ffffff;
+}
+
+/* Experience Details */
 .exp-details {
     flex: 1;
 }
@@ -881,6 +875,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     color: var(--color-primary);
 }
 
+/* Experience Duration Badge */
 .exp-duration {
     background: var(--color-bg-1);
     color: var(--color-primary);
@@ -891,10 +886,12 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     display: inline-block;
 }
 
+/* Experience Content */
 .exp-content {
     margin-top: 20px;
 }
 
+/* Achievement List */
 .exp-achievements {
     list-style: none;
     padding: 0;
@@ -906,7 +903,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     padding-left: 30px;
     margin-bottom: 18px;
     color: var(--color-text-secondary);
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.7;
 }
 
@@ -920,6 +917,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     font-weight: bold;
 }
 
+/* Skills Section */
 .exp-skills {
     display: flex;
     flex-wrap: wrap;
@@ -942,7 +940,24 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
-/* Responsive */
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+[data-aos="fade-up"] .experience-card {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+[data-aos="fade-up"].aos-animate .experience-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ============================================
+   RESPONSIVE - TABLET & MOBILE
+   ============================================ */
+
 @media (max-width: 768px) {
     .exp-header {
         flex-direction: column;
@@ -951,12 +966,12 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     }
     
     .exp-icon {
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
     }
     
     .exp-icon i {
-        font-size: 20px;
+        font-size: 30px;
     }
     
     .experience-card {
@@ -973,38 +988,39 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     }
 }
 
-/* Animation enhancements */
-.experience-card {
-    animation-duration: 0.6s;
+/* ============================================
+   EXTRA SMALL DEVICES (Mobile)
+   ============================================ */
+
+@media (max-width: 480px) {
+    .exp-icon {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .exp-icon i {
+        font-size: 26px;
+    }
+    
+    .experience-card {
+        padding: 20px;
+    }
+    
+    .exp-details h4 {
+        font-size: 18px;
+    }
+    
+    .exp-details h6 {
+        font-size: 14px;
+    }
+    
+    .exp-achievements li {
+        font-size: 13px;
+        padding-left: 22px;
+        margin-bottom: 14px;
+    }
 }
 
-[data-aos="fade-up"] .experience-card {
-    opacity: 0;
-    transform: translateY(30px);
-}
-
-[data-aos="fade-up"].aos-animate .experience-card {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-
-
-
-
-
-
-
-
-/* Experience bullets text */
-.exp-achievements li {
-    font-size: 14px;
-}
-
-/* Experience date line (e.g., 2025 - Present) */
-.exp-duration {
-    font-size: 14px;
-}
 
 
 

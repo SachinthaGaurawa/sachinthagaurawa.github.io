@@ -834,20 +834,32 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     border-bottom: 2px solid #f8f9fa;
 }
 
-.exp-icon {
-    width: 60px;
-    height: 60px;
-    background: var(--gradient-primary);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+.exp-icon i {
+    font-size: 34px;              /* increase icon size */
+    color: #ffffff;
 }
 
-.exp-icon i {
-    font-size: 24px;
-    color: white;
+/* optional tweak for small screens */
+@media (max-width: 768px) {
+    .exp-icon {
+        width: 60px;
+        height: 60px;
+    }
+    .exp-icon i {
+        font-size: 30px;
+    }
+}
+
+
+.exp-icon {
+    width: 70px;                  /* slightly bigger box */
+    height: 70px;
+    background: var(--gradient-primary);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;          /* perfect vertical centering */
+    justify-content: center;      /* perfect horizontal centering */
+    flex-shrink: 0;
 }
 
 .exp-details {

@@ -798,16 +798,16 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 
 
 /* ============================================
-   EXPERIENCE SECTION - COMPLETE STYLES
+   EXPERIENCE SECTION - FINAL FIXED STYLES
    ============================================ */
 
+/* Remove the old conflicting rules first */
 .experience-card {
-    background: #ffffff !important;
-    border: 1px solid #e9ecef !important;
-    border-radius: 12px !important;
-    padding: 30px !important;
+    background: white !important;
+    border-radius: 20px !important;
+    padding: 40px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
     transition: all 0.3s ease !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
     position: relative !important;
     overflow: hidden !important;
 }
@@ -819,27 +819,25 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     left: 0 !important;
     right: 0 !important;
     height: 4px !important;
-    background: linear-gradient(90deg, var(--gradient-primary)) !important;
+    background: var(--gradient-primary) !important;
 }
 
 .experience-card:hover {
     transform: translateY(-5px) !important;
-    box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
-    border-color: var(--color-primary) !important;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important;
 }
 
-/* HEADER LAYOUT */
+/* HEADER - FLEX LAYOUT */
 .exp-header {
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
     gap: 20px !important;
     margin-bottom: 25px !important;
     padding-bottom: 20px !important;
     border-bottom: 2px solid #f8f9fa !important;
 }
 
-/* ICON BOX - CENTERED PERFECTLY */
+/* ICON BOX - PERFECT CENTERING */
 .exp-icon {
     width: 70px !important;
     height: 70px !important;
@@ -851,15 +849,20 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
+    line-height: 1 !important;
+    position: relative !important;
 }
 
 .exp-icon i {
     font-size: 34px !important;
     color: #ffffff !important;
     line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-/* DETAILS TEXT */
+/* DETAILS SECTION */
 .exp-details {
     flex: 1 !important;
 }
@@ -868,7 +871,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     margin: 0 0 5px 0 !important;
     font-size: 22px !important;
     font-weight: 600 !important;
-    color: var(--color-text) !important;
+    color: var(--color-text, #212529) !important;
     line-height: 1.3 !important;
 }
 
@@ -876,13 +879,13 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     margin: 0 0 8px 0 !important;
     font-size: 16px !important;
     font-weight: 500 !important;
-    color: var(--color-primary) !important;
+    color: var(--primary-color, #0d6efd) !important;
 }
 
 /* DURATION BADGE */
 .exp-duration {
-    background: var(--color-bg-1) !important;
-    color: var(--color-primary) !important;
+    background: rgba(13, 110, 253, 0.1) !important;
+    color: var(--primary-color, #0d6efd) !important;
     padding: 6px 16px !important;
     border-radius: 25px !important;
     font-size: 14px !important;
@@ -906,7 +909,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     position: relative !important;
     padding-left: 30px !important;
     margin-bottom: 18px !important;
-    color: var(--color-text-secondary) !important;
+    color: #6c757d !important;
     font-size: 14px !important;
     line-height: 1.7 !important;
 }
@@ -915,8 +918,8 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     content: "✓" !important;
     position: absolute !important;
     left: 0 !important;
-    top: 2px !important;
-    color: var(--color-primary) !important;
+    top: 0px !important;
+    color: var(--primary-color, #0d6efd) !important;
     font-size: 18px !important;
     font-weight: bold !important;
 }
@@ -926,6 +929,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 10px !important;
+    margin-top: 20px !important;
 }
 
 .skill-tag {
@@ -945,7 +949,10 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
 }
 
-/* RESPONSIVE - TABLET */
+/* ============================================
+   RESPONSIVE - TABLET (768px and below)
+   ============================================ */
+
 @media (max-width: 768px) {
     .exp-header {
         flex-direction: column !important;
@@ -979,7 +986,10 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     }
 }
 
-/* RESPONSIVE - MOBILE */
+/* ============================================
+   RESPONSIVE - MOBILE (480px and below)
+   ============================================ */
+
 @media (max-width: 480px) {
     .exp-icon {
         width: 55px !important;
@@ -1011,7 +1021,10 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     }
 }
 
-/* ANIMATIONS */
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
 [data-aos="fade-up"] .experience-card {
     opacity: 0 !important;
     transform: translateY(30px) !important;
@@ -1021,7 +1034,6 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     opacity: 1 !important;
     transform: translateY(0) !important;
 }
-
 
 
 

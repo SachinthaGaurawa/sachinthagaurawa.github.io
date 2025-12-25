@@ -1045,3 +1045,58 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 
 
 
+
+
+/* ===== FINAL: FORCE-CENTER EXPERIENCE ICON ON ALL DEVICES ===== */
+
+/* 1. Make the square a flex centering box */
+.exp-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  line-height: 0 !important;   /* remove text baseline */
+}
+
+/* 2. Reset the <i> box itself */
+.exp-icon i {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 1em !important;
+  height: 1em !important;
+  font-size: 34px !important;  /* desktop size */
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 3. Center the Font Awesome glyph (which lives in ::before) */
+.exp-icon i::before {
+  display: block !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 4. Responsive sizes (tablet & mobile) */
+@media (max-width: 768px) {
+  .exp-icon i {
+    font-size: 30px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .exp-icon i {
+    font-size: 26px !important;
+  }
+}
+
+
+
+
+
+
+
+

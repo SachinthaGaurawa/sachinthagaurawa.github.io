@@ -38,7 +38,8 @@ body {
 .loading-text {
     font-family: 'Orbitron', monospace !important;
     font-weight: 500 !important;
-    font-size: 1.6rem !important;
+    font-size: 1rem !important;
+    animation: pulse 1.5s ease-in-out infinite alternate;
     letter-spacing: 0.06em !important;
     color: #6b4fd8 !important;   /* adjust to your previous purple */
     text-transform: none !important;

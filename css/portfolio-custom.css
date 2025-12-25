@@ -1114,7 +1114,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 1rem !important;
+    gap: 10rem !important;
 }
 
 

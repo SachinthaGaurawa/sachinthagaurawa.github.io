@@ -4,12 +4,12 @@ const nextConfig = {
   swcMinify: true,
   poweredByHeader: false,
 
-  // Public env (not required by your API route, but fine to keep)
+  // Public env
   env: {
     NEXT_PUBLIC_GALLERY_TITLE: 'Album — Sachintha Gaurawa',
   },
 
-  // Not used by the API, but harmless if you ever add pages that show images
+  // Images domains
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -18,10 +18,8 @@ const nextConfig = {
     ],
   },
 
-  // Security headers (applied to all responses, including API JSON)
+  // Security headers
   async headers() {
-    // Note: CSP mainly matters for HTML pages; it does not block your server-side fetches.
-    // We keep connect-src permissive to avoid accidental breakage.
     return.join('; '),
           },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -33,9 +31,6 @@ const nextConfig = {
       },
     ];
   },
-
-  // IMPORTANT: No rewrites here — this project IS your backend.
-  // If you add a rewrite for /api/*, you will bypass app/api/ai/route.ts.
 
   output: 'standalone',
 };

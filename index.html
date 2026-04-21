@@ -68,8 +68,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Elements & Constants
       const downloadBtn = document.getElementById('downloadCV');
-      const FILE_URL = 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf';
-      const FILE_NAME = 'Sachintha_Gaurawa_CV.pdf';
+      const degreeVerifyBtn = document.getElementById('degreeVerifyBtn'); // Degree Verification Button
     
       let modalInstance = null;
       const modalEl = document.getElementById('captchaModal');
@@ -131,16 +130,6 @@
         document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
       }
     
-      // Initialize Captcha Events
-      function verifyCaptchaSync() {
-        if (downloadBtn) downloadBtn.onclick = e => { e.preventDefault(); showCaptchaModal('cv'); };
-        document.querySelectorAll('.download-research').forEach(btn => {
-          btn.onclick = e => { e.preventDefault(); showCaptchaModal(btn.dataset.paper); };
-        });
-        const verifyBtn = document.getElementById('verifyCaptcha');
-        if (verifyBtn) verifyBtn.onclick = verifyCaptchaAndDownload;
-      }
-    
       // Show Captcha Logic
       function showCaptchaModal(type) {
         if (!modalEl) return;
@@ -157,17 +146,26 @@
         const answerEl = document.getElementById('captchaAnswer');
         const inputEl = document.getElementById('captchaInput');
         const verifyBtn = document.getElementById('verifyCaptcha');
+        const modalTitle = document.getElementById('captchaModalLabel');
     
         if (mathEl) mathEl.textContent = `${firstNum} ${op} ${secondNum} =?`;
         if (answerEl) answerEl.value = ans;
         if (inputEl) { inputEl.value = ''; setTimeout(() => inputEl.focus?.(), 300); }
-        if (verifyBtn) verifyBtn.dataset.download = type;
+        
+        // Dynamically change text based on action (Degree vs Download)
+        if (verifyBtn) {
+            verifyBtn.dataset.download = type;
+            verifyBtn.textContent = type === 'degree'? 'Verify & Open Link' : 'Verify & Download';
+        }
+        if (modalTitle) {
+            modalTitle.textContent = type === 'degree'? 'Secure Link Verification' : 'Human Verification';
+        }
     
         removeModalBackdropIfExists();
         modalInstance.show();
       }
     
-      // Verify Captcha and Trigger Download
+      // Verify Captcha and Trigger Action
       async function verifyCaptchaAndDownload() {
         if (!modalEl) return;
         const inputEl = document.getElementById('captchaInput');
@@ -189,8 +187,24 @@
         // Hide modal upon success
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
+
+        // ==========================================
+        // DEGREE URL REDIRECT LOGIC
+        // ==========================================
+        if (type === 'degree') {
+            const targetUrl = 'https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441';
+            // Open immediately synchronously to bypass Popup Blockers completely
+            const newWindow = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+            if (newWindow) {
+                showNotification('✅ Verification successful! Opening secure link...', 'success', 3000);
+            } else {
+                // Fallback if extremely strict popup blocker is on
+                window.location.href = targetUrl;
+            }
+            return;
+        }
     
-        // Document Mapping
+        // Document Mapping for Downloads
         const map = {
           cv: 'https://sachinthagaurawa.github.io/docs/Sachintha_Gaurawa_CV.pdf',
           'av-safety-framework': 'https://sachinthagaurawa.github.io/docs/AI_Enhanced_Predictive_Safety_Framework.pdf',
@@ -203,7 +217,7 @@
         const filename = url.split('/').pop();
     
         try { 
-          const success = await universalDownloadWithNotification(url, filename);
+          const success = await tryBlobDownload(url, filename);
           if (success) showNotification('✅ Download started successfully!', 'success', 3000);
           else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
         }
@@ -233,56 +247,24 @@
         } catch (err) { return false; }
       }
     
-      async function universalDownloadWithNotification(url, filename) {
-        let success = await tryBlobDownload(url, filename);
-        return success;
+      // Bind Events
+      if (downloadBtn) {
+          downloadBtn.onclick = e => { e.preventDefault(); showCaptchaModal('cv'); };
       }
-    
-      verifyCaptchaSync();
-      window.addEventListener('pageshow', removeModalBackdropIfExists);
-
-      // ==============================================
-      // PREMIUM SECURE DEGREE VERIFICATION LOGIC
-      // ==============================================
-      const degreeVerifyBtn = document.getElementById('degreeVerifyBtn');
+      
       if (degreeVerifyBtn) {
-        degreeVerifyBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          // Popup Blockers මගහරින්න Click කරපු ගමන් අලුත් Tab එකක් Open කරනවා
-          const newWindow = window.open('about:blank', '_blank');
-          if (newWindow) {
-              newWindow.opener = null;
-              newWindow.document.write('<body style="background:#f5f7fa;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>Authenticating Secure Connection...</h2></body>');
-          }
-
-          // Visual Button State
-          const originalText = this.innerHTML;
-          this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Authenticating...';
-          this.style.transform = 'scale(0.98)';
-          this.style.pointerEvents = 'none';
-          
-          showNotification('Authenticating secure connection...', 'info', 1500);
-
-          setTimeout(() => {
-            // Revert button state
-            this.innerHTML = originalText;
-            this.style.transform = 'scale(1)';
-            this.style.pointerEvents = 'auto';
-
-            // Dual-Layer Obfuscated URL (Reversed + Base64) for anti-scraping
-            const encPayload = "MTQ0Vy0xMC0wNzA2MjU3MT1lY25lcmVmZXI/Ly5rdS5jYS5yZXRzZWhjbmFtcmV0YWVyZy5pcmV2Y2QvLzpzcHR0aA==";
-            const targetUrl = atob(encPayload).split('').reverse().join('');
-            
-            // High Security Redirection
-            if (newWindow) {
-                newWindow.location.href = targetUrl;
-            } else {
-                window.location.href = targetUrl;
-            }
-          }, 1500);
-        });
+          // Trigger Math Verification for the Degree Button
+          degreeVerifyBtn.onclick = e => { e.preventDefault(); showCaptchaModal('degree'); };
       }
+
+      document.querySelectorAll('.download-research').forEach(btn => {
+          btn.onclick = e => { e.preventDefault(); showCaptchaModal(btn.dataset.paper); };
+      });
+      
+      const verifyBtn = document.getElementById('verifyCaptcha');
+      if (verifyBtn) verifyBtn.onclick = verifyCaptchaAndDownload;
+      
+      window.addEventListener('pageshow', removeModalBackdropIfExists);
     });
     </script>
 

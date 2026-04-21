@@ -271,7 +271,7 @@
           if (success) showNotification('✅ Download started successfully!', 'success', 3000);
           else showNotification('❌ Failed to download. Please try again.', 'error', 4000);
         }
-        catch (err) { console.error(err); showNotification('❌ Failed to download. Please try again.', 'error', 4000); }
+        
       }
     
       async function tryBlobDownload(url, filename) {

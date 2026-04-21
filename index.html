@@ -210,7 +210,7 @@
         catch (err) { console.error(err); showNotification('❌ Failed to download. Please try again.', 'error', 4000); }
       }
     
-      // Blob Download Helper (Bug Fixed: Corrected Array Syntax)
+      // Blob Download Helper
       async function tryBlobDownload(url, filename) {
         try {
           const resp = await fetch(url, { mode: 'cors' });
@@ -249,6 +249,13 @@
         degreeVerifyBtn.addEventListener('click', function(e) {
           e.preventDefault();
           
+          // Popup Blockers මගහරින්න Click කරපු ගමන් අලුත් Tab එකක් Open කරනවා
+          const newWindow = window.open('about:blank', '_blank');
+          if (newWindow) {
+              newWindow.opener = null;
+              newWindow.document.write('<body style="background:#f5f7fa;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>Authenticating Secure Connection...</h2></body>');
+          }
+
           // Visual Button State
           const originalText = this.innerHTML;
           this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Authenticating...';
@@ -267,11 +274,9 @@
             const encPayload = "MTQ0Vy0xMC0wNzA2MjU3MT1lY25lcmVmZXI/Ly5rdS5jYS5yZXRzZWhjbmFtcmV0YWVyZy5pcmV2Y2QvLzpzcHR0aA==";
             const targetUrl = atob(encPayload).split('').reverse().join('');
             
-            // High Security Redirection (Tabnabbing Prevention)
-            const newWindow = window.open();
+            // High Security Redirection
             if (newWindow) {
-                newWindow.opener = null; 
-                newWindow.location = targetUrl;
+                newWindow.location.href = targetUrl;
             } else {
                 window.location.href = targetUrl;
             }
@@ -630,17 +635,12 @@
                             <p>Comprehensive foundation in electrical systems, embedded design and electronic engineering principles.</p>
                             
                             <div class="mt-3">
-                                <a 
-                                  href="https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441" 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-full hover:bg-emerald-700 transition-colors duration-300"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                <button id="degreeVerifyBtn" class="btn text-white rounded-pill d-inline-flex align-items-center border-0" style="background-color: #059669; padding: 8px 20px; font-size: 14px; transition: all 0.3s ease;">
+                                  <svg class="me-2" style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                   </svg>
                                   Official Verified Degree
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>

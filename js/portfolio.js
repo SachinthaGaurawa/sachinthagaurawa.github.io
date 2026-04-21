@@ -611,3 +611,37 @@ window.__trackAnalytics?.trackDownload('Sachintha_Gaurawa_CV.pdf');
 window.__trackAnalytics?.trackDegreeClick();
 window.__trackAnalytics?.trackLead(name, email, message);
 window.__trackAnalytics?.trackClick('Verify Degree');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+window.__trackAnalytics = {
+  trackDownload: (file) => {
+    if (window.trackPortfolioDownload) window.trackPortfolioDownload(file);
+    else if (TRACK.trackDownload) TRACK.trackDownload(file);
+  },
+  trackDegreeClick: () => {
+    if (window.trackDegreeClick) window.trackDegreeClick();
+    else if (TRACK.trackDegreeClick) TRACK.trackDegreeClick();
+  },
+  trackLead: (name, email, subject, message) => {
+    if (window.trackPortfolioLead) window.trackPortfolioLead(name, email, subject, message);
+    else if (TRACK.trackLead) TRACK.trackLead(name, email, subject, message);
+  },
+  trackClick: (label) => {
+    if (window.trackPortfolioClick) window.trackPortfolioClick(label);
+    else if (TRACK.trackClick) TRACK.trackClick(label);
+  }
+};

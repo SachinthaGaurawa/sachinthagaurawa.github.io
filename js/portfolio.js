@@ -582,14 +582,23 @@ function initializeDegreeVerification() {
 
 
 
-function verifyCaptchaAndDownloadDegree() {
+function verifyCaptchaAndOpenDegree() {
   const user = +document.getElementById('captchaInput').value;
   const correct = +document.getElementById('captchaAnswer').value;
   const type = document.getElementById('verifyCaptcha').dataset.download;
 
-  if (user === correct && type === 'bachelor') {
-    bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
-    window.location.href = '/verify-degree?token=bachelor';
+  if (user === correct) {
+    const modalEl = document.getElementById('captchaModal');
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+
+    const degreeUrlMap = {
+      bachelor: 'https://your-third-party-verification-site.com/verify-degree'
+    };
+
+    const url = degreeUrlMap[type];
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   } else {
     alert('Incorrect answer. Please try again.');
   }

@@ -148,6 +148,10 @@ document.addEventListener('DOMContentLoaded', function() {
       emailjs
         .sendForm('service_thpmguh', 'template_m1n7xw5', this)
         .then(() => {
+
+          // Lead tracking goes here 
+          trackPortfolioLead(name, email, subject, message); 
+       
           showFormStatus(
             "✅ Message sent successfully! I'll get back to you soon.",
             'success'
@@ -309,6 +313,8 @@ async function triggerDownload(type) {
     document.body.removeChild(link);
 
     window.URL.revokeObjectURL(blobUrl);
+
+    trackPortfolioDownload(filename); 
     showNotification('✅ Download started successfully!', 'success');
   } catch (err) {
     console.error('Download error:', err);
@@ -645,3 +651,131 @@ window.__trackAnalytics = {
     else if (TRACK.trackClick) TRACK.trackClick(label);
   }
 };
+
+
+
+
+
+
+
+function trackPortfolioLead(name, email, subject, message) {
+  sendAnalytics({
+    type: 'lead',
+    name,
+    email,
+    subject,
+    message,
+    page: location.pathname + location.hash,
+    referrer: document.referrer || ''
+  });
+}
+
+
+
+
+
+// ===== Analytics helpers =====
+function sendAnalytics(payload) {
+  try {
+    return fetch(`${API_BASE}/api/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true
+    });
+  } catch (e) {
+    return Promise.resolve();
+  }
+}
+
+function trackPageVisit() {
+  sendAnalytics({
+    type: 'visit',
+    page: location.pathname + location.hash,
+    referrer: document.referrer || '',
+    title: document.title || ''
+  });
+}
+
+function trackPortfolioClick(name) {
+  sendAnalytics({
+    type: 'click',
+    name,
+    page: location.pathname + location.hash,
+    referrer: document.referrer || ''
+  });
+}
+
+function trackPortfolioDownload(file) {
+  sendAnalytics({
+    type: 'download',
+    file,
+    page: location.pathname + location.hash,
+    referrer: document.referrer || ''
+  });
+}
+
+function trackDegreeClick() {
+  sendAnalytics({
+    type: 'degree_click',
+    page: location.pathname + location.hash,
+    referrer: document.referrer || ''
+  });
+}
+
+function trackPortfolioLead(name, email, subject, message) {
+  sendAnalytics({
+    type: 'lead',
+    name,
+    email,
+    subject,
+    message,
+    page: location.pathname + location.hash,
+    referrer: document.referrer || ''
+  });
+}
+
+// Initialize everything when DOM is loaded
+document.addEventListener('DOMContentLoaded', function () {
+  initializePortfolio();
+  startTypedDescription();
+  initializeBackToTop();
+  initializeDegreeVerification();
+  trackPageVisit();
+});
+
+
+
+
+
+
+
+
+
+function initializeDownloadVerification() {
+  const cvBtn = document.getElementById('downloadCV');
+  if (cvBtn) {
+    cvBtn.addEventListener('click', e => {
+      e.preventDefault();
+      trackPortfolioClick('Download CV');
+      showCaptchaModal('cv');
+    });
+  }
+
+  document.querySelectorAll('.download-research').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const paper = btn.dataset.paper;
+      trackPortfolioClick(`Download Research: ${paper}`);
+      showCaptchaModal(paper);
+    });
+  });
+
+  document.querySelectorAll('.degree-verify-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      trackPortfolioClick('Verify Degree');
+      trackDegreeClick();
+      showCaptchaModal('degree');
+    });
+  });

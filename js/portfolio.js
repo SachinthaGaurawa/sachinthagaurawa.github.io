@@ -582,7 +582,18 @@ function initializeDegreeVerification() {
 
 
 
+function verifyCaptchaAndDownloadDegree() {
+  const user = +document.getElementById('captchaInput').value;
+  const correct = +document.getElementById('captchaAnswer').value;
+  const type = document.getElementById('verifyCaptcha').dataset.download;
 
+  if (user === correct && type === 'bachelor') {
+    bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
+    window.location.href = '/verify-degree?token=bachelor';
+  } else {
+    alert('Incorrect answer. Please try again.');
+  }
+}
 
 
 

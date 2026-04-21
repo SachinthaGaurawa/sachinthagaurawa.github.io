@@ -23,10 +23,12 @@ emailjs.init("Xl7XarHSSsPc7uaCF");
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    initializePortfolio();
-    startTypedDescription();
-    initializeBackToTop();
-  });
+  initializePortfolio();
+  startTypedDescription();
+  initializeBackToTop();
+  initializeDegreeVerification();
+});
+
   
   // Main initialization
   function initializePortfolio() {
@@ -540,6 +542,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function initializeDegreeVerification() {
+  document.querySelectorAll('.degree-verify-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const degreeType = this.dataset.degree;
+      showCaptchaModal(degreeType);
+    });
+  });
+
+  const verifyBtn = document.getElementById('verifyCaptcha');
+  if (verifyBtn && !verifyBtn.dataset.degreeBound) {
+    verifyBtn.dataset.degreeBound = '1';
+    verifyBtn.addEventListener('click', function () {
+      const type = this.dataset.download;
+      if (type === 'bachelor') {
+        verifyCaptchaAndDownloadDegree();
+      }
+    });
+  }
+}
 
 
 

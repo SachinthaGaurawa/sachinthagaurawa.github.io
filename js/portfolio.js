@@ -120,14 +120,15 @@ function initializeContactForm() {
   const form = document.getElementById('contactForm');
   if (!form) return;
 
+
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
-
+  
     const name = document.getElementById('name')?.value.trim() || '';
     const email = document.getElementById('email')?.value.trim() || '';
     const subject = document.getElementById('subject')?.value.trim() || '';
     const message = document.getElementById('message')?.value.trim() || '';
-
+  
     const userAns = +document.getElementById('mathAnswer').value;
     const correctAns = +document.getElementById('correctAnswer').value;
     if (userAns !== correctAns) {
@@ -135,16 +136,16 @@ function initializeContactForm() {
       generateMathQuestion();
       return;
     }
-
+  
     showFormStatus('Sending message...', 'loading');
-
+  
     try {
       await sendLeadToDashboard(name, email, subject, message);
-
+  
       if (window.emailjs && typeof emailjs.sendForm === 'function') {
         await emailjs.sendForm('service_thpmguh', 'template_m1n7xw5', form);
       }
-
+  
       showFormStatus("✅ Message sent successfully! I'll get back to you soon.", 'success');
       form.reset();
       generateMathQuestion();
@@ -154,7 +155,9 @@ function initializeContactForm() {
       generateMathQuestion();
     }
   });
-}
+
+
+  
 
 async function sendLeadToDashboard(name, email, subject, message) {
   try {

@@ -164,10 +164,10 @@ body {
 .about-img { transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .about-img:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
 .tech-counter {
-    background: var(--gradient-primary); color: white; border-radius: 15px; padding: 20px;
+    background: var(--gradient-primary); color: white; border-radius: 15px; padding: 5px;
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
-.stats-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+.stats-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
 /* Skills Section */
 .skill { margin-bottom: 2rem; }

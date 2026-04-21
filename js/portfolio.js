@@ -607,6 +607,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+document.addEventListener('DOMContentLoaded', function () {
+  const modalEl = document.getElementById('captchaModal');
+  if (!modalEl) return;
+
+  modalEl.addEventListener('hidden.bs.modal', function () {
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('overflow');
+  });
+});
+
+
+
+
 
 
 

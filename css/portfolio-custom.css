@@ -167,7 +167,7 @@ body {
     background: var(--gradient-primary); color: white; border-radius: 15px; padding: 20px;
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
-.stats-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+.stats-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
 /* Skills Section */
 .skill { margin-bottom: 2rem; }

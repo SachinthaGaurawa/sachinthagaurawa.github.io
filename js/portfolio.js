@@ -676,6 +676,13 @@ function openDegreeVerificationTab() {
 
 
 
+window.__trackAnalytics?.trackDownload('Sachintha_Gaurawa_CV.pdf');
+window.__trackAnalytics?.trackDegreeClick();
+window.__trackAnalytics?.trackLead(name, email, message);
+window.__trackAnalytics?.trackClick('Verify Degree');
+
+
+
 
 
 

@@ -218,21 +218,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const verifyBtn = document.getElementById('verifyCaptcha');
     if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
   }
-  
-  function showCaptchaModal(type) {
-    const modalEl = document.getElementById('captchaModal');
-    if (!modalEl) return;
-    const modal = new bootstrap.Modal(modalEl);
-    const a = Math.floor(Math.random() * 20) + 1;
-    const b = Math.floor(Math.random() * 20) + 1;
-    const op = Math.random() > 0.5 ? '+' : '-';
-    const ans = op === '+' ? a + b : Math.abs(a - b);
-    document.getElementById('captchaMath').textContent = `${op==='+'?Math.max(a,b):Math.max(a,b)} ${op} ${op==='+'?Math.min(a,b):Math.min(a,b)} = ?`;
-    document.getElementById('captchaAnswer').value = ans;
-    document.getElementById('captchaInput').value = '';
-    document.getElementById('verifyCaptcha').dataset.download = type;
-    modal.show();
-  }
+
+
+function showCaptchaModal(type) {
+  const modalEl = document.getElementById('captchaModal');
+  if (!modalEl) return;
+
+  const modal = new bootstrap.Modal(modalEl);
+  const a = Math.floor(Math.random() * 20) + 1;
+  const b = Math.floor(Math.random() * 20) + 1;
+  const op = Math.random() > 0.5 ? '+' : '-';
+  const ans = op === '+' ? a + b : Math.abs(a - b);
+
+  document.getElementById('captchaMath').textContent =
+    `${op === '+' ? Math.max(a, b) : Math.max(a, b)} ${op} ${op === '+' ? Math.min(a, b) : Math.min(a, b)} = ?`;
+
+  document.getElementById('captchaAnswer').value = ans;
+  document.getElementById('captchaInput').value = '';
+  document.getElementById('verifyCaptcha').dataset.download = type;
+  modal.show();
+}
+
   
   function verifyCaptchaAndDownload() {
     const user = +document.getElementById('captchaInput').value;
@@ -557,53 +563,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
 function initializeDegreeVerification() {
   document.querySelectorAll('.degree-verify-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const degreeType = this.dataset.degree;
-      showCaptchaModal(degreeType);
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      showCaptchaModal('degree');
     });
   });
-
-  const verifyBtn = document.getElementById('verifyCaptcha');
-  if (verifyBtn && !verifyBtn.dataset.degreeBound) {
-    verifyBtn.dataset.degreeBound = '1';
-    verifyBtn.addEventListener('click', function () {
-      const type = this.dataset.download;
-      if (type === 'bachelor') {
-        verifyCaptchaAndDownloadDegree();
-      }
-    });
-  }
 }
 
-
-
-
-function verifyCaptchaAndOpenDegree() {
+function verifyCaptchaAndDownload() {
   const user = +document.getElementById('captchaInput').value;
   const correct = +document.getElementById('captchaAnswer').value;
   const type = document.getElementById('verifyCaptcha').dataset.download;
 
-  if (user === correct) {
-    const modalEl = document.getElementById('captchaModal');
-    bootstrap.Modal.getInstance(modalEl)?.hide();
-
-    const degreeUrlMap = {
-      bachelor: 'https://your-third-party-verification-site.com/verify-degree'
-    };
-
-    const url = degreeUrlMap[type];
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  } else {
+  if (user !== correct) {
     alert('Incorrect answer. Please try again.');
+    return;
   }
+
+  const modalEl = document.getElementById('captchaModal');
+  bootstrap.Modal.getInstance(modalEl).hide();
+
+  if (type === 'degree') {
+    openDegreeVerificationTab();
+    return;
+  }
+
+  triggerDownload(type);
 }
 
+function openDegreeVerificationTab() {
+  const url = 'https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441';
+  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  if (win) win.opener = null;
+}
 
 
 

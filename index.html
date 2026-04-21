@@ -930,23 +930,7 @@
     <script src="js/main.js"></script>
     <script src="js/portfolio.js"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const currentYear = document.getElementById('currentYear');
-            if (currentYear) currentYear.textContent = new Date().getFullYear();
 
-            const verifyBtn = document.getElementById('officialDegreeVerifyBtn');
-            if (verifyBtn) {
-                verifyBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const url = this.href;
-                    const newTab = window.open(url, '_blank', 'noopener,noreferrer');
-                    if (newTab) newTab.opener = null;
-                    else window.location.href = url;
-                });
-            }
-        });
-    </script>
 </body>
 
 </html>

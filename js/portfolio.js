@@ -1,7 +1,5 @@
 /* Next-Level Portfolio JavaScript */
 
-
-
 /* ====== CONFIG (ONE LINE only) ======
    For local dev (running server.js locally): 'http://localhost:8787'
 */
@@ -14,19 +12,16 @@ window.addEventListener('error', (e) => {
   console.error('[portfolio] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
 });
 
-
-
-
 // Initialize EmailJS SDK
 emailjs.init("Xl7XarHSSsPc7uaCF");
 
-
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    initializePortfolio();
-    startTypedDescription();
-    initializeBackToTop();
-  });
+  initializePortfolio();
+  startTypedDescription();
+  initializeBackToTop();
+  initializeDegreeVerification();
+});
   
   // Main initialization
   function initializePortfolio() {
@@ -199,38 +194,81 @@ document.addEventListener('DOMContentLoaded', function() {
     inputEl.value = '';
     qEl.textContent = `${a} + ${b}`;
   }
+
   
-  // Download verification and triggering
-  function initializeDownloadVerification() {
-    const cvBtn = document.getElementById('downloadCV');
-    if (cvBtn) cvBtn.addEventListener('click', e => {
+function initializeDownloadVerification() {
+  const cvBtn = document.getElementById('downloadCV');
+  if (cvBtn) cvBtn.addEventListener('click', e => {
+    e.preventDefault();
+    showCaptchaModal('cv');
+  });
+
+  document.querySelectorAll('.download-research').forEach(btn => {
+    btn.addEventListener('click', e => {
       e.preventDefault();
-      showCaptchaModal('cv');
+      showCaptchaModal(btn.dataset.paper);
     });
-    document.querySelectorAll('.download-research').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.preventDefault();
-        showCaptchaModal(btn.dataset.paper);
-      });
+  });
+
+  document.querySelectorAll('.degree-verify-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      showCaptchaModal('degree');
     });
-    const verifyBtn = document.getElementById('verifyCaptcha');
-    if (verifyBtn) verifyBtn.addEventListener('click', verifyCaptchaAndDownload);
+  });
+
+  const verifyBtn = document.getElementById('verifyCaptcha');
+  if (verifyBtn && !verifyBtn.dataset.bound) {
+    verifyBtn.dataset.bound = '1';
+    verifyBtn.addEventListener('click', verifyCaptchaAndRoute);
   }
-  
-  function showCaptchaModal(type) {
-    const modalEl = document.getElementById('captchaModal');
-    if (!modalEl) return;
-    const modal = new bootstrap.Modal(modalEl);
-    const a = Math.floor(Math.random() * 20) + 1;
-    const b = Math.floor(Math.random() * 20) + 1;
-    const op = Math.random() > 0.5 ? '+' : '-';
-    const ans = op === '+' ? a + b : Math.abs(a - b);
-    document.getElementById('captchaMath').textContent = `${op==='+'?Math.max(a,b):Math.max(a,b)} ${op} ${op==='+'?Math.min(a,b):Math.min(a,b)} = ?`;
-    document.getElementById('captchaAnswer').value = ans;
-    document.getElementById('captchaInput').value = '';
-    document.getElementById('verifyCaptcha').dataset.download = type;
-    modal.show();
+}
+
+function verifyCaptchaAndRoute() {
+  const user = +document.getElementById('captchaInput').value;
+  const correct = +document.getElementById('captchaAnswer').value;
+  const type = document.getElementById('verifyCaptcha').dataset.download;
+
+  if (user !== correct) {
+    alert('Incorrect answer. Please try again.');
+    return;
   }
+
+  bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
+
+  if (type === 'degree') {
+    openDegreeVerificationTab();
+    return;
+  }
+
+  triggerDownload(type);
+}
+
+function openDegreeVerificationTab() {
+  const url = 'https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441';
+  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  if (win) win.opener = null;
+}
+
+function showCaptchaModal(type) {
+  const modalEl = document.getElementById('captchaModal');
+  if (!modalEl) return;
+
+  const modal = new bootstrap.Modal(modalEl);
+  const a = Math.floor(Math.random() * 20) + 1;
+  const b = Math.floor(Math.random() * 20) + 1;
+  const op = Math.random() > 0.5 ? '+' : '-';
+  const ans = op === '+' ? a + b : Math.abs(a - b);
+
+  document.getElementById('captchaMath').textContent =
+    `${op === '+' ? Math.max(a, b) : Math.max(a, b)} ${op} ${op === '+' ? Math.min(a, b) : Math.min(a, b)} = ?`;
+
+  document.getElementById('captchaAnswer').value = ans;
+  document.getElementById('captchaInput').value = '';
+  document.getElementById('verifyCaptcha').dataset.download = type;
+  modal.show();
+}
+
   
   function verifyCaptchaAndDownload() {
     const user = +document.getElementById('captchaInput').value;
@@ -243,24 +281,26 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Incorrect answer. Please try again.');
     }
   }
-  
+
 async function triggerDownload(type) {
   const map = {
     cv: 'Sachintha_Gaurawa_CV.pdf',
     'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
     'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
   };
-  const filename = map[type] || 'document.pdf';
+
+  const filename = map[type];
+  if (!filename) return;
+
   const url = `docs/${filename}`;
 
   try {
-    // Fetch the file as a blob
     const response = await fetch(url);
     if (!response.ok) throw new Error('Network response was not ok');
-    const blob = await response.blob();
 
-    // Create a local URL for the blob and force download
+    const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
+
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = filename;
@@ -268,9 +308,7 @@ async function triggerDownload(type) {
     link.click();
     document.body.removeChild(link);
 
-    // Release the object URL
     window.URL.revokeObjectURL(blobUrl);
-
     showNotification('✅ Download started successfully!', 'success');
   } catch (err) {
     console.error('Download error:', err);
@@ -410,13 +448,6 @@ async function triggerDownload(type) {
   `;
   document.head.appendChild(styleTag);
   
-
-
-
-
-
-
-
 document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('#awards .award-card');
 
@@ -507,15 +538,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
-
-
-
-
-
-
-
-
 document.addEventListener('DOMContentLoaded', function() {
     // Find the input field and the verify button inside your modal
     const captchaInput = document.getElementById('captchaInput');
@@ -537,27 +559,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+  const modalEl = document.getElementById('captchaModal');
+  if (!modalEl) return;
 
+  modalEl.addEventListener('hidden.bs.modal', function () {
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('overflow');
+  });
+});
 
+function initializeDegreeVerification() {
+  document.querySelectorAll('.degree-verify-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      showCaptchaModal('degree');
+    });
+  });
+}
 
+function verifyCaptchaAndDownload() {
+  const user = +document.getElementById('captchaInput').value;
+  const correct = +document.getElementById('captchaAnswer').value;
+  const type = document.getElementById('verifyCaptcha').dataset.download;
 
+  if (user !== correct) {
+    alert('Incorrect answer. Please try again.');
+    return;
+  }
 
+  const modalEl = document.getElementById('captchaModal');
+  bootstrap.Modal.getInstance(modalEl).hide();
 
+  if (type === 'degree') {
+    openDegreeVerificationTab();
+    return;
+  }
 
+  triggerDownload(type);
+}
 
+function openDegreeVerificationTab() {
+  const url = 'https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441';
+  const win = window.open(url, '_blank', 'noopener,noreferrer');
+  if (win) win.opener = null;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+window.__trackAnalytics?.trackDownload('Sachintha_Gaurawa_CV.pdf');
+window.__trackAnalytics?.trackDegreeClick();
+window.__trackAnalytics?.trackLead(name, email, message);
+window.__trackAnalytics?.trackClick('Verify Degree');

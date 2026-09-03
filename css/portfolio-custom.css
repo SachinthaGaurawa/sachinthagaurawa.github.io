@@ -1148,3 +1148,12 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 
 
 
+
+/* Honeypot field: off-screen rather than display:none, so bots still fill it. */
+.hp-field {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

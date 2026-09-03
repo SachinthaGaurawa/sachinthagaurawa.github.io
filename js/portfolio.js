@@ -12,6 +12,11 @@ window.addEventListener('error', (e) => {
   console.error('[portfolio] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
 });
 
+// Contact-form anti-bot state. Deliberately kept out of the DOM so the
+// expected answer cannot simply be read off the page.
+let captchaAnswer = null;
+let formRenderedAt = Date.now();
+
 // Initialize EmailJS SDK
 emailjs.init("Xl7XarHSSsPc7uaCF");
 
@@ -134,10 +139,20 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
   
-      // Math CAPTCHA verification
-      const userAns = +document.getElementById('mathAnswer').value;
-      const correctAns = +document.getElementById('correctAnswer').value;
-      if (userAns !== correctAns) {
+      // Honeypot: real people never fill a field they cannot see.
+      const trap = document.getElementById('website');
+      if (trap && trap.value.trim() !== '') return;
+
+      // Timing check: scripted submits arrive far faster than a human can type.
+      if (Date.now() - formRenderedAt < 3000) {
+        showFormStatus('Please take a moment to complete the form.', 'error');
+        return;
+      }
+
+      // Math CAPTCHA verification. The expected answer lives only in this
+      // closure, so it is not readable from the DOM the way a hidden input is.
+      const userAns = Number(document.getElementById('mathAnswer').value);
+      if (captchaAnswer === null || userAns !== captchaAnswer) {
         showFormStatus('Please solve the math problem correctly.', 'error');
         generateMathQuestion();
         return;
@@ -185,12 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function generateMathQuestion() {
     const qEl = document.getElementById('mathQuestion');
-    const ansEl = document.getElementById('correctAnswer');
     const inputEl = document.getElementById('mathAnswer');
-    if (!qEl || !ansEl || !inputEl) return;
+    if (!qEl || !inputEl) return;
     const a = Math.floor(Math.random() * 10) + 1;
     const b = Math.floor(Math.random() * 10) + 1;
-    ansEl.value = a + b;
+    captchaAnswer = a + b;
+    formRenderedAt = Date.now();
     inputEl.value = '';
     qEl.textContent = `${a} + ${b}`;
   }

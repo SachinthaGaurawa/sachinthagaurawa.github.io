@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+      (function () {
+        if (window.location.hostname === 'sachinthagaurawa.github.io') {
+          window.location.replace('https://sachinthagaurawa.vercel.app'
+            + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+    
   <meta charset="utf-8" />
   <title>Album — Sachintha Gaurawa</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -102,8 +111,6 @@
   
 
   <!-- Live Preview -->
-  <link rel="stylesheet" href="css/site.css?v=2025-08-15-1">
-  <script src="js/app.js?v=2025-08-15-1"></script>
 
   
   <!-- Icons + Styles -->
@@ -226,7 +233,6 @@
 
   <!-- Load your app logic ONCE (single include only). Keep this at the end. -->
   <script src="app.js?v=8" defer></script>
-  <script src="js/ask.js" defer></script>
 
 </body>
 </html>

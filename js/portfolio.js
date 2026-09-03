@@ -12,10 +12,9 @@ window.addEventListener('error', (e) => {
   console.error('[portfolio] Uncaught error:', e.message, 'at', e.filename + ':' + e.lineno);
 });
 
-// Contact-form anti-bot state. Deliberately kept out of the DOM so the
-// expected answer cannot simply be read off the page.
-let captchaAnswer = null;
-let formRenderedAt = Date.now();
+// Contact-form CAPTCHA answer. Deliberately kept out of the DOM so it
+// cannot simply be read off the page the way a hidden input can.
+let contactCaptchaAnswer = null;
 
 // Initialize EmailJS SDK
 emailjs.init("Xl7XarHSSsPc7uaCF");
@@ -143,16 +142,10 @@ document.addEventListener('DOMContentLoaded', function() {
       const trap = document.getElementById('website');
       if (trap && trap.value.trim() !== '') return;
 
-      // Timing check: scripted submits arrive far faster than a human can type.
-      if (Date.now() - formRenderedAt < 3000) {
-        showFormStatus('Please take a moment to complete the form.', 'error');
-        return;
-      }
-
       // Math CAPTCHA verification. The expected answer lives only in this
       // closure, so it is not readable from the DOM the way a hidden input is.
       const userAns = Number(document.getElementById('mathAnswer').value);
-      if (captchaAnswer === null || userAns !== captchaAnswer) {
+      if (contactCaptchaAnswer === null || userAns !== contactCaptchaAnswer) {
         showFormStatus('Please solve the math problem correctly.', 'error');
         generateMathQuestion();
         return;
@@ -204,8 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!qEl || !inputEl) return;
     const a = Math.floor(Math.random() * 10) + 1;
     const b = Math.floor(Math.random() * 10) + 1;
-    captchaAnswer = a + b;
-    formRenderedAt = Date.now();
+    contactCaptchaAnswer = a + b;
     inputEl.value = '';
     qEl.textContent = `${a} + ${b}`;
   }
@@ -241,7 +233,7 @@ function initializeDownloadVerification() {
 
 function verifyCaptchaAndRoute() {
   const user = +document.getElementById('captchaInput').value;
-  const correct = +document.getElementById('captchaAnswer').value;
+  const correct = +document.getElementById("captchaAnswer").value;
   const type = document.getElementById('verifyCaptcha').dataset.download;
 
   if (user !== correct) {
@@ -278,7 +270,7 @@ function showCaptchaModal(type) {
   document.getElementById('captchaMath').textContent =
     `${op === '+' ? Math.max(a, b) : Math.max(a, b)} ${op} ${op === '+' ? Math.min(a, b) : Math.min(a, b)} = ?`;
 
-  document.getElementById('captchaAnswer').value = ans;
+  document.getElementById("captchaAnswer").value = ans;
   document.getElementById('captchaInput').value = '';
   document.getElementById('verifyCaptcha').dataset.download = type;
   modal.show();
@@ -287,7 +279,7 @@ function showCaptchaModal(type) {
   
   function verifyCaptchaAndDownload() {
     const user = +document.getElementById('captchaInput').value;
-    const correct = +document.getElementById('captchaAnswer').value;
+    const correct = +document.getElementById("captchaAnswer").value;
     const type = document.getElementById('verifyCaptcha').dataset.download;
     if (user === correct) {
       bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
@@ -597,7 +589,7 @@ function initializeDegreeVerification() {
 
 function verifyCaptchaAndDownload() {
   const user = +document.getElementById('captchaInput').value;
-  const correct = +document.getElementById('captchaAnswer').value;
+  const correct = +document.getElementById("captchaAnswer").value;
   const type = document.getElementById('verifyCaptcha').dataset.download;
 
   if (user !== correct) {

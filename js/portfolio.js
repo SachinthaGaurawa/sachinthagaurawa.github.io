@@ -233,7 +233,7 @@ function initializeDownloadVerification() {
 
 function verifyCaptchaAndRoute() {
   const user = +document.getElementById('captchaInput').value;
-  const correct = +document.getElementById("captchaAnswer").value;
+  const correct = +document.getElementById('captchaAnswer').value;
   const type = document.getElementById('verifyCaptcha').dataset.download;
 
   if (user !== correct) {
@@ -270,7 +270,7 @@ function showCaptchaModal(type) {
   document.getElementById('captchaMath').textContent =
     `${op === '+' ? Math.max(a, b) : Math.max(a, b)} ${op} ${op === '+' ? Math.min(a, b) : Math.min(a, b)} = ?`;
 
-  document.getElementById("captchaAnswer").value = ans;
+  document.getElementById('captchaAnswer').value = ans;
   document.getElementById('captchaInput').value = '';
   document.getElementById('verifyCaptcha').dataset.download = type;
   modal.show();
@@ -279,7 +279,7 @@ function showCaptchaModal(type) {
   
   function verifyCaptchaAndDownload() {
     const user = +document.getElementById('captchaInput').value;
-    const correct = +document.getElementById("captchaAnswer").value;
+    const correct = +document.getElementById('captchaAnswer').value;
     const type = document.getElementById('verifyCaptcha').dataset.download;
     if (user === correct) {
       bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
@@ -589,7 +589,7 @@ function initializeDegreeVerification() {
 
 function verifyCaptchaAndDownload() {
   const user = +document.getElementById('captchaInput').value;
-  const correct = +document.getElementById("captchaAnswer").value;
+  const correct = +document.getElementById('captchaAnswer').value;
   const type = document.getElementById('verifyCaptcha').dataset.download;
 
   if (user !== correct) {

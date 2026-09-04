@@ -212,9 +212,15 @@
         }, duration);
       }
     
-      // Remove leftover modal/backdrop
+      // Sweep up a backdrop Bootstrap left behind. Only ever an orphan: while a
+      // modal is still on screen or fading out the backdrop belongs to the
+      // library, and pulling it out mid-transition makes Bootstrap's own
+      // dispose() throw on a null parentNode.
       function removeModalBackdropIfExists() {
+        if (document.querySelector('.modal.show')) return;
         if (document.body.classList.contains('modal-open')) document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('padding-right');
+        document.body.style.removeProperty('overflow');
         document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
       }
     
@@ -230,7 +236,9 @@
     
       function showCaptchaModal(type) {
         if (!modalEl) return;
-        modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        // Bootstrap 5.0.0 (the version this page ships) has no getOrCreateInstance;
+        // reuse the existing instance so only ever one owns this element.
+        modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     
         const a = Math.floor(Math.random() * 20) + 1;
         const b = Math.floor(Math.random() * 20) + 1;
@@ -271,7 +279,7 @@
     
         // Correct
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
-        setTimeout(removeModalBackdropIfExists, 200);
+
     
         // Degree verification opens the university's checker, not a file.
         // portfolio.js owns this helper; it is defined by the time a click happens.

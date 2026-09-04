@@ -198,11 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const status = document.getElementById('form-status');
     if (!status) return;
     status.textContent = msg;
-    status.className = type;
+    // keep the element's own spacing class; assigning className alone dropped it
+    status.className = 'mt-3 ' + type;
     if (type === 'success') {
       setTimeout(() => {
         status.textContent = '';
-        status.className = '';
+        status.className = 'mt-3';
       }, 5000);
     }
   }
@@ -225,23 +226,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   
 function initializeDownloadVerification() {
-  const cvBtn = document.getElementById('downloadCV');
-  if (cvBtn) cvBtn.addEventListener('click', e => {
-    e.preventDefault();
-    showCaptchaModal('cv');
-  });
-
-  document.querySelectorAll('.download-research').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault();
-      showCaptchaModal(btn.dataset.paper);
-    });
-  });
-
+  // #downloadCV, .download-research and #verifyCaptcha are all bound by the
+  // inline script in index.html. Binding them here as well ran two captcha
+  // implementations per click: the second overwrote the first question and
+  // left a second Modal instance behind, which threw on dispose.
   // .degree-verify-btn is bound in initializeDegreeVerification().
-
-  // #verifyCaptcha is handled by the inline script in index.html. Binding a
-  // second listener here made one click download the document twice.
 }
 
 function verifyCaptchaAndRoute() {
@@ -254,7 +243,7 @@ function verifyCaptchaAndRoute() {
     return;
   }
 
-  bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
+  bootstrap.Modal.getInstance(document.getElementById('captchaModal'))?.hide();
 
   if (type === 'degree') {
     openDegreeVerificationTab();
@@ -269,7 +258,9 @@ function showCaptchaModal(type) {
   const modalEl = document.getElementById('captchaModal');
   if (!modalEl) return;
 
-  const modal = new bootstrap.Modal(modalEl);
+  // Reuse the instance the page may already hold; two instances on one
+  // element orphan a backdrop and make Bootstrap 5.0 throw on dispose.
+  const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
   const a = Math.floor(Math.random() * 20) + 1;
   const b = Math.floor(Math.random() * 20) + 1;
   const op = Math.random() > 0.5 ? '+' : '-';
@@ -567,10 +558,15 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!modalEl) return;
 
   modalEl.addEventListener('hidden.bs.modal', function () {
-    document.body.classList.remove('modal-open');
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.style.removeProperty('padding-right');
-    document.body.style.removeProperty('overflow');
+    // Wait out Bootstrap's own backdrop transition and dispose(); sweeping
+    // sooner removes the element the library is still holding a handle to.
+    setTimeout(function () {
+      if (document.querySelector('.modal.show')) return;
+      document.body.classList.remove('modal-open');
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.style.removeProperty('padding-right');
+      document.body.style.removeProperty('overflow');
+    }, 600);
   });
 });
 
@@ -594,7 +590,7 @@ function verifyCaptchaAndDownload() {
   }
 
   const modalEl = document.getElementById('captchaModal');
-  bootstrap.Modal.getInstance(modalEl).hide();
+  bootstrap.Modal.getInstance(modalEl)?.hide();
 
   if (type === 'degree') {
     openDegreeVerificationTab();

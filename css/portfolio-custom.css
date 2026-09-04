@@ -8,7 +8,7 @@
     --info-color: #0dcaf0;
     --dark-color: #212529;
     --light-color: #f8f9fa;
-    --bg-color: #f5f7fa;
+    --bg-color: #ffffff;
     --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --tech-gradient: linear-gradient(45deg, #00c9ff 0%, #92fe9d 100%);
@@ -1193,4 +1193,61 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 .counter-num {
   color: #12141D;
   line-height: 1.2;
+}
+
+/* ==========================================================================
+   White surface
+   The page used alternating #f5f7fa bands to separate sections, and cards
+   relied on that grey to stand out. On a pure white surface that contrast is
+   gone, so structure comes from hairlines instead: a 1px rule between
+   sections, and a 1px border on every card with a much tighter shadow.
+   ========================================================================== */
+:root {
+  --hairline: #ebedf0;
+  --surface: #ffffff;
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.04);
+  --card-shadow-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 12px 28px rgba(16, 24, 40, 0.08);
+}
+
+/* One hairline between consecutive sections, never above the first. */
+#about, #experience, #education, #skill, #project,
+#research, #awards, #memberships, #contact {
+  border-top: 1px solid var(--hairline);
+}
+
+/* Cards define their own edge now that the background no longer does it. */
+.experience-card,
+.project-card,
+.research-card,
+.membership-card,
+.tool-card,
+.spec-card,
+#awards .award-card,
+.timeline-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--card-shadow);
+}
+
+.experience-card:hover,
+.project-card:hover,
+.research-card:hover,
+.membership-card:hover,
+.tool-card:hover,
+.spec-card:hover,
+#awards .award-card:hover {
+  border-color: #dfe3e8;
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* The years counter sits on the purple gradient. Near-black on that gradient
+   measures about 2.8:1 against its darker end, below the 3:1 that large text
+   needs. White clears it on both ends. */
+.years .counter-num { color: #ffffff; }
+
+/* The navbar is fixed and the hero drops its top padding at lg and above
+   (pt-lg-0), so the hero's first line sat behind the navbar on desktop.
+   Below 992px the hero already clears it, so this is scoped to lg+. */
+@media (min-width: 992px) {
+  .hero-section { padding-top: 56px; }
 }

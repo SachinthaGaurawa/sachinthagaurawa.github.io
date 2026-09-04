@@ -478,7 +478,8 @@ body {
 /* Brand Center Styling */
 .brand-center { background: var(--gradient-primary) !important; border-radius: 15px; transition: all 0.3s ease; }
 .brand-center:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
-.brand-center h1 { color: white !important; font-size: 1.2rem; font-weight: 700; }
+.brand-center h1,
+.brand-center .brand-font { color: white !important; font-size: 1.2rem; font-weight: 700; }
 
 /* Counter Animation */
 .counter { font-family: 'Orbitron', monospace; }
@@ -492,7 +493,8 @@ body {
     .timeline-year {
         position: relative; top: 0; right: auto; left: auto; margin-bottom: 15px; display: inline-block;
     }
-    .brand-center h1 { font-size: 1rem; }
+    .brand-center h1,
+    .brand-center .brand-font { font-size: 1rem; }
     .hero-name { font-size: 2.5rem; }
     .social-icons { justify-content: center; margin-top: 2rem; }
 }
@@ -1156,4 +1158,39 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+/* Skip link: off-screen until it receives keyboard focus. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  padding: 0.75rem 1.25rem;
+  background: #12141d;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 0 0 6px 0;
+}
+.skip-link:focus {
+  left: 0;
+  outline: 3px solid #6244c5;
+  outline-offset: 2px;
+}
+
+/* .brand-font and .counter-num were <h1> elements. They now carry semantically
+   correct tags (a page needs exactly one <h1>), so the typography Bootstrap
+   used to give them as headings is restated here to keep them identical. */
+.brand-font {
+  display: block;              /* <span> is inline; the <h1> it replaced was not */
+  font-size: calc(1.375rem + 1.5vw);
+  line-height: 1.2;
+  margin: 0;
+}
+@media (min-width: 1200px) {
+  .brand-font { font-size: 2.5rem; }
+}
+.counter-num {
+  color: #12141D;
+  line-height: 1.2;
 }

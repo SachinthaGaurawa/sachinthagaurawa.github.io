@@ -19,6 +19,16 @@
     </script>
 
     <link rel="canonical" href="https://sachinthagaurawa.vercel.app/">
+    <script>
+      // Browsers restore the previous scroll position on reload, which drops a
+      // returning visitor into the middle of the page. Start at the top unless
+      // the URL names a section.
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      window.addEventListener('load', function () {
+        if (!window.location.hash) window.scrollTo(0, 0);
+      });
+    </script>
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -386,7 +396,7 @@
 
                 <a href="#research" class="nav-item nav-link">Research</a>
                 <a href="#memberships" class="nav-item nav-link">Memberships</a>
-                <a href="gallery.html" class="nav-item nav-link" target="_blank">Gallery</a>
+                <a href="gallery.html" class="nav-item nav-link" target="_blank" rel="noopener noreferrer">Gallery</a>
                 <a href="#contact" class="nav-item nav-link">Contact</a>
             </div>
         </div>
@@ -417,7 +427,7 @@
                           <i class="fas fa-download me-2"></i>Download CV
                         </button>
 
-                        <a href="https://www.linkedin.com/in/sachinthagaurawa" target="_blank" class="btn btn-outline-primary py-3 px-4 linkedin-btn">
+                        <a href="https://www.linkedin.com/in/sachinthagaurawa" target="_blank" class="btn btn-outline-primary py-3 px-4 linkedin-btn" rel="noopener noreferrer">
                             <i class="fab fa-linkedin-in me-2"></i>LinkedIn
                         </a>
                     </div>
@@ -491,6 +501,30 @@
                             <h2 class="text-primary fw-bold mb-0 counter" data-target="11">0</h2>
                         </div>
                     </div>
+
+                      <!-- At a glance: every line below is stated elsewhere on
+                           this page (education timeline, memberships section). -->
+                      <div class="glance-card mt-4">
+                          <h3 class="glance-title">At a glance</h3>
+
+                          <div class="glance-row">
+                              <span class="glance-label">Education</span>
+                              <span class="glance-value">
+                                  MSc Automation &amp; Robotics — Anglia Ruskin University<br>
+                                  BEng (Hons) Electrical &amp; Electronic Engineering — University of Greater Manchester
+                              </span>
+                          </div>
+
+                          <div class="glance-row">
+                              <span class="glance-label">Professional bodies</span>
+                              <span class="glance-value">IET &nbsp;·&nbsp; IEEE &nbsp;·&nbsp; IESL &nbsp;·&nbsp; Institution of Electronics</span>
+                          </div>
+
+                          <div class="glance-row">
+                              <span class="glance-label">Focus</span>
+                              <span class="glance-value">Embedded Systems &nbsp;·&nbsp; Robotics &nbsp;·&nbsp; AI-Driven Safety Systems</span>
+                          </div>
+                      </div>
                 </div>
             </div>
         </div>
@@ -1084,7 +1118,7 @@
                     <i class="fas fa-medal me-2"></i>View Trophy
                     </a>
                     <!-- Optional: evidence PDF if available -->
-                    <!-- <a href="files/award-letter.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <!-- <a href="files/award-letter.pdf" target="_blank" class="btn btn-outline-secondary btn-sm" rel="noopener noreferrer">
                     <i class="fas fa-file-pdf me-2"></i>Evidence PDF
                     </a> -->
                 </div>
@@ -1282,7 +1316,7 @@
                             </div>
                             <div class="contact-details">
                                 <h6>LinkedIn</h6>
-                                <p><a href="https://www.linkedin.com/in/sachinthagaurawa" target="_blank">linkedin.com/in/sachinthagaurawa</a></p>
+                                <p><a href="https://www.linkedin.com/in/sachinthagaurawa" target="_blank" rel="noopener noreferrer">linkedin.com/in/sachinthagaurawa</a></p>
                             </div>
                         </div>
                     </div>
@@ -1349,7 +1383,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    &copy; <span id="currentYear"></span> <a class="border-bottom text-secondary" href="#">Sachintha Gaurawa</a>, All Rights Reserved.
+                    &copy; <span id="currentYear"></span> <span class="border-bottom text-secondary">Sachintha Gaurawa</span>, All Rights Reserved.
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <span class="text-secondary">Engineered with Innovation</span>

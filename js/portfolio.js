@@ -153,23 +153,44 @@ document.addEventListener('DOMContentLoaded', function() {
   
       showFormStatus('Sending message...', 'loading');
 
+      const submitBtn = form.querySelector('[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      // sendForm() posts every named field, so the honeypot was travelling to
+      // EmailJS and the template's {{from_name}}/{{from_email}} were always empty,
+      // because the inputs are named "name" and "email". An explicit object
+      // fixes both: the honeypot stays on the page, and every value is supplied
+      // under both naming conventions so the dashboard fields and the email
+      // body agree.
+      const fieldValue = id => (document.getElementById(id)?.value || '').trim();
+      const payload = {
+        name:       fieldValue('name'),
+        email:      fieldValue('email'),
+        subject:    fieldValue('subject'),
+        message:    fieldValue('message'),
+        from_name:  fieldValue('name'),
+        from_email: fieldValue('email'),
+        reply_to:   fieldValue('email'),
+        time:       new Date().toLocaleString()
+      };
+
       emailjs
-        .sendForm('service_thpmguh', 'template_m1n7xw5', this)
+        .send('service_thpmguh', 'template_m1n7xw5', payload)
         .then(() => {
-          showFormStatus(
-            "✅ Message sent successfully! I'll get back to you soon.",
-            'success'
-          );
+          showFormStatus("✅ Message sent successfully! I'll get back to you soon.", 'success');
           form.reset();
           generateMathQuestion();
         })
-        .catch((err) => {
+        .catch(err => {
           console.error('EmailJS error:', err);
+          const detail = err && (err.text || err.message);
           showFormStatus(
-            '❌ Failed to send message. Please try again or contact me directly.',
+            '❌ Could not send' + (detail ? ' (' + detail + ')' : '') +
+            '. Please email gaurawasachintha@gmail.com directly.',
             'error'
           );
-        });
+        })
+        .finally(() => { if (submitBtn) submitBtn.disabled = false; });
     });
   }
   

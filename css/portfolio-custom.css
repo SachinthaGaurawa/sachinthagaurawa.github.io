@@ -1325,3 +1325,45 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 .nav-pills .nav-link {
   color: #4b5563;
 }
+
+/* At-a-glance credentials panel. Fills the column the stock photos used to
+   occupy, using facts already stated in the education and memberships
+   sections. Same hairline language as the other cards. */
+.glance-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  box-shadow: var(--card-shadow);
+  padding: 28px 30px;
+}
+.glance-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--primary-color);
+  margin: 0 0 18px;
+}
+.glance-row {
+  display: block;
+  padding: 14px 0;
+  border-top: 1px solid var(--hairline);
+}
+.glance-row:first-of-type { border-top: none; padding-top: 0; }
+.glance-row:last-child { padding-bottom: 0; }
+.glance-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #8a90a0;
+  margin-bottom: 6px;
+}
+.glance-value {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #2b2f3a;
+}

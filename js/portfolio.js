@@ -182,30 +182,66 @@ document.addEventListener('DOMContentLoaded', function() {
           generateMathQuestion();
         })
         .catch(err => {
+          // The provider's own wording ("Gmail_API: Invalid grant", a 412, a
+          // quota message) is for the console, not for a visitor: it reads as
+          // a broken site and exposes how the mailbox is wired up.
           console.error('EmailJS error:', err);
-          const detail = err && (err.text || err.message);
           showFormStatus(
-            '❌ Could not send' + (detail ? ' (' + detail + ')' : '') +
-            '. Please email gaurawasachintha@gmail.com directly.',
-            'error'
+            "Sorry \u2014 the message couldn't be sent right now.",
+            'error',
+            buildMailtoFallback(payload)
           );
         })
         .finally(() => { if (submitBtn) submitBtn.disabled = false; });
     });
   }
   
-  function showFormStatus(msg, type) {
+  function showFormStatus(msg, type, actionEl) {
     const status = document.getElementById('form-status');
     if (!status) return;
     status.textContent = msg;
     // keep the element's own spacing class; assigning className alone dropped it
     status.className = 'mt-3 ' + type;
+    if (actionEl) status.appendChild(actionEl);
     if (type === 'success') {
       setTimeout(() => {
         status.textContent = '';
         status.className = 'mt-3';
       }, 5000);
     }
+  }
+
+  // When the mail provider is down the visitor should still be able to reach
+  // the inbox, so hand them their own message pre-filled in their mail app
+  // rather than asking them to retype it. Built with DOM nodes and
+  // encodeURIComponent so nothing typed into the form can become markup.
+  const CONTACT_ADDRESS = 'gaurawasachintha@gmail.com';
+
+  function buildMailtoFallback(payload) {
+    const body =
+      'From: ' + payload.name + ' <' + payload.email + '>\n\n' + payload.message;
+    // Mail clients drop very long mailto URLs; keep the link inside a safe budget.
+    const trimmed = body.length > 1500 ? body.slice(0, 1500) + '\n\n[...]' : body;
+    const href =
+      'mailto:' + CONTACT_ADDRESS +
+      '?subject=' + encodeURIComponent(payload.subject || 'Portfolio enquiry') +
+      '&body='    + encodeURIComponent(trimmed);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'mt-2';
+
+    const link = document.createElement('a');
+    link.href = href;
+    link.className = 'btn btn-primary btn-sm';
+    link.textContent = 'Send it from your email app';
+    wrap.appendChild(link);
+
+    const note = document.createElement('div');
+    note.className = 'mt-2 small';
+    note.textContent = 'Your message is filled in already \u2014 just press send. Or write to ' + CONTACT_ADDRESS + '.';
+    wrap.appendChild(note);
+
+    return wrap;
   }
   
   // Math CAPTCHA setup

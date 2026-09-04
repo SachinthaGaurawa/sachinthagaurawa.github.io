@@ -1,6 +1,6 @@
 /* Next-Level Portfolio Custom Styles */
 :root {
-    --primary-color: #0d6efd;
+    --primary-color: #6244C5;
     --secondary-color: #6c757d;
     --success-color: #198754;
     --warning-color: #ffc107;
@@ -8,7 +8,7 @@
     --info-color: #0dcaf0;
     --dark-color: #212529;
     --light-color: #f8f9fa;
-    --bg-color: #f5f7fa;
+    --bg-color: #ffffff;
     --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --tech-gradient: linear-gradient(45deg, #00c9ff 0%, #92fe9d 100%);
@@ -203,7 +203,7 @@ body {
 .timeline-marker {
     position: absolute; left: 50%; top: 20px; width: 20px; height: 20px; background: var(--primary-color);
     border-radius: 50%; transform: translateX(-50%); border: 4px solid white;
-    box-shadow: 0 0 20px rgba(13,110,253,0.4);
+    box-shadow: 0 0 20px rgba(98,68,197,0.4);
 }
 .timeline-content {
     background: white; padding: 0; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -253,7 +253,7 @@ body {
 .project-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
 .project-card:hover .project-image img { transform: scale(1.1); }
 .project-overlay {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(13, 110, 253, 0.9);
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(98, 68, 197, 0.9);
     display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
 }
 .project-card:hover .project-overlay { opacity: 1; }
@@ -279,7 +279,7 @@ body {
 .research-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: var(--gradient-primary); }
 .research-card:hover { transform: translateY(-10px) rotateX(5deg); box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
 .research-icon {
-    width: 80px; height: 80px; background: rgba(13, 110, 253, 0.1); border-radius: 20px;
+    width: 80px; height: 80px; background: rgba(98, 68, 197, 0.1); border-radius: 20px;
     display: flex; align-items: center; justify-content: center; margin-bottom: 25px; font-size: 2rem;
 }
 .research-abstract { flex-grow: 1; line-height: 1.7; margin-bottom: 25px; }
@@ -294,7 +294,7 @@ body {
 }
 .membership-card::before {
     content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-    background: conic-gradient(from 0deg, transparent, rgba(13, 110, 253, 0.1), transparent);
+    background: conic-gradient(from 0deg, transparent, rgba(98, 68, 197, 0.1), transparent);
     animation: rotate 4s linear infinite; opacity: 0; transition: opacity 0.3s ease;
 }
 .membership-card:hover::before { opacity: 1; }
@@ -460,25 +460,26 @@ body {
 /* Contact Form */
 .contact-form-container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
 .form-floating > .form-control { border: 2px solid rgba(0,0,0,0.1); border-radius: 10px; transition: all 0.3s ease; }
-.form-floating > .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 20px rgba(13, 110, 253, 0.2); }
+.form-floating > .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 20px rgba(98, 68, 197, 0.2); }
 
 /* Human Verification */
 .human-verification {
-    background: rgba(13, 110, 253, 0.05); border: 2px solid rgba(13, 110, 253, 0.2);
+    background: rgba(98, 68, 197, 0.05); border: 2px solid rgba(98, 68, 197, 0.2);
     border-radius: 15px; padding: 20px; margin: 15px 0;
 }
 
 /* Pulse Animation */
 .pulse-glow { animation: pulseGlow 2s ease-in-out infinite alternate; }
 @keyframes pulseGlow {
-    from { text-shadow: 0 0 5px rgba(13, 110, 253, 0.5); transform: scale(1); }
-    to   { text-shadow: 0 0 20px rgba(13, 110, 253, 0.8); transform: scale(1.02); }
+    from { text-shadow: 0 0 5px rgba(98, 68, 197, 0.5); transform: scale(1); }
+    to   { text-shadow: 0 0 20px rgba(98, 68, 197, 0.8); transform: scale(1.02); }
 }
 
 /* Brand Center Styling */
 .brand-center { background: var(--gradient-primary) !important; border-radius: 15px; transition: all 0.3s ease; }
 .brand-center:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
-.brand-center h1 { color: white !important; font-size: 1.2rem; font-weight: 700; }
+.brand-center h1,
+.brand-center .brand-font { color: white !important; font-size: 1.2rem; font-weight: 700; }
 
 /* Counter Animation */
 .counter { font-family: 'Orbitron', monospace; }
@@ -492,7 +493,8 @@ body {
     .timeline-year {
         position: relative; top: 0; right: auto; left: auto; margin-bottom: 15px; display: inline-block;
     }
-    .brand-center h1 { font-size: 1rem; }
+    .brand-center h1,
+    .brand-center .brand-font { font-size: 1rem; }
     .hero-name { font-size: 2.5rem; }
     .social-icons { justify-content: center; margin-top: 2rem; }
 }
@@ -544,7 +546,7 @@ body {
 .back-to-top.show { opacity: 1; visibility: visible; transform: translateY(0); }
 
 /* Research icon color align */
-.research-icon { width: 80px; height: 80px; background: rgba(13,110,253,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; font-size: 2rem; color: var(--primary-color); }
+.research-icon { width: 80px; height: 80px; background: rgba(98,68,197,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; font-size: 2rem; color: var(--primary-color); }
 
 /* Nav pills equal widths */
 .nav-pills { display: flex !important; }
@@ -882,13 +884,13 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     margin: 0 0 8px 0 !important;
     font-size: 16px !important;
     font-weight: 500 !important;
-    color: var(--primary-color, #0d6efd) !important;
+    color: var(--primary-color, #6244C5) !important;
 }
 
 /* DURATION BADGE */
 .exp-duration {
-    background: rgba(13, 110, 253, 0.1) !important;
-    color: var(--primary-color, #0d6efd) !important;
+    background: rgba(98, 68, 197, 0.1) !important;
+    color: var(--primary-color, #6244C5) !important;
     padding: 6px 16px !important;
     border-radius: 25px !important;
     font-size: 14px !important;
@@ -922,7 +924,7 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     position: absolute !important;
     left: 0 !important;
     top: 0px !important;
-    color: var(--primary-color, #0d6efd) !important;
+    color: var(--primary-color, #6244C5) !important;
     font-size: 18px !important;
     font-weight: bold !important;
 }
@@ -1156,4 +1158,170 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+/* Skip link: off-screen until it receives keyboard focus. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  padding: 0.75rem 1.25rem;
+  background: #12141d;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 0 0 6px 0;
+}
+.skip-link:focus {
+  left: 0;
+  outline: 3px solid #6244c5;
+  outline-offset: 2px;
+}
+
+/* .brand-font and .counter-num were <h1> elements. They now carry semantically
+   correct tags (a page needs exactly one <h1>), so the typography Bootstrap
+   used to give them as headings is restated here to keep them identical. */
+.brand-font {
+  display: block;              /* <span> is inline; the <h1> it replaced was not */
+  font-size: calc(1.375rem + 1.5vw);
+  line-height: 1.2;
+  margin: 0;
+}
+@media (min-width: 1200px) {
+  .brand-font { font-size: 2.5rem; }
+}
+.counter-num {
+  color: #12141D;
+  line-height: 1.2;
+}
+
+/* ==========================================================================
+   White surface
+   The page used alternating #f5f7fa bands to separate sections, and cards
+   relied on that grey to stand out. On a pure white surface that contrast is
+   gone, so structure comes from hairlines instead: a 1px rule between
+   sections, and a 1px border on every card with a much tighter shadow.
+   ========================================================================== */
+:root {
+  --hairline: #ebedf0;
+  --surface: #ffffff;
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.04);
+  --card-shadow-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 12px 28px rgba(16, 24, 40, 0.08);
+}
+
+/* One hairline between consecutive sections, never above the first. */
+#about, #experience, #education, #skill, #project,
+#research, #awards, #memberships, #contact {
+  border-top: 1px solid var(--hairline);
+}
+
+/* Cards define their own edge now that the background no longer does it. */
+.experience-card,
+.project-card,
+.research-card,
+.membership-card,
+.tool-card,
+.spec-card,
+#awards .award-card,
+.timeline-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--card-shadow);
+}
+
+.experience-card:hover,
+.project-card:hover,
+.research-card:hover,
+.membership-card:hover,
+.tool-card:hover,
+.spec-card:hover,
+#awards .award-card:hover {
+  border-color: #dfe3e8;
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* The years counter sits on the purple gradient. Near-black on that gradient
+   measures about 2.8:1 against its darker end, below the 3:1 that large text
+   needs. White clears it on both ends. */
+.years .counter-num { color: #ffffff; }
+
+/* The navbar is fixed and the hero drops its top padding at lg and above
+   (pt-lg-0), so the hero's first line sat behind the navbar on desktop.
+   Below 992px the hero already clears it, so this is scoped to lg+. */
+@media (min-width: 992px) {
+  .hero-section { padding-top: 56px; }
+}
+
+/* ==========================================================================
+   Credentials
+   The patent badge used the pink/coral gradient, the technology chips used
+   Bootstrap blue (#0d6efd, not this site's purple) and the achievements were
+   saturated green. Three loud colour languages competing on one card reads as
+   a consumer app. Shape and spacing are unchanged; only the colour language
+   is calmed so the claims themselves carry the weight.
+   ========================================================================== */
+
+/* Patent Pending is the strongest claim on the page, so it gets the only
+   solid fill: ink, not decoration. */
+.project-badge.patent {
+  background: #12141d;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 6px 13px;
+  box-shadow: none;
+}
+
+/* Technologies are metadata. They should be legible, not competing. */
+.tech-badge {
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px solid var(--hairline);
+  font-weight: 500;
+}
+
+/* Achievements keep their meaning through a small status dot rather than a
+   saturated fill. */
+.achievement {
+  background: #f7f9fb;
+  color: #1f2937;
+  border: 1px solid var(--hairline);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+.achievement::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   One accent
+   The skill bars carried eight Bootstrap colour utilities (bg-primary,
+   bg-warning, bg-danger, bg-success, bg-info, bg-dark, bg-secondary and a
+   gradient) and the active tab used #0d6efd, which is Bootstrap's blue and
+   not this site's accent. A single accent is what makes a page read as
+   deliberate. Markup is untouched; these override the utilities in place.
+   ========================================================================== */
+.progress {
+  background: #eef0f4;
+}
+.progress .skill-bar,
+.progress .progress-bar.skill-bar {
+  background-color: #6244c5 !important;
+  background-image: none !important;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #6244c5 !important;
+}
+.nav-pills .nav-link {
+  color: #4b5563;
 }

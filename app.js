@@ -1,6 +1,9 @@
 /* ====== CONFIG (ONE LINE only) ====== */
 /* For local dev use: window.__API_BASE__ = 'http://localhost:8787' before this script */
-const API_BASE = String(window.__API_BASE__ || 'https://album-ai-backend-new.vercel.app').replace(/\/+$/, '');
+/* The backend project serves these hostnames; album-ai-backend-new.vercel.app
+   (used previously) is not one of them, so every AI call 404'd before it ever
+   reached a function. */
+const API_BASE = String(window.__API_BASE__ || 'https://album-ai-backend-new-sachinthagaurawas-projects.vercel.app').replace(/\/+$/, '');
 
 console.log('[gallery] app.js loaded, API_BASE =', API_BASE);
 
@@ -25,30 +28,57 @@ const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
 const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 const clamp = (v, min, max)=> Math.max(min, Math.min(max, v));
 
-/* ====== Data (sample) ====== */
+/* ====== Data ====== */
+/* Every asset below is Sachintha's own work. The previous entries were
+   Unsplash stock photography and placeholder YouTube ids, which presented
+   other people's photographs - and a joke video - as this portfolio's
+   projects. */
 const ALBUMS = [
   {
     id: "aavss",
     title: "Advanced Autonomous Vehicle Safety System",
-    cover: "https://res.cloudinary.com/dzrfpc9be/image/upload/v1755231573/IMG_8893_1_wtmgsn.jpg",
-    description: "Patent-pending AAVSS — multi-sensor fusion (LiDAR, radar, camera), embedded AI on Jetson Nano, and real-time driver safety analytics.",
-    tags: ["AAVSS","autonomous","safety","jetson","embedded","fusion"],
+    cover: "img/aavss-wallpaper.jpg",
+    description: "A real-time, AI-integrated embedded platform built to reduce road accidents through intelligent monitoring and automation. Patent-pending, and recognised at distinction level.",
+    tags: ["AAVSS","autonomous","safety","embedded","sensor fusion","patent-pending"],
+    // The 100-page final report ships with this site and is indexed into
+    // data/aavss-kb.json, so questions about this album can be answered from
+    // the document itself rather than from the two-line description.
+    report: { file: "reports/AAVSS_Report.pdf", kb: "data/aavss-kb.json" },
     media: [
-      { type: "image",   src: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1600&auto=format&fit=crop" },
-      { type: "youtube", src: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
-      { type: "image",   src: "https://images.unsplash.com/photo-1558985040-ed4d5029c24c?q=80&w=1600&auto=format&fit=crop" }
+      { type: "image", src: "img/aavss-wallpaper.jpg" },
+      { type: "image", src: "https://res.cloudinary.com/dzrfpc9be/image/upload/f_auto,q_auto/v1755231573/IMG_8893_1_wtmgsn.jpg" }
     ]
   },
   {
     id: "dataset",
-    title: "Sri Lanka Autonomous Driving Dataset",
-    cover: "https://images.unsplash.com/photo-1524635962361-d7f8ae9c79b1?q=80&w=1600&auto=format&fit=crop",
-    description: "Open driving dataset across Sri Lankan road scenarios — urban, rural, rain/fog/night. Includes lane, sign and hazard annotations.",
-    tags: ["dataset","Sri Lanka","traffic","vision","research"],
+    title: "Autonomous Driving Dataset for Sri Lanka",
+    cover: "img/dataset-sri-lanka.jpg",
+    description: "Upcoming. A dataset built around Sri Lankan road conditions, traffic patterns and driving behaviour, to support localised autonomous-vehicle development and contribute to global AV research.",
+    tags: ["dataset","Sri Lanka","computer vision","machine learning","autonomous vehicles"],
     media: [
-      { type: "image",   src: "https://images.unsplash.com/photo-1483721310020-03333e577078?q=80&w=1600&auto=format&fit=crop" },
-      { type: "youtube", src: "https://www.youtube.com/embed/3JZ_D3ELwOQ" },
-      { type: "image",   src: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1600&auto=format&fit=crop" }
+      { type: "image", src: "img/dataset-sri-lanka.jpg" }
+    ]
+  },
+  {
+    id: "drone-swarm",
+    title: "Disaster Prediction and Rapid Response Drone Swarm",
+    cover: "img/drone-swarm.jpg",
+    description: "AI-driven disaster prediction and rapid response using an edge-embedded vision drone swarm. Published research.",
+    tags: ["drone","swarm","edge AI","vision","disaster response","research"],
+    media: [
+      { type: "image", src: "img/drone-swarm.jpg" }
+    ]
+  },
+  {
+    id: "recognition",
+    title: "Recognition and Awards",
+    cover: "img/awards/excellence-trophy.jpg",
+    description: "Dr. Vidhya Vinod Academic Excellence Award - Best Undergraduate Project, BEng(Hons) Electrical and Electronic Engineering Top-Up, Study World Lanka Campus, Convocation 2025.",
+    tags: ["award","academic excellence","2025","recognition"],
+    media: [
+      { type: "image", src: "img/awards/excellence-trophy.jpg" },
+      { type: "image", src: "img/awards/excellence-certificate.jpg" },
+      { type: "image", src: "img/awards/award-ceremony.jpg" }
     ]
   }
 ];
@@ -306,6 +336,11 @@ function openAlbum(id, index=0, push=false){
     masonry.appendChild(tile);
   });
 
+  // Warm the report index while the visitor is still looking at the photos,
+  // so the first question does not wait on a 129 KB fetch.
+  if (a.report) ReportKB.load().catch(() => {});
+  renderAskSuggestions(a);
+
   albumView.classList.add('active'); 
   albumView.setAttribute('aria-hidden','false');
   if (window.gsap) gsap.fromTo('.album-hero',{opacity:.6,y:10},{opacity:1,y:0,duration:.35,ease:'power2.out'});
@@ -475,20 +510,116 @@ function buildAlbumContext(album){
   ].join('\n');
 }
 
+/* Visitors do not guess that a 100-page engineering report sits behind this
+   box, so the album says what it can be asked. */
+const REPORT_PROMPTS = [
+  'What sensors does it use?',
+  'How does the emergency response work?',
+  'What hardware does it run on?',
+  'Crash avoidance results?',
+  'How does it compare to Tesla?',
+  'What are the limitations?'
+];
+
+function renderAskSuggestions(album) {
+  const panel = document.querySelector('.album-ask');
+  const input = document.getElementById('askInput');
+  const btn   = document.getElementById('askBtn');
+  if (!panel || !input || !btn) return;
+
+  const existing = document.getElementById('ask-suggest');
+  if (existing) existing.remove();
+  if (!album || !album.report) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'ask-suggest';
+  wrap.className = 'ask-suggest';
+
+  const lead = document.createElement('span');
+  lead.className = 'ask-suggest-lead';
+  lead.textContent = 'Ask the 100-page project report:';
+  wrap.appendChild(lead);
+
+  REPORT_PROMPTS.forEach(q => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ask-chip';
+    b.textContent = q;
+    b.addEventListener('click', () => { input.value = q; btn.click(); });
+    wrap.appendChild(b);
+  });
+
+  panel.appendChild(wrap);
+  input.placeholder = 'Ask anything about this project — answered from the report';
+}
+
+/* One route for every question, best source first:
+   1. passages retrieved from the project's own report,
+   2. handed to the hosted model when it is reachable, so it writes prose over
+      real evidence instead of guessing from a two-line description,
+   3. and if that model cannot be reached, the retrieved passages answer
+      directly - which is why this box works with no backend at all. */
+async function answerQuestion(question, album) {
+  let fromReport = null, context = '';
+
+  if (album && album.report) {
+    try {
+      await ReportKB.load();
+      fromReport = ReportKB.answer(question);
+      context = ReportKB.contextFor(question);
+    } catch (err) {
+      console.warn('[gallery] report KB unavailable:', err && err.message);
+    }
+  }
+  if (!context) context = buildAlbumContext(album);
+
+  try {
+    const modelAnswer = await aiAsk(question, context);
+    if (modelAnswer && modelAnswer.trim()) {
+      return { text: modelAnswer.trim(), sources: fromReport ? fromReport.sources : [], via: 'model' };
+    }
+  } catch (err) {
+    console.warn('[gallery] hosted model unavailable:', err && err.message);
+  }
+
+  if (fromReport) return { text: fromReport.text, sources: fromReport.sources, via: 'report' };
+  return { text: localAnswer(question, album), sources: [], via: 'page' };
+}
+
+// Citations, and a way to read the source document.
+function sourceLine(result, album) {
+  if (!result.sources || !result.sources.length) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'ask-sources';
+  const label = document.createElement('span');
+  label.textContent = result.via === 'model' ? 'Grounded in the project report: ' : 'From the project report: ';
+  wrap.appendChild(label);
+  wrap.appendChild(document.createTextNode(result.sources.join('  ·  ')));
+  if (album && album.report) {
+    wrap.appendChild(document.createTextNode(' '));
+    const a = document.createElement('a');
+    a.href = album.report.file; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = 'open the PDF';
+    wrap.appendChild(a);
+  }
+  return wrap;
+}
+
 // kept for compatibility
 async function askAboutAlbum(question){
   const input = $('#askInput');
   const btn   = $('#askBtn');
   const out   = $('#askResult');
   if (!question || !currentAlbum || !out || !btn) return;
-  const context = buildAlbumContext(currentAlbum);
-  btn.disabled = true; out.textContent = 'Thinking…';
+  btn.disabled = true; out.textContent = 'Reading the report…';
   try{
-    const answer = await aiAsk(question, context);
-    out.textContent = answer || 'No answer.';
+    const result = await answerQuestion(question, currentAlbum);
+    out.textContent = result.text;
+    const cite = sourceLine(result, currentAlbum);
+    if (cite) out.appendChild(cite);
   }catch(err){
-    console.error('[gallery] ask error:', err);
-    out.textContent = 'Sorry — the assistant had an issue. Please try again.';
+    console.warn('[gallery] ask failed:', err?.message || err);
+    out.textContent = localAnswer(question, currentAlbum);
   }finally{ btn.disabled = false; }
 }
 
@@ -803,19 +934,14 @@ function wireAskUI(){
         throw e;
       }
 
-      let answer = '';
-      try {
-        answer = await expertAsk(routed.guarded);
-      } catch (ex) {
-        console.warn('[gallery] expertAsk failed, falling back:', ex?.message || ex);
-        const ctx = buildAlbumContext(currentAlbum || ALBUMS[0]);
-        answer = await aiAsk(q, ctx);
-      }
-
-      renderChat(answer || 'No answer.', routed.topic || 'Assistant');
+      const album = currentAlbum || ALBUMS[0];
+      const result = await answerQuestion(q, album);
+      renderChat(result.text, routed.topic || 'Assistant');
+      const cite = sourceLine(result, album);
+      if (cite) out.appendChild(cite);
     } catch (err) {
-      console.error('[gallery] ask error:', err);
-      renderChat('Sorry — the assistant had an issue. Please try again.', 'Assistant');
+      console.warn('[gallery] ask failed, answering locally:', err?.message || err);
+      renderChat(localAnswer(q, currentAlbum || ALBUMS[0]), 'Assistant');
     } finally {
       btn.disabled = false;
     }
@@ -823,6 +949,206 @@ function wireAskUI(){
 
   btn.onclick = ask;
   input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
+}
+
+/* ====== AAVSS report knowledge base ======
+   The final report is a 100-page document that already ships with this site.
+   Rather than depend on a backend, a database and a paid model to answer one
+   question about it, the report is extracted at build time into
+   data/aavss-kb.json and searched here, in the page. That means answers are
+   grounded in Sachintha's own words, quote a section and page number, cost
+   nothing, and cannot break independently of the site. The hosted model, when
+   it is reachable, is handed these same passages as context - so it improves
+   the answer instead of being the only thing that can produce one. */
+const ReportKB = (() => {
+  const STOP = new Set(('a an the and or but if then than that this these those of to in on for with by from as at is are was were be been being it its into over under about ' +
+    'what which who whom how why when where does do did can could should would will shall may might must have has had i you he she they we me my your our their there here ' +
+    'not no yes any all some more most other such only own same so too very s t just now').split(' '));
+
+  const state = { loading: null, ready: false, chunks: [], df: new Map(), avgLen: 0 };
+
+  function stem(w) {
+    if (w.length > 4 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
+    if (w.length > 4 && w.endsWith('sses')) return w.slice(0, -2);
+    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+    if (w.length > 5 && w.endsWith('ing')) return w.slice(0, -3);
+    if (w.length > 4 && w.endsWith('ed')) return w.slice(0, -2);
+    return w;
+  }
+  function tokens(str) {
+    return String(str || '').toLowerCase().replace(/[^a-z0-9\s.-]/g, ' ')
+      .split(/\s+/).filter(w => w.length > 1 && !STOP.has(w)).map(stem);
+  }
+
+  // A visitor asks about "the processor"; the report says "Jetson Nano". Every
+  // term on the right was verified present in the document, so this widens
+  // recall without inventing vocabulary the report does not use.
+  const ALIAS = {
+    processor: ['jetson','nano','pi'], microcontroller: ['jetson','nano','pi'],
+    mcu: ['jetson','nano'], chip: ['jetson','nano'], cpu: ['jetson','nano'],
+    gpu: ['jetson','nano'], board: ['jetson','nano','pcb'], compute: ['jetson','nano'],
+    computer: ['jetson','nano'], hardware: ['jetson','nano','pcb','component'],
+    brain: ['jetson','nano'], camera: ['imx219','vision'], vision: ['imx219','camera'],
+    watch: ['pinetime'], smartwatch: ['pinetime'], wearable: ['pinetime'],
+    heart: ['pinetime','biometric'], biometric: ['pinetime','facial'],
+    distance: ['vl53l0x','ultrasonic','lidar'], proximity: ['vl53l0x','ultrasonic'],
+    range: ['vl53l0x','lidar'], battery: ['li-po','power'],
+    connectivity: ['4g','gsm','gps'], network: ['4g','gsm','gps'],
+    internet: ['4g','gsm'], cellular: ['4g','gsm'], location: ['gps'],
+    security: ['nfc','access'], unlock: ['nfc'], circuit: ['pcb'],
+    speed: ['latency','response'], fast: ['latency','response'],
+    steering: ['servo'], motor: ['servo'], cost: ['power','efficiency']
+  };
+  function expand(qTokens, raw) {
+    const out = new Set(qTokens);
+    const words = String(raw || '').toLowerCase().split(/[^a-z0-9]+/);
+    words.forEach(w => (ALIAS[w] || []).forEach(a => out.add(stem(a))));
+    return [...out];
+  }
+
+  async function load() {
+    if (state.ready) return true;
+    if (state.loading) return state.loading;
+    state.loading = (async () => {
+      const r = await fetch('data/aavss-kb.json', { cache: 'force-cache' });
+      if (!r.ok) throw new Error('KB HTTP ' + r.status);
+      const data = await r.json();
+      state.meta = data.meta || {};
+      state.doc = data.doc || '';
+      state.chunks = (data.chunks || []).map(c => {
+        const body = tokens(c.t), head = tokens(c.s);
+        const tf = new Map();
+        // section titles describe what a passage is about, so they count double
+        body.forEach(w => tf.set(w, (tf.get(w) || 0) + 1));
+        head.forEach(w => tf.set(w, (tf.get(w) || 0) + 2));
+        return { s: c.s, p: c.p, t: c.t, tf, len: body.length };
+      });
+      state.chunks.forEach(c => {
+        new Set(c.tf.keys()).forEach(w => state.df.set(w, (state.df.get(w) || 0) + 1));
+      });
+      state.avgLen = state.chunks.reduce((a, c) => a + c.len, 0) / Math.max(1, state.chunks.length);
+      state.ready = true;
+      return true;
+    })().catch(err => { state.loading = null; throw err; });
+    return state.loading;
+  }
+
+  // Okapi BM25.
+  const K1 = 1.5, B = 0.75;
+  function search(question, topK = 4) {
+    const q = expand(tokens(question), question);
+    if (!q.length || !state.ready) return [];
+    const N = state.chunks.length;
+    const scored = state.chunks.map(c => {
+      let score = 0;
+      for (const w of q) {
+        const f = c.tf.get(w);
+        if (!f) continue;
+        const idf = Math.log(1 + (N - state.df.get(w) + 0.5) / (state.df.get(w) + 0.5));
+        score += idf * (f * (K1 + 1)) / (f + K1 * (1 - B + B * c.len / state.avgLen));
+      }
+      // Appendices are largely figure captions and pointers rather than
+      // explanation, so they should surface only when nothing better matches.
+      if (/^A\b/.test(c.s)) score *= 0.7;
+      return { c, score };
+    }).filter(x => x.score > 0);
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, topK);
+  }
+
+  // Whole passages are too blunt to read. Rank the sentences inside the best
+  // passages and keep the few that actually answer the question, in the order
+  // the report states them.
+  function bestSentences(hits, question, limit = 4) {
+    const q = new Set(expand(tokens(question), question));
+    const cand = [];
+    const seen = new Set();   // chunks overlap by design, so the same sentence recurs
+    hits.slice(0, 3).forEach((h, hi) => {
+      h.c.t.split(/(?<=[.!?])\s+(?=[A-Z0-9•])/).forEach((sent, si) => {
+        const clean = sent.trim();
+        if (clean.length < 40 || clean.length > 400) return;
+        // "This appendix contains…", "Figure 5.2 shows…" describe the report,
+        // not the system, and answer nothing a visitor asked.
+        if (/\b(this|the)\s+(appendix|section|chapter|figure|table)\b[^.]{0,40}\b(contains?|includes?|shows?|presents?|provides?|illustrat\w+|depicts?|outlines?)\b/i.test(clean)) return;
+        if (/^\(?(figure|table|appendix)\s*\d/i.test(clean)) return;
+        const key = clean.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 90);
+        if (seen.has(key)) return;
+        seen.add(key);
+        const st = tokens(clean);
+        if (!st.length) return;
+        const overlap = st.filter(w => q.has(w)).length;
+        if (!overlap) return;
+        cand.push({ text: clean, hi, si, score: overlap / Math.sqrt(st.length) + (3 - hi) * 0.05 });
+      });
+    });
+    cand.sort((a, b) => b.score - a.score);
+    const keep = cand.slice(0, limit);
+    keep.sort((a, b) => a.hi - b.hi || a.si - b.si);
+    return keep.map(k => k.text);
+  }
+
+  function cite(h) { return `§${h.c.s} · p${h.c.p}`; }
+
+  // Passages joined for the hosted model, tagged so it can cite them too.
+  function contextFor(question, topK = 4) {
+    const hits = search(question, topK);
+    if (!hits.length) return '';
+    return hits.map(h => `[${cite(h)}]\n${h.c.t}`).join('\n---\n');
+  }
+
+  function answer(question) {
+    const hits = search(question, 4);
+    if (!hits.length) return null;
+    const sentences = bestSentences(hits, question);
+    const body = sentences.length ? sentences.join(' ') : hits[0].c.t;
+    const lead = /^[a-z]/.test(body) ? '…' + body : body;
+    const sources = [...new Set(hits.slice(0, 3).map(cite))];
+    return { text: lead, sources, top: hits[0] };
+  }
+
+  return { load, search, answer, contextFor, cite,
+           get ready() { return state.ready; },
+           get meta() { return state.meta || {}; },
+           get size() { return state.chunks.length; } };
+})();
+
+/* ====== Local answerer (no network) ======
+   The hosted model is the better answer when it is reachable. When it is not -
+   the backend is down, blocked by deployment protection, or no provider key is
+   configured - the box used to say only that something had gone wrong. Every
+   album already carries its own title, description and tags, which is enough to
+   answer the questions this page actually gets asked. */
+function localAnswer(question, album) {
+  if (!album) return '';
+  const q = String(question || '').toLowerCase();
+  const has = (...words) => words.some(w => q.includes(w));
+  const lines = [];
+
+  if (has('tag', 'keyword', 'topic', 'about what')) {
+    lines.push(`Tags for “${album.title}”: ${album.tags.join(', ')}.`);
+  }
+  if (has('how many', 'count', 'photos', 'images', 'media')) {
+    const n = (album.media || []).length;
+    lines.push(`This album holds ${n} item${n === 1 ? '' : 's'}.`);
+  }
+  if (has('status', 'finished', 'complete', 'upcoming', 'when')) {
+    lines.push(/upcoming/i.test(album.description)
+      ? 'This one is still upcoming rather than finished.'
+      : 'This project is complete; the description above covers where it stands.');
+  }
+  if (has('patent', 'award', 'recognition', 'prize')) {
+    const hit = ALBUMS.find(a => /patent|award|recognition/i.test(a.description + a.tags.join(' ')));
+    if (hit) lines.push(hit.description);
+  }
+  if (has('contact', 'email', 'reach', 'hire')) {
+    lines.push('The contact form on the main page reaches Sachintha directly.');
+  }
+
+  // Nothing matched a specific shape: answer from the album itself.
+  if (!lines.length) lines.push(album.description);
+
+  return lines.join(' ') +
+    '\n\n(Answered from this page while the AI service is unavailable.)';
 }
 
 /* ====== AI: Smart image captions ====== */

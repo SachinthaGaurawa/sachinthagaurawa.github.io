@@ -217,18 +217,10 @@ function initializeDownloadVerification() {
     });
   });
 
-  document.querySelectorAll('.degree-verify-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault();
-      showCaptchaModal('degree');
-    });
-  });
+  // .degree-verify-btn is bound in initializeDegreeVerification().
 
-  const verifyBtn = document.getElementById('verifyCaptcha');
-  if (verifyBtn && !verifyBtn.dataset.bound) {
-    verifyBtn.dataset.bound = '1';
-    verifyBtn.addEventListener('click', verifyCaptchaAndRoute);
-  }
+  // #verifyCaptcha is handled by the inline script in index.html. Binding a
+  // second listener here made one click download the document twice.
 }
 
 function verifyCaptchaAndRoute() {
@@ -251,11 +243,6 @@ function verifyCaptchaAndRoute() {
   triggerDownload(type);
 }
 
-function openDegreeVerificationTab() {
-  const url = 'https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441';
-  const win = window.open(url, '_blank', 'noopener,noreferrer');
-  if (win) win.opener = null;
-}
 
 function showCaptchaModal(type) {
   const modalEl = document.getElementById('captchaModal');
@@ -277,18 +264,6 @@ function showCaptchaModal(type) {
 }
 
   
-  function verifyCaptchaAndDownload() {
-    const user = +document.getElementById('captchaInput').value;
-    const correct = +document.getElementById('captchaAnswer').value;
-    const type = document.getElementById('verifyCaptcha').dataset.download;
-    if (user === correct) {
-      bootstrap.Modal.getInstance(document.getElementById('captchaModal')).hide();
-      triggerDownload(type);
-    } else {
-      alert('Incorrect answer. Please try again.');
-    }
-  }
-
 async function triggerDownload(type) {
   const map = {
     cv: 'Sachintha_Gaurawa_CV.pdf',

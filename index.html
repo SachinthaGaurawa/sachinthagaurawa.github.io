@@ -60,8 +60,9 @@
     <link rel="icon" href="img/sg_logo.ico" type="image/x-icon">
     <link rel="shortcut icon" href="img/sg_logo.ico" type="image/x-icon">
 
-    <link rel="icon" type="image/png" sizes="32x32" href="img/sg_logo.png">
-    <link rel="icon" type="image/png" sizes="64x64" href="img/sg_logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
     
 
     <!-- Google Web Fonts -->
@@ -243,6 +244,13 @@
         try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch (e) {}
         setTimeout(removeModalBackdropIfExists, 200);
     
+        // Degree verification opens the university's checker, not a file.
+        // portfolio.js owns this helper; it is defined by the time a click happens.
+        if (type === 'degree') {
+          if (typeof openDegreeVerificationTab === 'function') openDegreeVerificationTab();
+          return;
+        }
+
         // 🔹 Absolute URLs for all downloads
         const map = {
           cv: '/docs/Sachintha_Gaurawa_CV.pdf',
@@ -868,7 +876,7 @@
                             <img class="img-fluid" src="https://res.cloudinary.com/dzrfpc9be/image/upload/v1762531544/AAVSS_wallpaper_kfrycm.png" alt="AAVSS" loading="lazy" decoding="async">
                             <div class="project-overlay">
                                 <div class="project-links">
-                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/AAVSS_wallpaper.png" data-lightbox="portfolio">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/aavss-wallpaper.jpg" data-lightbox="portfolio">
                                         <i class="fa fa-eye"></i>
                                     </a>
                                 </div>
@@ -905,7 +913,7 @@
                             <img class="img-fluid" src="https://res.cloudinary.com/dzrfpc9be/image/upload/v1764968169/1F074C60-9057-49F3-A09E-752457C8E4AE_bazhfx.png" alt="Dataset" loading="lazy" decoding="async">
                             <div class="project-overlay">
                                 <div class="project-links">
-                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/Dataset_Sri Lanka.PNG" data-lightbox="portfolio">
+                                    <a class="btn btn-lg-square btn-primary mx-1" href="img/dataset-sri-lanka.jpg" data-lightbox="portfolio">
                                         <i class="fa fa-eye"></i>
                                     </a>
                                 </div>
@@ -1122,7 +1130,7 @@
                 <div class="col-lg-6" data-aos="flip-right" data-aos-delay="200">
                     <div class="research-card">
                         <div class="research-icon">
-                            <img src="img/drone_image.png" alt="Drone" width="80" height="80" style="object-fit: contain;" loading="lazy" decoding="async">
+                            <img src="img/drone_image-240.png" alt="Drone" width="80" height="80" style="object-fit: contain;" loading="lazy" decoding="async">
                         </div>
                         
                         <div class="research-content">

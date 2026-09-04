@@ -269,26 +269,6 @@ function initializeDownloadVerification() {
   // .degree-verify-btn is bound in initializeDegreeVerification().
 }
 
-function verifyCaptchaAndRoute() {
-  const user = +document.getElementById('captchaInput').value;
-  const correct = +document.getElementById('captchaAnswer').value;
-  const type = document.getElementById('verifyCaptcha').dataset.download;
-
-  if (user !== correct) {
-    alert('Incorrect answer. Please try again.');
-    return;
-  }
-
-  bootstrap.Modal.getInstance(document.getElementById('captchaModal'))?.hide();
-
-  if (type === 'degree') {
-    openDegreeVerificationTab();
-    return;
-  }
-
-  triggerDownload(type);
-}
-
 
 function showCaptchaModal(type) {
   const modalEl = document.getElementById('captchaModal');
@@ -312,50 +292,8 @@ function showCaptchaModal(type) {
 }
 
   
-async function triggerDownload(type) {
-  const map = {
-    cv: 'Sachintha_Gaurawa_CV.pdf',
-    'av-safety-framework': 'AI_Enhanced_Predictive_Safety_Framework.pdf',
-    'drone-disaster-response': 'AI_Driven_Disaster_Prediction_Drone_Swarm.pdf'
-  };
-
-  const filename = map[type];
-  if (!filename) return;
-
-  const url = `docs/${filename}`;
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    window.URL.revokeObjectURL(blobUrl);
-    showNotification('✅ Download started successfully!', 'success');
-  } catch (err) {
-    console.error('Download error:', err);
-    showNotification('❌ Failed to download. Please try again.', 'error');
-  }
-}
 
   
-  // Notification popup
-  function showNotification(message, type) {
-    const notif = document.createElement('div');
-    notif.className = `alert alert-${type} position-fixed`;
-    notif.style.cssText = 'top:20px; right:20px; z-index:9999; animation:slideInRight .5s ease;';
-    notif.innerHTML = `${message}<button class="btn-close" onclick="this.parentElement.remove()"></button>`;
-    document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 5000);
-  }
   
   // Navbar hide/show on scroll and tech-circuit animation tweak
   function addScrollEffects() {
@@ -615,26 +553,6 @@ function initializeDegreeVerification() {
   });
 }
 
-function verifyCaptchaAndDownload() {
-  const user = +document.getElementById('captchaInput').value;
-  const correct = +document.getElementById('captchaAnswer').value;
-  const type = document.getElementById('verifyCaptcha').dataset.download;
-
-  if (user !== correct) {
-    alert('Incorrect answer. Please try again.');
-    return;
-  }
-
-  const modalEl = document.getElementById('captchaModal');
-  bootstrap.Modal.getInstance(modalEl)?.hide();
-
-  if (type === 'degree') {
-    openDegreeVerificationTab();
-    return;
-  }
-
-  triggerDownload(type);
-}
 
 function openDegreeVerificationTab() {
   const url = 'https://dcveri.greatermanchester.ac.uk/?reference=17526070-01-W441';

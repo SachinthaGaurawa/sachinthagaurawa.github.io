@@ -1499,3 +1499,58 @@ body.is-light #ask-hint-row,
 .ai-img a{ color:#fff; font-size:.85rem; text-decoration:none; background:rgba(0,0,0,.35);
   padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.35); }
 body.is-light .ai-img a{ color:#1b2b45; background:rgba(255,255,255,.8); border-color:rgba(0,0,0,.15); }
+
+/* ===== Footer on narrow screens =====
+   The unscoped "FINAL footer override" above re-applies display:flex and
+   justify-content:space-between with !important, which defeats the
+   max-width:600px stacking rule that comes before it. Combined with
+   white-space:nowrap on .footer-left, the copyright line could not fit a
+   360px viewport and pushed the whole page into horizontal scroll. This
+   block sits last so it wins on order, and it only relaxes the two
+   declarations that caused the overflow. */
+@media (max-width: 600px) {
+  .site-footer {
+    flex-direction: column !important;
+    justify-content: center !important;
+    text-align: center;
+    gap: 6px;
+  }
+  .site-footer .footer-left {
+    white-space: normal;
+    flex: 0 1 auto;
+    justify-content: center;
+    text-align: center;
+  }
+  .site-footer .footer-right {
+    margin-left: 0;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* The gallery never carried the guard the main page has, so any single
+   overflowing child could drag the whole document sideways. */
+html, body { overflow-x: hidden; }
+
+/* ===== Ask panel: report citations and suggested questions ===== */
+.ask-sources{
+  margin-top:.6rem; padding-top:.5rem;
+  border-top:1px solid rgba(255,255,255,.12);
+  font-size:.82rem; line-height:1.5; opacity:.85;
+}
+body.is-light .ask-sources{ border-top-color:rgba(0,0,0,.12); }
+.ask-sources a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+
+.ask-suggest{ display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; margin-top:.7rem; }
+.ask-suggest-lead{ font-size:.82rem; opacity:.75; margin-right:.15rem; width:100%; }
+.ask-chip{
+  font:inherit; font-size:.8rem; line-height:1.2;
+  padding:.4rem .7rem; border-radius:999px; cursor:pointer;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06); color:inherit;
+  transition:background .15s ease, border-color .15s ease;
+}
+.ask-chip:hover{ background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.3); }
+body.is-light .ask-chip{ border-color:rgba(0,0,0,.15); background:rgba(0,0,0,.04); }
+body.is-light .ask-chip:hover{ background:rgba(0,0,0,.08); }
+@media (max-width:600px){ .ask-suggest{ gap:.35rem } .ask-chip{ font-size:.75rem; padding:.35rem .6rem } }

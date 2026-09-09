@@ -136,10 +136,21 @@ window.GalleryAI = (function () {
   /* --------------------------------------------------------------- state --- */
   const state = { manifest: null, manifestP: null, docs: new Map(), loading: new Map() };
 
+  /* 'force-cache' tells the browser to use any cached copy of this file
+     forever, without ever asking the server whether it's still current -
+     it overrides the server's own Cache-Control, not just supplements it.
+     This manifest is exactly the file that changes when a document gets a
+     new cover (build-kb.py rewrites it), so a visitor whose browser had
+     cached it even once kept seeing the old covers indefinitely, on every
+     future visit, with no way to tell from the page that anything was
+     stale - reloading, even in a private tab that still shares the
+     browser's HTTP cache, changed nothing. 'no-cache' still lets the
+     browser skip re-downloading unchanged bytes via a conditional request,
+     but it always asks the server first. */
   async function manifest() {
     if (state.manifest) return state.manifest;
     if (!state.manifestP) {
-      state.manifestP = fetch(MANIFEST, { cache: 'force-cache' })
+      state.manifestP = fetch(MANIFEST, { cache: 'no-cache' })
         .then(r => { if (!r.ok) throw new Error('manifest HTTP ' + r.status); return r.json(); })
         .then(j => (state.manifest = j))
         .catch(e => { state.manifestP = null; throw e; });
@@ -170,7 +181,7 @@ window.GalleryAI = (function () {
       .then(m => {
         const d = (m.docs || []).find(x => x.id === id);
         if (!d) throw new Error('unknown document: ' + id);
-        return fetch(d.kb, { cache: 'force-cache' });
+        return fetch(d.kb, { cache: 'no-cache' });
       })
       .then(r => { if (!r.ok) throw new Error('kb HTTP ' + r.status); return r.json(); })
       .then(j => { indexDoc(id, j); return true; })

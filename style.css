@@ -1618,6 +1618,22 @@ body.is-light .ans-figure img{
   .ans-figure figcaption{ font-size:.76rem; }
 }
 
+/* ===== Answer images =====
+   The project's own real photos, shown when a visitor asks for one - small
+   thumbnails in a row rather than one large crop, since there can be several
+   and none of them is "the" evidence the way a document figure is. */
+.ans-images{ margin:.6rem 0 .3rem; display:flex; flex-wrap:wrap; gap:.5rem; }
+.ans-image{ margin:0; }
+.ans-image img{
+  display:block; width:132px; height:132px; object-fit:cover;
+  border-radius:10px; border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 2px 10px rgba(0,0,0,.22);
+}
+body.is-light .ans-image img{ border-color:rgba(0,0,0,.12); box-shadow:0 2px 10px rgba(0,0,0,.08); }
+@media (max-width:520px){
+  .ans-image img{ width:104px; height:104px; }
+}
+
 /* ===== Album card entrance =====
    Owned here rather than delegated to AOS. The cards are created after load,
    from the album list read out of the portfolio page, and AOS only animates

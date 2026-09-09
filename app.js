@@ -580,16 +580,63 @@ function renderAskSuggestions(album) {
   input.placeholder = 'Ask anything about this project — answered from its documents';
 }
 
+/* A request for an image gets the project's own real, already-verified
+   photos - never a description of a picture the model cannot actually
+   attach. Detected before anything else runs, so it never depends on the
+   backend being reachable, the model complying, or the KB having a figure
+   that matches. */
+const IMAGE_INTENT = /\b(image|photo|photograph|picture|pic|pics|visual|visuals|diagram|screenshot|render(ing)?s?)\b|\bshow\s+(me|us)\b|what\s+does\s+(it|this)\s+look\s+like|see\s+(it|this|the\s+project)|රූප|ඡායාරූප|පින්තූර|පෙන්නන්න/i;
+
+function imageBlockFor(album, lang) {
+  if (!album) return null;
+  const seen = new Set();
+  const items = [];
+  const push = (src, alt) => {
+    if (!src || seen.has(src)) return;
+    seen.add(src);
+    items.push({ src, alt: alt || album.title });
+  };
+  push(album.cover, `${album.title} — cover`);
+  (album.media || []).forEach((m, i) => { if (m.type === 'image') push(m.src, `${album.title} ${i + 1}`); });
+  if (!items.length) return null;
+  const intro = (lang && lang.code === 'si')
+    ? `මෙන්න "${album.title}" ට අදාළ සත්‍ය images:`
+    : `Here are the actual images from “${album.title}”:`;
+  return { type: 'images', intro, items: items.slice(0, 6) };
+}
+
+/* The backend model is told to always answer, but a model can still slip -
+   and showing a refusal as if it were the answer is the exact "no answer"
+   bug this whole path exists to close. Anything shaped like a decline is
+   treated as if the model had not answered at all, so the code below falls
+   through to the retrieved passages or the album's own text instead -
+   always something concrete, never a dead end. English-only: the prompt's
+   own refusal phrasing is English, and this is a safety net on top of a
+   fixed prompt, not the primary defence. */
+const REFUSAL_RE = /\b(i\s+don.?t\s+(have|know)|i\s+do\s+not\s+(have|know)|no\s+information\s+(is\s+)?(available|provided)|not\s+(mentioned|provided|specified|available)\s+in\s+the\s+(context|(provided\s+)?document)|cannot\s+(answer|provide|find)\s+(that|this|it)|unable\s+to\s+(answer|find|help)|does\s*n.?t\s+contain\s+(the\s+)?(answer|information)|as\s+an\s+ai\b|i.?m\s+sorry,?\s+(but\s+)?i\b)/i;
+function looksLikeRefusal(text) {
+  const t = String(text || '').trim();
+  if (!t) return true;
+  return REFUSAL_RE.test(t);
+}
+
 /* One route for every question, best source first:
    1. passages retrieved from the project's own report,
    2. handed to the hosted model when it is reachable, so it writes prose over
       real evidence instead of guessing from a two-line description,
    3. and if that model cannot be reached, the retrieved passages answer
-      directly - which is why this box works with no backend at all. */
+      directly - which is why this box works with no backend at all.
+   A request for an image is answered outside this chain entirely - see
+   imageBlockFor above - so it never depends on any of the three. */
 async function answerQuestion(question, album) {
   const AI = window.GalleryAI;
   const lang = AI ? AI.detectLanguage(question) : null;
   const docs = (album && album.docs) || [];
+  const leadBlocks = [];
+  if (IMAGE_INTENT.test(question)) {
+    const imgBlock = imageBlockFor(album, lang);
+    if (imgBlock) leadBlocks.push(imgBlock);
+  }
   let grounded = null, context = '';
 
   if (AI) {
@@ -638,16 +685,19 @@ async function answerQuestion(question, album) {
       ? `${question}\n\n(Answer entirely in ${lang.name}.)`
       : question;
     const modelAnswer = await aiAsk(ask, context);
-    if (modelAnswer && modelAnswer.trim()) {
-      return { blocks: [{ type: 'text', text: modelAnswer.trim() }],
+    if (modelAnswer && modelAnswer.trim() && !looksLikeRefusal(modelAnswer)) {
+      return { blocks: leadBlocks.concat([{ type: 'text', text: modelAnswer.trim() }]),
                sources: grounded ? grounded.sources : [], via: 'model', lang };
+    }
+    if (modelAnswer && looksLikeRefusal(modelAnswer)) {
+      console.warn('[gallery] model declined instead of answering, falling back:', modelAnswer.slice(0, 120));
     }
   } catch (err) {
     console.warn('[gallery] hosted model unavailable:', err && err.message);
   }
 
-  if (grounded) return { blocks: grounded.blocks, sources: grounded.sources, via: 'docs', lang };
-  return { blocks: [{ type: 'text', text: localAnswer(question, album) }], sources: [], via: 'page', lang };
+  if (grounded) return { blocks: leadBlocks.concat(grounded.blocks), sources: grounded.sources, via: 'docs', lang };
+  return { blocks: leadBlocks.concat([{ type: 'text', text: localAnswer(question, album) }]), sources: [], via: 'page', lang };
 }
 
 // Citations, and a way to read the source document.
@@ -660,6 +710,26 @@ function renderAnswer(result, album, out) {
   out.textContent = '';
 
   (result.blocks || []).forEach(b => {
+    if (b.type === 'images') {
+      if (b.intro) {
+        const p = document.createElement('p');
+        p.className = 'ans-text';
+        p.textContent = b.intro;
+        out.appendChild(p);
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'ans-images';
+      b.items.forEach(item => {
+        const fig = document.createElement('figure');
+        fig.className = 'ans-image';
+        const img = document.createElement('img');
+        img.src = item.src; img.alt = item.alt || ''; img.loading = 'lazy'; img.decoding = 'async';
+        fig.appendChild(img);
+        wrap.appendChild(fig);
+      });
+      out.appendChild(wrap);
+      return;
+    }
     if (b.type === 'text') {
       const p = document.createElement('p');
       p.className = 'ans-text';

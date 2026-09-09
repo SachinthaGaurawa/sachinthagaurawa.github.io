@@ -15,13 +15,30 @@ import pypdfium2 as pdfium
 DOCS = [
     dict(id="aavss", file="reports/AAVSS_Report.pdf",
          title="AAVSS — Advanced Autonomous Vehicle Safety System",
-         kind="Final project report", topic="aavss"),
+         kind="Final project report", topic="aavss",
+         # The project already has its own cover on the homepage; this is
+         # only for a gallery context that wants the report's own imagery
+         # (e.g. a future hero slot) rather than the homepage photo.
+         cover="img/kb/aavss/fig-5-1.webp"),
     dict(id="av-safety-framework", file="docs/AI_Enhanced_Predictive_Safety_Framework.pdf",
          title="AI-Enhanced Predictive Safety Framework for Autonomous Vehicles",
-         kind="Research paper", topic="av-safety-framework"),
+         kind="Research paper", topic="av-safety-framework",
+         # fig-4 is the paper's own live camera frame with its detector's
+         # bounding boxes on real cars and a pedestrian - not a generated
+         # image, the actual figure the paper reports its results with.
+         cover="img/kb/av-safety-framework/fig-4.webp"),
     dict(id="drone-disaster-response", file="docs/AI_Driven_Disaster_Prediction_Drone_Swarm.pdf",
          title="AI-Driven Disaster Prediction and Rapid Response Drone Swarm",
-         kind="Research paper", topic="drone-disaster-response"),
+         kind="Research paper", topic="drone-disaster-response",
+         # This PDF has no usable figure anywhere in it (every embedded
+         # image across all 173 pages is either a Gantt chart or a bar
+         # chart - checked directly, not assumed), so there is no source
+         # image to reuse. img/covers/disaster-drone-hero.svg is a
+         # hand-authored illustration instead: a drone swarm in formation,
+         # each drone with its own downward detection cone, over flooded
+         # terrain with partially-submerged structures - the paper's own
+         # subject, not a stand-in for it.
+         cover="img/covers/disaster-drone-hero.svg"),
     # The CV is deliberately NOT indexed. Two reasons: its designed layout
     # extracts letter-spaced ("indus tr y s tandard tool s"), which is useless
     # for retrieval; and it carries a home address and phone number. Offering
@@ -373,7 +390,9 @@ def main():
         if got is None:
             continue
         chunks.extend(got)
-        docs_meta.append({k: d[k] for k in ("id", "file", "title", "kind", "topic")})
+        docs_meta.append({k: d[k] for k in ("id", "file", "title", "kind", "topic") })
+        if d.get("cover"):
+            docs_meta[-1]["cover"] = d["cover"]
 
     print("Cropping figures:")
     for d in DOCS:

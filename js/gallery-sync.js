@@ -154,9 +154,35 @@ window.GallerySync = (function () {
     return out;
   }
 
-  /* A research paper has no photograph of its own; borrow the cover of the
-     project it belongs to so the grid does not show an empty tile. */
-  function fillCovers(albums) {
+  /* A research paper with no photograph of its own used to borrow the cover
+     of whichever project it matched, or - failing any match - the first
+     project in the page, unconditionally. That is how both research cards
+     ended up showing the exact same image: the drone-swarm paper shares no
+     word with any project title, so it fell straight through to "the first
+     cover there is", which happened to be AAVSS's - the same image the
+     safety-framework paper had also been given, because its word-match
+     victory was AAVSS too. Two different papers, two different code paths,
+     one identical wrong picture.
+
+     A document's own cover - set once a real document is resolved, from
+     data/kb/index.json's own manifest - now wins outright, before any
+     borrowing is considered: build-kb.py records, per document, either a
+     figure actually printed in that document, or a purpose-built image
+     when the document has no usable figure at all (checked directly against
+     the PDF, not assumed). Borrowing a project's cover remains the
+     fallback for an album that resolves no document and has no photo of
+     its own, so the grid still never shows an empty tile - it just never
+     again claims one paper's illustration is another paper's. */
+  function fillCovers(albums, docs) {
+    docs = docs || [];
+    albums.forEach(a => {
+      if (a.cover || a.kind !== 'research') return;
+      const doc = docs.find(d => a.docs && a.docs.includes(d.id));
+      if (doc && doc.cover) {
+        a.cover = assetUrl(doc.cover);
+        a.media = [{ type: 'image', src: a.cover }];
+      }
+    });
     const withCover = albums.filter(a => a.cover);
     albums.forEach(a => {
       if (a.cover) return;
@@ -173,10 +199,14 @@ window.GallerySync = (function () {
     if (!res.ok) throw new Error('portfolio HTTP ' + res.status);
     const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
 
-    const albums = fillCovers(parseProjects(doc).concat(parseResearch(doc)));
     const docs = kbDocs || [];
+    const albums = parseProjects(doc).concat(parseResearch(doc));
+    // A paper's document (and therefore its own cover) must be resolved
+    // before fillCovers runs, so the cover lookup above has something to
+    // find - the reverse order is what let a mismatched image through.
+    albums.forEach(a => { a.docs = resolveDocs(a, docs); });
+    fillCovers(albums, docs);
     albums.forEach(a => {
-      a.docs = resolveDocs(a, docs);
       if (a.docs.length && !a.report) {
         const d = docs.find(x => x.id === a.docs[0]);
         if (d && d.file) a.report = { file: assetUrl(d.file) };

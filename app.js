@@ -50,6 +50,21 @@ let ALBUMS = [
   }
 ];
 
+/* The "Projects & Albums" hero used to be one fixed picture (an AAVSS
+   wallpaper that reads as generic sci-fi art, not this portfolio's actual
+   work) shown forever. It now rotates through purpose-built banners - each
+   an accurate illustration of one real project domain, not stock art - on a
+   deterministic ~2-month cycle: no server, no API key, nothing that can ever
+   show a wrong or unverified image. */
+const HERO_POOL = [
+  { src: 'img/covers/av-safety-hero.svg',
+    alt: 'AI-enhanced autonomous-vehicle sensor fusion — LiDAR, camera, radar and ultrasonic ranging' },
+  { src: 'img/covers/disaster-drone-hero.svg',
+    alt: 'Disaster-response drone swarm with edge-AI flood and structure detection' },
+  { src: 'img/covers/electronics-lab-hero.svg',
+    alt: 'Embedded electronics workbench — PCB assembly, sensor calibration and precision measurement' }
+];
+
 /* ====== Local stores ====== */
 const CaptionStore = {
   get(key){ try { return JSON.parse(localStorage.getItem('cap:'+key)); } catch { return null; } },
@@ -1238,6 +1253,23 @@ function setupHeroAnimation(){
   }
 }
 
+/* One pool entry per ~60-day window since the epoch, so every visitor in the
+   same window sees the same banner and it changes on its own with no build
+   step, cron job or external call. */
+function setupHeroRotation(){
+  if (!HERO_POOL.length) return;
+  const img = document.querySelector('.hero-media img.lazy-cover');
+  if (!img) return;
+  const windowIdx = Math.floor(Date.now() / 86400000 / 60) % HERO_POOL.length;
+  const pick = HERO_POOL[windowIdx];
+  img.dataset.src = pick.src;
+  img.alt = pick.alt;
+  // A <noscript> block's contents never become real DOM nodes while a
+  // script is running (that's the point of it), so there's nothing here
+  // to rewrite - the no-JS visitor gets whichever pool image gallery.html
+  // sets as that fallback's static default.
+}
+
 function setupLazyHero(){
   const io = new IntersectionObserver(es=>{
     es.forEach(e=>{
@@ -1410,6 +1442,7 @@ function init(){
   setupChips();
   setupResponsiveToolbar();   // phones/tablets layout
   setupHeroAnimation();
+  setupHeroRotation();
   setupLazyHero();
   updateAllFooterYears();
 

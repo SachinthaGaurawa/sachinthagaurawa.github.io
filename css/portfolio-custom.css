@@ -1350,7 +1350,12 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
   padding: 14px 0;
   border-top: 1px solid var(--hairline);
 }
-.glance-row:first-of-type { border-top: none; padding-top: 0; }
+/* The hairline between rows belongs to the row below it. :first-of-type is
+   matched by element type, so once the credential strip - also a div - was
+   added above them, no row was the first div any more and the top row drew a
+   second line directly under the strip's own. */
+.glance-row:first-of-type,
+.glance-marks + .glance-row { border-top: none; padding-top: 0; }
 .glance-row:last-child { padding-bottom: 0; }
 .glance-label {
   display: block;
@@ -1366,4 +1371,26 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
   font-size: 0.95rem;
   line-height: 1.65;
   color: #2b2f3a;
+}
+
+/* ===== At a glance — credential strip =====
+   The card led with detail before it led with standing. A short strip of the
+   three facts that establish authority now sits directly under the title, so a
+   recruiter reads the standing first and the particulars second. */
+.glance-card .glance-marks{
+  display:flex; flex-wrap:wrap; gap:.4rem;
+  margin:0 0 1rem; padding-bottom:1rem;
+  border-bottom:1px solid var(--hairline, #ebedf0);
+}
+.glance-card .glance-mark{
+  font-size:.735rem; font-weight:600; letter-spacing:.015em; line-height:1.2;
+  padding:.34rem .62rem; border-radius:999px; white-space:nowrap;
+  color:#3f4550; background:#f5f7fa; border:1px solid #e6e9ee;
+}
+.glance-card .glance-mark-patent{
+  color:#6244C5; background:rgba(98,68,197,.07); border-color:rgba(98,68,197,.22);
+}
+@media (max-width:575.98px){
+  .glance-card .glance-marks{ gap:.32rem }
+  .glance-card .glance-mark{ font-size:.7rem; padding:.3rem .52rem; white-space:normal }
 }

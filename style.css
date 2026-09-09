@@ -1554,3 +1554,40 @@ body.is-light .ask-sources{ border-top-color:rgba(0,0,0,.12); }
 body.is-light .ask-chip{ border-color:rgba(0,0,0,.15); background:rgba(0,0,0,.04); }
 body.is-light .ask-chip:hover{ background:rgba(0,0,0,.08); }
 @media (max-width:600px){ .ask-suggest{ gap:.35rem } .ask-chip{ font-size:.75rem; padding:.35rem .6rem } }
+
+/* ===== Answer blocks: prose, measurement tables, figure references ===== */
+.ans-text{ margin:0 0 .6rem; line-height:1.62; }
+.ans-table-wrap{ margin:.7rem 0; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.ans-table-cap{ font-size:.78rem; opacity:.72; margin-bottom:.35rem; line-height:1.4; }
+.ans-table{ border-collapse:collapse; font-size:.84rem; min-width:min(100%,320px); }
+.ans-table th,.ans-table td{
+  padding:.34rem .6rem; text-align:right; white-space:nowrap;
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+.ans-table th{ text-align:left; font-weight:600; }
+.ans-table tr:last-child th,.ans-table tr:last-child td{ border-bottom:0; }
+body.is-light .ans-table th, body.is-light .ans-table td{ border-bottom-color:rgba(0,0,0,.10); }
+
+.ans-figs{ margin:.6rem 0 .2rem; display:flex; flex-direction:column; gap:.3rem; }
+.ans-fig{ font-size:.82rem; line-height:1.45; opacity:.9; }
+.ans-fig-tag{
+  display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.02em;
+  padding:.1rem .42rem; border-radius:4px; margin-right:.35rem;
+  background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16);
+}
+body.is-light .ans-fig-tag{ background:rgba(0,0,0,.05); border-color:rgba(0,0,0,.12); }
+.ans-fig-pg{ opacity:.6; font-size:.76rem; }
+
+.ans-lang-note{
+  margin-top:.55rem; font-size:.8rem; line-height:1.5; opacity:.8;
+  padding:.45rem .6rem; border-radius:6px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10);
+}
+body.is-light .ans-lang-note{ background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.10); }
+
+.ask-src{ opacity:.9; }
+.ask-chip-lang{ font-weight:600; }
+@media (max-width:600px){
+  .ans-table{ font-size:.78rem }
+  .ans-table th,.ans-table td{ padding:.3rem .45rem }
+}

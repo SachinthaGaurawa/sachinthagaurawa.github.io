@@ -33,53 +33,20 @@ const clamp = (v, min, max)=> Math.max(min, Math.min(max, v));
    Unsplash stock photography and placeholder YouTube ids, which presented
    other people's photographs - and a joke video - as this portfolio's
    projects. */
-const ALBUMS = [
+/* Albums are read from index.html at load (js/gallery-sync.js). These entries
+   are only the fallback used if that fetch fails, so the gallery still shows
+   something rather than an empty grid. */
+let ALBUMS = [
   {
     id: "aavss",
+    kind: "project",
     title: "Advanced Autonomous Vehicle Safety System",
     cover: "img/aavss-wallpaper.jpg",
-    description: "A real-time, AI-integrated embedded platform built to reduce road accidents through intelligent monitoring and automation. Patent-pending, and recognised at distinction level.",
-    tags: ["AAVSS","autonomous","safety","embedded","sensor fusion","patent-pending"],
-    // The 100-page final report ships with this site and is indexed into
-    // data/aavss-kb.json, so questions about this album can be answered from
-    // the document itself rather than from the two-line description.
-    report: { file: "reports/AAVSS_Report.pdf", kb: "data/aavss-kb.json" },
-    media: [
-      { type: "image", src: "img/aavss-wallpaper.jpg" },
-      { type: "image", src: "https://res.cloudinary.com/dzrfpc9be/image/upload/f_auto,q_auto/v1755231573/IMG_8893_1_wtmgsn.jpg" }
-    ]
-  },
-  {
-    id: "dataset",
-    title: "Autonomous Driving Dataset for Sri Lanka",
-    cover: "img/dataset-sri-lanka.jpg",
-    description: "Upcoming. A dataset built around Sri Lankan road conditions, traffic patterns and driving behaviour, to support localised autonomous-vehicle development and contribute to global AV research.",
-    tags: ["dataset","Sri Lanka","computer vision","machine learning","autonomous vehicles"],
-    media: [
-      { type: "image", src: "img/dataset-sri-lanka.jpg" }
-    ]
-  },
-  {
-    id: "drone-swarm",
-    title: "Disaster Prediction and Rapid Response Drone Swarm",
-    cover: "img/drone-swarm.jpg",
-    description: "AI-driven disaster prediction and rapid response using an edge-embedded vision drone swarm. Published research.",
-    tags: ["drone","swarm","edge AI","vision","disaster response","research"],
-    media: [
-      { type: "image", src: "img/drone-swarm.jpg" }
-    ]
-  },
-  {
-    id: "recognition",
-    title: "Recognition and Awards",
-    cover: "img/awards/excellence-trophy.jpg",
-    description: "Dr. Vidhya Vinod Academic Excellence Award - Best Undergraduate Project, BEng(Hons) Electrical and Electronic Engineering Top-Up, Study World Lanka Campus, Convocation 2025.",
-    tags: ["award","academic excellence","2025","recognition"],
-    media: [
-      { type: "image", src: "img/awards/excellence-trophy.jpg" },
-      { type: "image", src: "img/awards/excellence-certificate.jpg" },
-      { type: "image", src: "img/awards/award-ceremony.jpg" }
-    ]
+    description: "A real-time, AI-integrated embedded platform built to reduce road accidents through intelligent monitoring and automation. Patent-pending.",
+    tags: ["AAVSS", "autonomous", "safety", "embedded"],
+    docs: ["aavss"],
+    report: { file: "reports/AAVSS_Report.pdf" },
+    media: [{ type: "image", src: "img/aavss-wallpaper.jpg" }]
   }
 ];
 
@@ -114,8 +81,7 @@ async function postJSON(url, payload, { retries=0 } = {}) {
       return j;
     } catch (err) {
       if (attempt < retries) { await sleep(400 * (attempt + 1)); continue; }
-      console.error('[gallery] postJSON failed:', err);
-      throw err;
+      throw err;   // every caller reports this in its own words
     }
   }
 }
@@ -126,10 +92,22 @@ async function aiAsk(question, context) {
   return j?.answer || '';
 }
 
-// Vision captions + tags
+/* Vision captions + tags.
+
+   Captions are automatic and run once per image, so when the service is not
+   reachable the first failure is all the information there is - asking again
+   for every remaining image only costs the visitor time and fills the console
+   with the same error. Questions are not gated by this: they are typed by a
+   person, one at a time, and deserve a fresh attempt. */
+let captionsOffline = false;
 async function aiCaption(imageUrl) {
-  const j = await postJSON(`${API_BASE}/api/ai`, { mode: 'caption', imageUrl });
-  return j; // { caption, tags }
+  if (captionsOffline) throw new Error('caption service unavailable');
+  try {
+    return await postJSON(`${API_BASE}/api/ai`, { mode: 'caption', imageUrl });
+  } catch (err) {
+    captionsOffline = true;
+    throw err;
+  }
 }
 
 // Expert deep Q&A
@@ -336,9 +314,11 @@ function openAlbum(id, index=0, push=false){
     masonry.appendChild(tile);
   });
 
-  // Warm the report index while the visitor is still looking at the photos,
-  // so the first question does not wait on a 129 KB fetch.
-  if (a.report) ReportKB.load().catch(() => {});
+  // Warm this album's documents while the visitor is still looking at the
+  // photos, so the first question does not wait on the fetch.
+  if (window.GalleryAI && a.docs && a.docs.length) {
+    a.docs.forEach(d => window.GalleryAI.load(d).catch(() => {}));
+  }
   renderAskSuggestions(a);
 
   albumView.classList.add('active'); 
@@ -512,14 +492,16 @@ function buildAlbumContext(album){
 
 /* Visitors do not guess that a 100-page engineering report sits behind this
    box, so the album says what it can be asked. */
-const REPORT_PROMPTS = [
-  'What sensors does it use?',
-  'How does the emergency response work?',
-  'What hardware does it run on?',
-  'Crash avoidance results?',
-  'How does it compare to Tesla?',
-  'What are the limitations?'
-];
+/* Visitors do not guess that full engineering documents sit behind this box,
+   so each album says what it can be asked - phrased for that album. */
+const PROMPTS_BY_KIND = {
+  research: ['What problem does this paper address?', 'What method is used?',
+             'What results are reported?', 'What are the limitations?',
+             'What hardware was it evaluated on?'],
+  project:  ['What sensors does it use?', 'What hardware does it run on?',
+             'How does it perform?', 'What are the limitations?',
+             'How does it compare to existing systems?']
+};
 
 function renderAskSuggestions(album) {
   const panel = document.querySelector('.album-ask');
@@ -529,7 +511,12 @@ function renderAskSuggestions(album) {
 
   const existing = document.getElementById('ask-suggest');
   if (existing) existing.remove();
-  if (!album || !album.report) return;
+
+  const hasDocs = album && ((album.docs && album.docs.length) || album.report);
+  if (!hasDocs) {
+    input.placeholder = 'Ask about this album…';
+    return;
+  }
 
   const wrap = document.createElement('div');
   wrap.id = 'ask-suggest';
@@ -537,10 +524,10 @@ function renderAskSuggestions(album) {
 
   const lead = document.createElement('span');
   lead.className = 'ask-suggest-lead';
-  lead.textContent = 'Ask the 100-page project report:';
+  lead.textContent = 'Ask the full document behind this project — answers cite the section and page:';
   wrap.appendChild(lead);
 
-  REPORT_PROMPTS.forEach(q => {
+  (PROMPTS_BY_KIND[album.kind] || PROMPTS_BY_KIND.project).forEach(q => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'ask-chip';
@@ -549,8 +536,19 @@ function renderAskSuggestions(album) {
     wrap.appendChild(b);
   });
 
+  // Anyone can ask in their own language; say so rather than hoping they try.
+  const lang = document.createElement('button');
+  lang.type = 'button';
+  lang.className = 'ask-chip ask-chip-lang';
+  lang.textContent = 'සිංහලෙන් / in your language';
+  lang.addEventListener('click', () => {
+    input.value = 'Explain this project in Sinhala';
+    btn.click();
+  });
+  wrap.appendChild(lang);
+
   panel.appendChild(wrap);
-  input.placeholder = 'Ask anything about this project — answered from the report';
+  input.placeholder = 'Ask anything about this project — answered from its documents';
 }
 
 /* One route for every question, best source first:
@@ -560,46 +558,165 @@ function renderAskSuggestions(album) {
    3. and if that model cannot be reached, the retrieved passages answer
       directly - which is why this box works with no backend at all. */
 async function answerQuestion(question, album) {
-  let fromReport = null, context = '';
+  const AI = window.GalleryAI;
+  const lang = AI ? AI.detectLanguage(question) : null;
+  const docs = (album && album.docs) || [];
+  let grounded = null, context = '';
 
-  if (album && album.report) {
+  if (AI) {
     try {
-      await ReportKB.load();
-      fromReport = ReportKB.answer(question);
-      context = ReportKB.contextFor(question);
+      // Load only what this album needs; fall back to everything for a question
+      // the album's own documents cannot answer.
+      if (docs.length) await Promise.all(docs.map(d => AI.load(d).catch(() => null)));
+      grounded = AI.answer(question, { docs });
+      if (!grounded) { await AI.loadAll(); grounded = AI.answer(question, {}); }
+      context = AI.contextFor(question, grounded ? { docs: docs.length ? docs : undefined } : {});
     } catch (err) {
-      console.warn('[gallery] report KB unavailable:', err && err.message);
+      console.warn('[gallery] knowledge base unavailable:', err && err.message);
     }
   }
   if (!context) context = buildAlbumContext(album);
 
+  // The hosted model, when it answers, writes over the passages retrieved
+  // above rather than over a two-line description - and it is what can reply
+  // in another language.
   try {
-    const modelAnswer = await aiAsk(question, context);
+    const ask = lang
+      ? `${question}\n\n(Answer entirely in ${lang.name}.)`
+      : question;
+    const modelAnswer = await aiAsk(ask, context);
     if (modelAnswer && modelAnswer.trim()) {
-      return { text: modelAnswer.trim(), sources: fromReport ? fromReport.sources : [], via: 'model' };
+      return { blocks: [{ type: 'text', text: modelAnswer.trim() }],
+               sources: grounded ? grounded.sources : [], via: 'model', lang };
     }
   } catch (err) {
     console.warn('[gallery] hosted model unavailable:', err && err.message);
   }
 
-  if (fromReport) return { text: fromReport.text, sources: fromReport.sources, via: 'report' };
-  return { text: localAnswer(question, album), sources: [], via: 'page' };
+  if (grounded) return { blocks: grounded.blocks, sources: grounded.sources, via: 'docs', lang };
+  return { blocks: [{ type: 'text', text: localAnswer(question, album) }], sources: [], via: 'page', lang };
 }
 
 // Citations, and a way to read the source document.
+/* Render an answer's blocks. A measurement table becomes a table, a figure
+   reference becomes a labelled figure, and citations name the document, the
+   section and the page. Everything is built from DOM nodes, never innerHTML,
+   so document text can never become markup. */
+function renderAnswer(result, album, out) {
+  if (!out) return;
+  out.textContent = '';
+
+  (result.blocks || []).forEach(b => {
+    if (b.type === 'text') {
+      const p = document.createElement('p');
+      p.className = 'ans-text';
+      p.textContent = b.text;
+      out.appendChild(p);
+      return;
+    }
+    if (b.type === 'table') {
+      const wrap = document.createElement('div');
+      wrap.className = 'ans-table-wrap';
+      if (b.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'ans-table-cap';
+        cap.textContent = b.caption;
+        wrap.appendChild(cap);
+      }
+      const tbl = document.createElement('table');
+      tbl.className = 'ans-table';
+      const tb = document.createElement('tbody');
+      b.rows.forEach(r => {
+        const tr = document.createElement('tr');
+        r.forEach((cell, i) => {
+          const td = document.createElement(i === 0 ? 'th' : 'td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+      tbl.appendChild(tb);
+      wrap.appendChild(tbl);
+      out.appendChild(wrap);
+      return;
+    }
+    if (b.type === 'figures') {
+      const wrap = document.createElement('div');
+      wrap.className = 'ans-figs';
+      b.items.forEach(f => {
+        const tag = document.createElement('span');
+        tag.className = 'ans-fig-tag';
+        tag.textContent = `${f.kind} ${f.num}`;
+        const pg = document.createElement('span');
+        pg.className = 'ans-fig-pg';
+        pg.textContent = `p${f.page}`;
+
+        /* The build cropped this one out of the document, so show the picture
+           itself - a chart answers "how fast is it" better than a sentence
+           about the chart. Figures it could not crop keep their caption line. */
+        if (f.src) {
+          const fig = document.createElement('figure');
+          fig.className = 'ans-figure';
+          const img = document.createElement('img');
+          img.src = f.src;
+          img.alt = `${f.kind} ${f.num}: ${f.caption}`;
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          // Real dimensions, so the answer does not jump as the image arrives.
+          if (f.w && f.h) { img.width = f.w; img.height = f.h; }
+          fig.appendChild(img);
+          const cap = document.createElement('figcaption');
+          cap.appendChild(tag);
+          cap.appendChild(document.createTextNode(' ' + f.caption + ' '));
+          cap.appendChild(pg);
+          fig.appendChild(cap);
+          wrap.appendChild(fig);
+          return;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'ans-fig';
+        row.appendChild(tag);
+        row.appendChild(document.createTextNode(' ' + f.caption + ' '));
+        row.appendChild(pg);
+        wrap.appendChild(row);
+      });
+      out.appendChild(wrap);
+    }
+  });
+
+  if (result.lang && result.via !== 'model') {
+    const note = document.createElement('div');
+    note.className = 'ans-lang-note';
+    note.textContent = `${result.lang.label}: the assistant that translates is offline right now, so this is quoted from the source document in English.`;
+    out.appendChild(note);
+  }
+
+  const cite = sourceLine(result, album);
+  if (cite) out.appendChild(cite);
+  return out;
+}
+
 function sourceLine(result, album) {
   if (!result.sources || !result.sources.length) return null;
   const wrap = document.createElement('div');
   wrap.className = 'ask-sources';
   const label = document.createElement('span');
-  label.textContent = result.via === 'model' ? 'Grounded in the project report: ' : 'From the project report: ';
+  label.textContent = result.via === 'model' ? 'Grounded in: ' : 'From: ';
   wrap.appendChild(label);
-  wrap.appendChild(document.createTextNode(result.sources.join('  ·  ')));
-  if (album && album.report) {
+  result.sources.forEach((sc, i) => {
+    if (i) wrap.appendChild(document.createTextNode('  ·  '));
+    const b = document.createElement('span');
+    b.className = 'ask-src';
+    b.textContent = (sc.doc ? sc.doc + ' ' : '') + sc.label;
+    wrap.appendChild(b);
+  });
+  const file = (result.sources.find(s => s.file) || {}).file || (album && album.report && album.report.file);
+  if (file) {
     wrap.appendChild(document.createTextNode(' '));
     const a = document.createElement('a');
-    a.href = album.report.file; a.target = '_blank'; a.rel = 'noopener noreferrer';
-    a.textContent = 'open the PDF';
+    a.href = file.replace(/^\//, ''); a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = 'open the document';
     wrap.appendChild(a);
   }
   return wrap;
@@ -614,9 +731,7 @@ async function askAboutAlbum(question){
   btn.disabled = true; out.textContent = 'Reading the report…';
   try{
     const result = await answerQuestion(question, currentAlbum);
-    out.textContent = result.text;
-    const cite = sourceLine(result, currentAlbum);
-    if (cite) out.appendChild(cite);
+    renderAnswer(result, currentAlbum, out);
   }catch(err){
     console.warn('[gallery] ask failed:', err?.message || err);
     out.textContent = localAnswer(question, currentAlbum);
@@ -923,7 +1038,7 @@ function wireAskUI(){
     if (!q) return;
 
     btn.disabled = true;
-    renderChat('_Thinking…_', 'Assistant');
+    renderChat('Reading the documents…', (currentAlbum && currentAlbum.title) || 'Assistant');
 
     try {
       let routed;
@@ -936,12 +1051,15 @@ function wireAskUI(){
 
       const album = currentAlbum || ALBUMS[0];
       const result = await answerQuestion(q, album);
-      renderChat(result.text, routed.topic || 'Assistant');
-      const cite = sourceLine(result, album);
-      if (cite) out.appendChild(cite);
+      // The chip used to come from a hard-coded two-topic router, so every
+      // album's answer was labelled "AAVSS". Name the album actually open.
+      renderChat('', album ? album.title : 'Assistant');
+      const bubble = out.querySelector('.chat-bubble:last-of-type .msg') || out;
+      renderAnswer(result, album, bubble);
     } catch (err) {
       console.warn('[gallery] ask failed, answering locally:', err?.message || err);
-      renderChat(localAnswer(q, currentAlbum || ALBUMS[0]), 'Assistant');
+      const fb = currentAlbum || ALBUMS[0];
+      renderChat(localAnswer(q, fb), fb ? fb.title : 'Assistant');
     } finally {
       btn.disabled = false;
     }
@@ -950,167 +1068,6 @@ function wireAskUI(){
   btn.onclick = ask;
   input.onkeydown = (e) => { if (e.key === 'Enter') ask(); };
 }
-
-/* ====== AAVSS report knowledge base ======
-   The final report is a 100-page document that already ships with this site.
-   Rather than depend on a backend, a database and a paid model to answer one
-   question about it, the report is extracted at build time into
-   data/aavss-kb.json and searched here, in the page. That means answers are
-   grounded in Sachintha's own words, quote a section and page number, cost
-   nothing, and cannot break independently of the site. The hosted model, when
-   it is reachable, is handed these same passages as context - so it improves
-   the answer instead of being the only thing that can produce one. */
-const ReportKB = (() => {
-  const STOP = new Set(('a an the and or but if then than that this these those of to in on for with by from as at is are was were be been being it its into over under about ' +
-    'what which who whom how why when where does do did can could should would will shall may might must have has had i you he she they we me my your our their there here ' +
-    'not no yes any all some more most other such only own same so too very s t just now').split(' '));
-
-  const state = { loading: null, ready: false, chunks: [], df: new Map(), avgLen: 0 };
-
-  function stem(w) {
-    if (w.length > 4 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
-    if (w.length > 4 && w.endsWith('sses')) return w.slice(0, -2);
-    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
-    if (w.length > 5 && w.endsWith('ing')) return w.slice(0, -3);
-    if (w.length > 4 && w.endsWith('ed')) return w.slice(0, -2);
-    return w;
-  }
-  function tokens(str) {
-    return String(str || '').toLowerCase().replace(/[^a-z0-9\s.-]/g, ' ')
-      .split(/\s+/).filter(w => w.length > 1 && !STOP.has(w)).map(stem);
-  }
-
-  // A visitor asks about "the processor"; the report says "Jetson Nano". Every
-  // term on the right was verified present in the document, so this widens
-  // recall without inventing vocabulary the report does not use.
-  const ALIAS = {
-    processor: ['jetson','nano','pi'], microcontroller: ['jetson','nano','pi'],
-    mcu: ['jetson','nano'], chip: ['jetson','nano'], cpu: ['jetson','nano'],
-    gpu: ['jetson','nano'], board: ['jetson','nano','pcb'], compute: ['jetson','nano'],
-    computer: ['jetson','nano'], hardware: ['jetson','nano','pcb','component'],
-    brain: ['jetson','nano'], camera: ['imx219','vision'], vision: ['imx219','camera'],
-    watch: ['pinetime'], smartwatch: ['pinetime'], wearable: ['pinetime'],
-    heart: ['pinetime','biometric'], biometric: ['pinetime','facial'],
-    distance: ['vl53l0x','ultrasonic','lidar'], proximity: ['vl53l0x','ultrasonic'],
-    range: ['vl53l0x','lidar'], battery: ['li-po','power'],
-    connectivity: ['4g','gsm','gps'], network: ['4g','gsm','gps'],
-    internet: ['4g','gsm'], cellular: ['4g','gsm'], location: ['gps'],
-    security: ['nfc','access'], unlock: ['nfc'], circuit: ['pcb'],
-    speed: ['latency','response'], fast: ['latency','response'],
-    steering: ['servo'], motor: ['servo'], cost: ['power','efficiency']
-  };
-  function expand(qTokens, raw) {
-    const out = new Set(qTokens);
-    const words = String(raw || '').toLowerCase().split(/[^a-z0-9]+/);
-    words.forEach(w => (ALIAS[w] || []).forEach(a => out.add(stem(a))));
-    return [...out];
-  }
-
-  async function load() {
-    if (state.ready) return true;
-    if (state.loading) return state.loading;
-    state.loading = (async () => {
-      const r = await fetch('data/aavss-kb.json', { cache: 'force-cache' });
-      if (!r.ok) throw new Error('KB HTTP ' + r.status);
-      const data = await r.json();
-      state.meta = data.meta || {};
-      state.doc = data.doc || '';
-      state.chunks = (data.chunks || []).map(c => {
-        const body = tokens(c.t), head = tokens(c.s);
-        const tf = new Map();
-        // section titles describe what a passage is about, so they count double
-        body.forEach(w => tf.set(w, (tf.get(w) || 0) + 1));
-        head.forEach(w => tf.set(w, (tf.get(w) || 0) + 2));
-        return { s: c.s, p: c.p, t: c.t, tf, len: body.length };
-      });
-      state.chunks.forEach(c => {
-        new Set(c.tf.keys()).forEach(w => state.df.set(w, (state.df.get(w) || 0) + 1));
-      });
-      state.avgLen = state.chunks.reduce((a, c) => a + c.len, 0) / Math.max(1, state.chunks.length);
-      state.ready = true;
-      return true;
-    })().catch(err => { state.loading = null; throw err; });
-    return state.loading;
-  }
-
-  // Okapi BM25.
-  const K1 = 1.5, B = 0.75;
-  function search(question, topK = 4) {
-    const q = expand(tokens(question), question);
-    if (!q.length || !state.ready) return [];
-    const N = state.chunks.length;
-    const scored = state.chunks.map(c => {
-      let score = 0;
-      for (const w of q) {
-        const f = c.tf.get(w);
-        if (!f) continue;
-        const idf = Math.log(1 + (N - state.df.get(w) + 0.5) / (state.df.get(w) + 0.5));
-        score += idf * (f * (K1 + 1)) / (f + K1 * (1 - B + B * c.len / state.avgLen));
-      }
-      // Appendices are largely figure captions and pointers rather than
-      // explanation, so they should surface only when nothing better matches.
-      if (/^A\b/.test(c.s)) score *= 0.7;
-      return { c, score };
-    }).filter(x => x.score > 0);
-    scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, topK);
-  }
-
-  // Whole passages are too blunt to read. Rank the sentences inside the best
-  // passages and keep the few that actually answer the question, in the order
-  // the report states them.
-  function bestSentences(hits, question, limit = 4) {
-    const q = new Set(expand(tokens(question), question));
-    const cand = [];
-    const seen = new Set();   // chunks overlap by design, so the same sentence recurs
-    hits.slice(0, 3).forEach((h, hi) => {
-      h.c.t.split(/(?<=[.!?])\s+(?=[A-Z0-9•])/).forEach((sent, si) => {
-        const clean = sent.trim();
-        if (clean.length < 40 || clean.length > 400) return;
-        // "This appendix contains…", "Figure 5.2 shows…" describe the report,
-        // not the system, and answer nothing a visitor asked.
-        if (/\b(this|the)\s+(appendix|section|chapter|figure|table)\b[^.]{0,40}\b(contains?|includes?|shows?|presents?|provides?|illustrat\w+|depicts?|outlines?)\b/i.test(clean)) return;
-        if (/^\(?(figure|table|appendix)\s*\d/i.test(clean)) return;
-        const key = clean.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 90);
-        if (seen.has(key)) return;
-        seen.add(key);
-        const st = tokens(clean);
-        if (!st.length) return;
-        const overlap = st.filter(w => q.has(w)).length;
-        if (!overlap) return;
-        cand.push({ text: clean, hi, si, score: overlap / Math.sqrt(st.length) + (3 - hi) * 0.05 });
-      });
-    });
-    cand.sort((a, b) => b.score - a.score);
-    const keep = cand.slice(0, limit);
-    keep.sort((a, b) => a.hi - b.hi || a.si - b.si);
-    return keep.map(k => k.text);
-  }
-
-  function cite(h) { return `§${h.c.s} · p${h.c.p}`; }
-
-  // Passages joined for the hosted model, tagged so it can cite them too.
-  function contextFor(question, topK = 4) {
-    const hits = search(question, topK);
-    if (!hits.length) return '';
-    return hits.map(h => `[${cite(h)}]\n${h.c.t}`).join('\n---\n');
-  }
-
-  function answer(question) {
-    const hits = search(question, 4);
-    if (!hits.length) return null;
-    const sentences = bestSentences(hits, question);
-    const body = sentences.length ? sentences.join(' ') : hits[0].c.t;
-    const lead = /^[a-z]/.test(body) ? '…' + body : body;
-    const sources = [...new Set(hits.slice(0, 3).map(cite))];
-    return { text: lead, sources, top: hits[0] };
-  }
-
-  return { load, search, answer, contextFor, cite,
-           get ready() { return state.ready; },
-           get meta() { return state.meta || {}; },
-           get size() { return state.chunks.length; } };
-})();
 
 /* ====== Local answerer (no network) ======
    The hosted model is the better answer when it is reachable. When it is not -
@@ -1168,10 +1125,22 @@ async function captionImagesInAlbum(album){
         tile.setAttribute('title', data.caption || '');
         let tr = tile.querySelector('.mini-tags');
         if (!tr) { tr = document.createElement('div'); tr.className = 'mini-tags'; tile.appendChild(tr); }
-        tr.innerHTML = (data.tags||[]).slice(0,3).map(t=>`<span class="mini-chip">${t}</span>`).join('');
+        // Built as nodes, not markup: these words come back from a model, and
+        // a tag containing a tag would otherwise become part of the page.
+        tr.textContent = '';
+        (data.tags||[]).slice(0,3).forEach(t => {
+          const chip = document.createElement('span');
+          chip.className = 'mini-chip';
+          chip.textContent = String(t);
+          tr.appendChild(chip);
+        });
       }
       (data.tags||[]).forEach(t=> allTags.add(t));
     } catch(err){
+      if (captionsOffline) {
+        console.info('[gallery] image captions skipped - AI service unavailable');
+        break;
+      }
       console.warn('[gallery] caption error:', err?.message || err);
     }
   }
@@ -1224,15 +1193,52 @@ function setupLazyHero(){
   document.querySelectorAll('img.lazy-cover').forEach(i=>io.observe(i));
 }
 
+/* The chips were a hard-coded list - 'lidar', 'night', 'rain'. Once the albums
+   started coming from the portfolio page three of the five matched nothing, so
+   clicking them emptied the grid. Build them from the tags the albums really
+   carry, commonest first, and keep only terms that return a result. */
+function chipTerms(limit = 6){
+  const freq = new Map();
+  ALBUMS.forEach(a => (a.tags || []).forEach(raw => {
+    const label = String(raw).trim();
+    if (label.length < 3 || label.length > 22) return;
+    if (/^\d{4}$/.test(label)) return;            // a year is a label, not a query
+    const key = label.toLowerCase();
+    const cur = freq.get(key);
+    if (cur) cur.n++; else freq.set(key, { n: 1, label });
+  }));
+  const returnsSomething = t => ALBUMS.some(a =>
+    (a.title + ' ' + (a.description || '') + ' ' + (a.tags || []).join(' '))
+      .toLowerCase().includes(t));
+  return [...freq.entries()]
+    .filter(([t]) => returnsSomething(t))
+    .sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([t, v]) => ({ term: t, label: v.label }));
+}
+
+let chipsWired = false;
 function setupChips(){
-  const POPULAR = ['autonomous','dataset','lidar','night','rain'];
   const chips = document.getElementById('chips');
   if (!chips) return;
-  chips.innerHTML = POPULAR.map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join('');
-  chips.addEventListener('click',e=>{
-    const b=e.target.closest('.chip'); if(!b) return;
-    const t=b.dataset.t.toLowerCase();
-    $('#searchInput').value = t;
+
+  chips.textContent = '';
+  chipTerms().forEach(({ term, label }) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.dataset.t = term;
+    b.textContent = label;      // tag text comes from the portfolio page
+    chips.appendChild(b);
+  });
+
+  if (chipsWired) return;       // re-rendered on every sync; wired once
+  chipsWired = true;
+  chips.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const t = b.dataset.t.toLowerCase();
+    const search = $('#searchInput');
+    if (search) search.value = t;
     renderGrid(t);
   });
 }
@@ -1295,6 +1301,29 @@ window.addEventListener('popstate', ()=>{
 });
 
 /* ====== Init ====== */
+/* The portfolio page is the single source of truth for what exists. Read it,
+   attach each album to the documents that describe it, and re-render. If the
+   fetch fails the built-in fallback album still shows, so the grid is never
+   empty. */
+async function syncFromPortfolio() {
+  if (!window.GallerySync) return;
+  try {
+    let docs = [];
+    if (window.GalleryAI) {
+      try { docs = (await window.GalleryAI.manifest()).docs || []; } catch (e) { docs = []; }
+    }
+    const albums = await window.GallerySync.build(docs);
+    if (albums && albums.length) {
+      ALBUMS = albums;
+      renderGrid(document.getElementById('searchInput') ? document.getElementById('searchInput').value : '');
+      setupChips();
+      console.log(`[gallery] ${albums.length} albums synced from the portfolio page`);
+    }
+  } catch (err) {
+    console.warn('[gallery] portfolio sync failed, using built-in albums:', err && err.message);
+  }
+}
+
 function init(){
   if (!hasRequiredEls()) {
     console.warn('[gallery] Init stopped because required elements are missing on this page.');
@@ -1302,6 +1331,7 @@ function init(){
   }
 
   renderGrid();
+  syncFromPortfolio();
   setupSearch();
   setupChips();
   setupResponsiveToolbar();   // phones/tablets layout
@@ -1351,18 +1381,31 @@ function init(){
 document.addEventListener('DOMContentLoaded', init);
 console.log('app.js fully initialized');
 
-// Quick backend sanity ping (shows result in console)
-fetch(`${API_BASE}/api/ai`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
-})
-  .then(async r => {
+/* Backend sanity ping, on demand.
+
+   This used to run on load. It sent a real question to the model on every
+   single page view - a charge for an answer nobody reads - and, whenever the
+   service was unreachable, logged an error for a state the gallery handles
+   perfectly well: every question is answered from the documents in the
+   browser. Kept as a helper, so the diagnostic is a console call away without
+   costing every visitor a request.
+   Run  __pingAPI()  in the console to check the backend. */
+window.__pingAPI = async function () {
+  try {
+    const r = await fetch(`${API_BASE}/api/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'ask', question: 'Ping from browser', context: 'Test context' })
+    });
     const t = await r.text();
-    console.log('[gallery] API ping →', t);
-    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on backend and API_BASE here.');
-  })
-  .catch(err => console.error('[gallery] API ping failed:', err));
+    console.log('[gallery] API ping →', r.status, t.slice(0, 300));
+    if (!r.ok) console.warn('[gallery] Ping failed. Check CORS_ORIGINS on the backend and API_BASE here.');
+    return r.ok;
+  } catch (err) {
+    console.warn('[gallery] API ping failed:', err && err.message);
+    return false;
+  }
+};
 
 
 /* ====== Mobile/Tablet toolbar: chips (left) + search (right) + tip below ====== */

@@ -190,15 +190,34 @@ window.GalleryAI = (function () {
   /* ------------------------------------------------------------ passages --- */
   const META_SENTENCE = /\b(this|the)\s+(appendix|section|chapter|figure|table)\b[^.]{0,40}\b(contains?|includes?|shows?|presents?|provides?|illustrat\w+|depicts?|outlines?)\b/i;
 
+  /* A table flattened by PDF extraction has no full stops in it, so a sentence
+     split welds "Urban Roads 2.5 95.7 Heavy Traffic 3.2 94.1" onto the front of
+     the paragraph that follows it, and the answer opens with a wall of numbers.
+     Cut those runs out before choosing sentences - extractTable puts them back
+     below, as an actual table. */
+  const TABLE_RUN = /(?:[A-Z][A-Za-z \/()\-]{2,38}?\s+(?:\d+(?:\.\d+)?\s+){1,5}\d+(?:\.\d+)?\s*){2,}/g;
+
+  /* What is left after the rows are gone can still be a column header rather
+     than a sentence ("Driving Conditions AI Response Time (Seconds)"). Prose
+     runs several plain lowercase words together; a header almost never does. */
+  const LOWER_PAIR = /\b[a-z]{2,}\s+[a-z]{2,}\b/g;
+  function looksLikeProse(str) {
+    return (str.match(LOWER_PAIR) || []).length >= 4;
+  }
+
   function bestSentences(hits, question, limit) {
     const q = new Set(expand(tokens(question), question));
     const cand = [], seen = new Set();
     hits.slice(0, 3).forEach((h, hi) => {
-      h.c.t.split(/(?<=[.!?])\s+(?=[A-Z0-9•])/).forEach((sent, si) => {
-        const clean = sent.trim();
+      h.c.t.replace(TABLE_RUN, ' \u00b6 ')
+        .split(/\u00b6|(?<=[.!?])\s+(?=[A-Z0-9•])/).forEach((sent, si) => {
+        // A bullet marker belongs to the list it came from, not to the front
+        // of an answer that no longer shows the list.
+        const clean = sent.trim().replace(/^[\u2022\u25cf\u25aa\-\u2013]\s*/, '');
         if (clean.length < 40 || clean.length > 400) return;
         if (META_SENTENCE.test(clean)) return;
         if (/^\(?(figure|table|appendix)\s*\d/i.test(clean)) return;
+        if (!looksLikeProse(clean)) return;
         const key = clean.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 90);
         if (seen.has(key)) return;
         seen.add(key);
@@ -220,7 +239,10 @@ window.GalleryAI = (function () {
      runs of numbers ("Pedestrian 98.7 250 99.1 Vehicle 96.4 310 97.8"). Flat
      prose loses them, so rebuild the grid. */
   function extractTable(text) {
-    const rowRe = /([A-Z][A-Za-z /()\-]{2,38}?)\s+((?:\d+(?:\.\d+)?\s+){1,5}\d+(?:\.\d+)?)(?=\s+[A-Z]|\s*$)/g;
+    // The last row of a table is often followed by its figure caption in
+    // brackets rather than by another row, and requiring a capital letter
+    // there dropped that row from every such table.
+    const rowRe = /([A-Z][A-Za-z \/()\-]{2,38}?)\s+((?:\d+(?:\.\d+)?\s+){1,5}\d+(?:\.\d+)?)(?=\s+[A-Z(]|\s*$)/g;
     const rows = [];
     let m;
     while ((m = rowRe.exec(text)) !== null) {
@@ -239,24 +261,63 @@ window.GalleryAI = (function () {
     // grid, which is accurate and still tells the reader what the columns are.
     const before = text.slice(0, text.indexOf(rows[0][0]));
     const headMatch = before.match(/([A-Z][A-Za-z %()/.,\-]{10,120})\s*$/);
-    const caption = headMatch ? headMatch[1].trim().replace(/\s+/g, ' ') : null;
+    // Trim any tail of the sentence that ran into the header, so the caption
+    // starts where the columns start.
+    const caption = headMatch
+      ? headMatch[1].replace(/^.*[.:\u2022]\s*/, '').trim().replace(/\s+/g, ' ') || null
+      : null;
     return { caption, rows: rows.filter(r => r.length === width).slice(0, 12) };
   }
 
   /* ------------------------------------------------------------- figures --- */
+  /* A question about results deserves the chart that shows them, not only a
+     sentence about it. tools/build-kb.py crops every captioned figure out of
+     the documents; this picks the ones the retrieved passages actually point
+     at - by number when a passage names one, otherwise by the page it came
+     from. A figure the build could not crop still appears as its caption, so
+     a document with no extractable artwork loses nothing. */
+  const FIG_REF = /\bFig(?:ure)?\.?\s*(\d+(?:\.\d+)*)/gi;
+
   function figuresIn(hits) {
-    const out = [], seen = new Set();
+    const named = [], nearby = [], seen = new Set();
+
+    const add = (list, doc, f) => {
+      const key = (doc.id || '') + '#' + f.num;
+      if (seen.has(key)) return;
+      seen.add(key);
+      list.push({
+        kind: 'Figure', num: f.num, caption: f.caption, page: f.page,
+        src: f.src, w: f.w, h: f.h, doc
+      });
+    };
+
     hits.forEach(h => {
-      const re = /\(?(Figure|Table)\s*([\d.]+)\s*[–\-—:]\s*([^)\n]{4,90})\)?/gi;
+      const doc = h.doc || {};
+      const figs = doc.figures || [];
+      if (!figs.length) return;
+      const refs = new Set();
+      let m;
+      FIG_REF.lastIndex = 0;
+      while ((m = FIG_REF.exec(h.c.t)) !== null) refs.add(m[1]);
+      figs.forEach(f => { if (refs.has(f.num)) add(named, doc, f); });
+      figs.forEach(f => { if (Math.abs(f.page - h.c.p) <= 1) add(nearby, doc, f); });
+    });
+
+    /* Whatever the build could not crop is still worth naming. */
+    const captions = [];
+    hits.forEach(h => {
+      const re = /\(?(Figure|Table)\s*([\d.]+)\s*[\u2013\-\u2014:]\s*([^)\n]{4,90})\)?/gi;
       let m;
       while ((m = re.exec(h.c.t)) !== null) {
         const key = (m[1] + m[2]).toLowerCase();
         if (seen.has(key)) continue;
         seen.add(key);
-        out.push({ kind: m[1], num: m[2], caption: m[3].trim(), page: h.c.p, doc: h.doc });
+        captions.push({ kind: m[1], num: m[2], caption: m[3].trim(), page: h.c.p, doc: h.doc });
       }
     });
-    return out.slice(0, 4);
+
+    const picked = named.length ? named.slice(0, 2) : nearby.slice(0, 1);
+    return picked.concat(captions).slice(0, 3);
   }
 
   /* ----------------------------------------------------------- assembling -- */

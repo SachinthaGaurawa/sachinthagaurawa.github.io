@@ -1591,3 +1591,29 @@ body.is-light .ans-lang-note{ background:rgba(0,0,0,.04); border-color:rgba(0,0,
   .ans-table{ font-size:.78rem }
   .ans-table th,.ans-table td{ padding:.3rem .45rem }
 }
+
+/* ===== Answer figures =====
+   A cropped figure from the source document. It is evidence, so it is framed
+   like a quotation rather than decoration: a hairline, the document's own
+   white behind it (these crops are drawn on white paper and would look cut
+   out on a dark panel), and the caption underneath in the same voice as the
+   citation line. */
+.ans-figure{ margin:.55rem 0 .35rem; }
+.ans-figure img{
+  display:block; width:100%; height:auto; max-width:520px;
+  border-radius:10px; background:#fff;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 2px 10px rgba(0,0,0,.22);
+}
+.ans-figure figcaption{
+  font-size:.8rem; line-height:1.45; opacity:.9;
+  margin-top:.34rem; max-width:520px;
+}
+body.is-light .ans-figure img{
+  border-color:rgba(0,0,0,.12);
+  box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+@media (max-width:520px){
+  .ans-figure img, .ans-figure figcaption{ max-width:100%; }
+  .ans-figure figcaption{ font-size:.76rem; }
+}

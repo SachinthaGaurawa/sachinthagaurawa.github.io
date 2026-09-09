@@ -207,8 +207,166 @@ def distinctive_terms(by_doc, top=48, vocab=400):
     return names, weights
 
 
+# ---------------------------------------------------------------- figures ---
+# A question about results deserves the chart that shows them, not only a
+# sentence about it. Each figure is cropped out of the page it lives on and
+# written next to the knowledge base, so an answer can show the real picture.
+
+FIG_CAP = re.compile(r'\b(Figure)\s*(\d+(?:\.\d+)*)\s*[:\u2013\u2014-]\s*([^\n]{4,90})')
+FIG_MIN_W, FIG_MIN_H = 90, 70   # smaller than this is a rule or a bullet, not a figure
+FIG_MAX_TEXT = 260              # a region with more characters than this is prose
+FIG_GAP = 40                    # points of blank space that end a drawing
+
+
+def _caption_rect(textpage, needle):
+    searcher = textpage.search(needle, match_case=False)
+    try:
+        found = searcher.get_next()
+        if not found:
+            return None
+        i, n = found
+        boxes = [b for b in (textpage.get_charbox(k) for k in range(i, i + n)) if b]
+        if not boxes:
+            return None
+        return (min(b[0] for b in boxes), min(b[1] for b in boxes),
+                max(b[2] for b in boxes), max(b[3] for b in boxes))
+    finally:
+        searcher.close()
+
+
+def _cluster(cands, start, upward):
+    """Grow away from the caption while the drawing stays continuous.
+
+    Without this, a figure sitting under a table swallowed the table's rules
+    and the prose between them, because nothing above said where to stop.
+    """
+    cands = sorted(cands, key=(lambda b: b[1]) if upward else (lambda b: -b[3]))
+    if not cands:
+        return []
+    out, edge = [cands[0]], (cands[0][3] if upward else cands[0][1])
+    for b in cands[1:]:
+        near = (b[1] <= edge + FIG_GAP) if upward else (b[3] >= edge - FIG_GAP)
+        if not near:
+            break
+        out.append(b)
+        edge = max(edge, b[3]) if upward else min(edge, b[1])
+    return out
+
+
+def extract_figures(doc, out_dir):
+    """Crop every captioned figure out of one document."""
+    try:
+        import pypdfium2.raw as raw
+        from PIL import Image  # noqa: F401  (pypdfium2 renders through Pillow)
+    except ImportError:
+        print("  (figures skipped - Pillow not installed)")
+        return []
+
+    pdf = pdfium.PdfDocument(doc["file"])
+    os.makedirs(out_dir, exist_ok=True)
+    figures, seen = [], set()
+
+    for pno in range(len(pdf)):
+        page = pdf[pno]
+        tp = page.get_textpage()
+        try:
+            text = tp.get_text_range()
+            caps = list(FIG_CAP.finditer(text))
+            if not caps:
+                continue
+
+            W, H = page.get_width(), page.get_height()
+            marks = []
+            for m in caps:
+                # Search for as much of the caption as will match on one line.
+                # Searching for "Figure 1" alone found the first mention of it
+                # in the body text instead of the caption under the picture,
+                # and the crop was then taken from the wrong part of the page.
+                r = None
+                whole = re.sub(r'\s+', ' ', m.group(0))
+                for cut in (46, 34, 24):
+                    r = _caption_rect(tp, whole[:cut])
+                    if r:
+                        break
+                if not r:
+                    r = _caption_rect(tp, f"{m.group(1)} {m.group(2)}")
+                if r:
+                    marks.append((r, m))
+
+            drawings = [o.get_bounds() for o in page.get_objects()
+                        if o.type in (raw.FPDF_PAGEOBJ_IMAGE, raw.FPDF_PAGEOBJ_PATH,
+                                      raw.FPDF_PAGEOBJ_FORM)]
+            drawings = [b for b in drawings if (b[2] - b[0]) > 20 and (b[3] - b[1]) > 20]
+
+            for rect, m in marks:
+                num = m.group(2)
+                if num in seen:
+                    continue
+                cap_low, cap_high = rect[1], rect[3]
+
+                # Some documents caption a figure underneath it, some above it,
+                # and this corpus does both - so take whichever side of the
+                # caption the drawing is actually on, nearest first.
+                # Which side of the caption a drawing sits on is judged by its
+                # middle, not its edges: a figure that is one large image with
+                # white padding has a box that reaches past its own caption,
+                # and requiring it to clear the caption entirely found nothing.
+                mid = lambda b: (b[1] + b[3]) / 2
+                above = _cluster([b for b in drawings if mid(b) >= cap_high], cap_high, True)
+                below = _cluster([b for b in drawings if mid(b) <= cap_low], cap_low, False)
+                box = above or below
+                if above and below:
+                    d_above = min(b[1] for b in above) - cap_high
+                    d_below = cap_low - max(b[3] for b in below)
+                    box = above if d_above <= d_below else below
+
+                if not box:
+                    continue
+
+                x0 = max(0, min(b[0] for b in box) - 6)
+                x1 = min(W, max(b[2] for b in box) + 6)
+                y0 = max(0, min(b[1] for b in box) - 2)
+                y1 = min(H, max(b[3] for b in box) + 2)
+                # Never cross the caption line: cropping to the drawing alone
+                # let the top of the caption bleed into the bottom of the crop.
+                if box is above:
+                    y0 = max(y0, cap_high + 9)
+                else:
+                    y1 = min(y1, cap_low - 4)
+
+                if (x1 - x0) < FIG_MIN_W or (y1 - y0) < FIG_MIN_H:
+                    continue
+
+                chars = sum(1 for k in range(tp.count_chars())
+                            for cb in [tp.get_charbox(k)]
+                            if cb and cb[0] >= x0 and cb[2] <= x1
+                            and cb[1] >= y0 and cb[3] <= y1)
+                if chars > FIG_MAX_TEXT:
+                    continue        # that is a table or a paragraph, not a picture
+
+                name = f"fig-{num.replace('.', '-')}.webp"
+                path = os.path.join(out_dir, name)
+                pil = page.render(scale=2.0, crop=(x0, y0, W - x1, H - y1)).to_pil()
+                pil.save(path, "WEBP", quality=82, method=5)
+
+                seen.add(num)
+                figures.append({
+                    "num": num,
+                    "caption": re.sub(r'\s+', ' ', m.group(3)).strip().rstrip(')').strip(),
+                    "page": pno + 1,
+                    "src": path.replace(os.sep, "/"),
+                    "w": pil.width, "h": pil.height,
+                })
+        finally:
+            tp.close()
+
+    total = sum(os.path.getsize(f["src"]) for f in figures)
+    print(f"  {doc['id']:<24} {len(figures):>3} figures cropped  {total/1024:>5.0f} KB")
+    return figures
+
+
 def main():
-    docs_meta, chunks = [], []
+    docs_meta, chunks, figures = [], [], {}
     print("Building knowledge base:")
     for d in DOCS:
         got = extract(d)
@@ -216,6 +374,12 @@ def main():
             continue
         chunks.extend(got)
         docs_meta.append({k: d[k] for k in ("id", "file", "title", "kind", "topic")})
+
+    print("Cropping figures:")
+    for d in DOCS:
+        if not os.path.exists(d["file"]):
+            continue
+        figures[d["id"]] = extract_figures(d, f"img/kb/{d['id']}")
 
     # One file per document, plus a small manifest. An album only needs its own
     # document, so opening AAVSS must not pull down the drone-swarm paper too.
@@ -228,6 +392,7 @@ def main():
         own = by_doc.get(meta["id"], [])
         meta["keywords"] = names.get(meta["id"], [])
         meta["terms"] = weights.get(meta["id"], {})
+        meta["figures"] = figures.get(meta["id"], [])
         path = f"data/kb/{meta['id']}.json"
         # The routing vocabulary belongs in the manifest only. Repeating it in
         # every document file would add 20 KB to each fetch for data the

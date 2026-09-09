@@ -644,16 +644,40 @@ function renderAnswer(result, album, out) {
       const wrap = document.createElement('div');
       wrap.className = 'ans-figs';
       b.items.forEach(f => {
-        const row = document.createElement('div');
-        row.className = 'ans-fig';
         const tag = document.createElement('span');
         tag.className = 'ans-fig-tag';
         tag.textContent = `${f.kind} ${f.num}`;
-        row.appendChild(tag);
-        row.appendChild(document.createTextNode(' ' + f.caption + ' '));
         const pg = document.createElement('span');
         pg.className = 'ans-fig-pg';
         pg.textContent = `p${f.page}`;
+
+        /* The build cropped this one out of the document, so show the picture
+           itself - a chart answers "how fast is it" better than a sentence
+           about the chart. Figures it could not crop keep their caption line. */
+        if (f.src) {
+          const fig = document.createElement('figure');
+          fig.className = 'ans-figure';
+          const img = document.createElement('img');
+          img.src = f.src;
+          img.alt = `${f.kind} ${f.num}: ${f.caption}`;
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          // Real dimensions, so the answer does not jump as the image arrives.
+          if (f.w && f.h) { img.width = f.w; img.height = f.h; }
+          fig.appendChild(img);
+          const cap = document.createElement('figcaption');
+          cap.appendChild(tag);
+          cap.appendChild(document.createTextNode(' ' + f.caption + ' '));
+          cap.appendChild(pg);
+          fig.appendChild(cap);
+          wrap.appendChild(fig);
+          return;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'ans-fig';
+        row.appendChild(tag);
+        row.appendChild(document.createTextNode(' ' + f.caption + ' '));
         row.appendChild(pg);
         wrap.appendChild(row);
       });

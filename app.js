@@ -213,8 +213,14 @@ function addCard(a){
     <div class="label"><div class="title">${a.title}</div></div>
     ${hasVideo?`<div class="badge-video" title="Contains video"><i class="fa-solid fa-play"></i></div>`:""}
   `;
-  card.setAttribute('data-aos','zoom-in');
-  card.setAttribute('data-aos-delay', String(60 * (grid.children.length % 5)));
+  /* These cards are built after the page has loaded, from the album list read
+     out of the portfolio page. AOS only ever animates elements that existed
+     when it initialised, and its stylesheet sets [data-aos] to opacity:0 until
+     it decides otherwise - so every card built here stayed invisible. Seven
+     albums, one visible card. The entrance is ours now: it cannot depend on a
+     library noticing an element it was never told about. */
+  card.classList.add('card-in');
+  card.style.animationDelay = (60 * (grid.children.length % 5)) + 'ms';
   card.addEventListener('click', ()=> openAlbum(a.id, 0, true));
   grid.appendChild(card);
 }

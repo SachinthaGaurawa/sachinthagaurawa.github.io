@@ -1458,66 +1458,6 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
     .research-content .download-research { width: 100%; margin: 0 0 .5rem; }
 }
 
-/* ===== Hero: pitch, credentials, actions =====
-   The hero gave a name, a typed job title and two buttons. A visitor deciding
-   in five seconds whether this person is worth reading got nothing to decide
-   on - the patent, the award and the papers were all below the fold. */
-.hero-pitch {
-    max-width: 34rem;
-    margin: 1.25rem 0 0;
-    font-size: 1.08rem;
-    line-height: 1.7;
-    color: #4a4f5c;
-}
-.hero-pitch strong { color: #23262f; font-weight: 650; }
-
-.hero-marks {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    margin: 1.4rem 0 0;
-    padding: 0;
-    list-style: none;
-}
-.hero-mark {
-    display: inline-flex;
-    align-items: center;
-    gap: .45rem;
-    padding: .42rem .78rem;
-    border-radius: 999px;
-    font-size: .82rem;
-    font-weight: 600;
-    letter-spacing: .01em;
-    white-space: nowrap;
-    color: #3f4550;
-    background: rgba(255, 255, 255, .72);
-    border: 1px solid #e3e6ec;
-    box-shadow: 0 1px 2px rgba(16, 20, 32, .04);
-}
-.hero-mark i { font-size: .88em; opacity: .78; }
-/* The patent is the strongest single claim on the page, so it leads in colour
-   as well as in order. */
-.hero-mark-lead {
-    color: var(--primary-color);
-    background: rgba(98, 68, 197, .08);
-    border-color: rgba(98, 68, 197, .26);
-}
-.hero-mark-lead i { opacity: 1; }
-
-.hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
-.hero-actions .btn { margin: 0; }
-
-@media (max-width: 991.98px) {
-    .hero-pitch { font-size: 1rem; max-width: none; }
-}
-@media (max-width: 575.98px) {
-    .hero-pitch { font-size: .96rem; line-height: 1.65; margin-top: 1rem; }
-    .hero-marks { gap: .4rem; margin-top: 1.1rem; }
-    .hero-mark  { font-size: .75rem; padding: .36rem .62rem; white-space: normal; }
-    .hero-actions { gap: .5rem; }
-    .hero-actions .btn { flex: 1 1 100%; justify-content: center; }
-}
-
 /* ===== Awards: one award, centred =====
    The single award card sat in a half-width column, leaving the right half of
    the section blank - it read as a section someone had not finished. The card
@@ -1537,29 +1477,54 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
 .membership-card .membership-badge,
 .membership-card > *:last-child { margin-top: auto; }
 
-/* ===== Hero photo: a box that is there before the photo is =====
-   The photo has no reserved space, so the hero column grew when it arrived and
-   pushed the page down - measured at CLS 0.148 for a portrait photo, inside
-   Google's "needs improvement" band, and the shift lands on the first thing a
-   visitor looks at.
 
-   The frame is sized in CSS rather than from the file, so it holds for any
-   photo Sachintha swaps in later, and the photo is fitted inside it rather
-   than cropped to it - a crop chosen without seeing the picture is how you
-   cut off someone's head. */
-.profile-container {
-    height: clamp(340px, 40vw, 560px);
+/* ===== At a glance — refinements =====
+   A qualification and the place that awarded it were the same weight on one
+   wrapped line, so two degrees read as a single grey paragraph. The card is
+   called "At a glance"; it should be readable at one. */
+.glance-item {
+    display: block;
+    margin-bottom: .7rem;
+}
+.glance-item:last-child { margin-bottom: 0; }
+.glance-item-main {
+    display: block;
+    font-size: .95rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: #23262f;
+}
+.glance-item-sub {
+    display: block;
+    margin-top: .12rem;
+    font-size: .86rem;
+    line-height: 1.5;
+    color: #767c8a;
+}
+
+/* Memberships and focus areas are a set of short labels, not a sentence. As
+   chips they scan in one pass and no longer depend on middot spacing holding
+   up when the line wraps. */
+.glance-tags {
     display: flex;
+    flex-wrap: wrap;
+    gap: .38rem;
+}
+.glance-tag {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    padding: .28rem .6rem;
+    border-radius: 8px;
+    font-size: .82rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: #3f4550;
+    background: #f4f6f9;
+    border: 1px solid #e6e9ee;
 }
-.profile-img {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-}
-@media (max-width: 991.98px) {
-    .profile-container { height: clamp(300px, 62vw, 460px); }
+
+@media (max-width: 575.98px) {
+    .glance-item-main { font-size: .9rem; }
+    .glance-item-sub  { font-size: .82rem; }
+    .glance-tag       { font-size: .78rem; padding: .24rem .5rem; }
 }

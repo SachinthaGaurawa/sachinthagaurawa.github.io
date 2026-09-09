@@ -470,37 +470,11 @@
                     <h2 class="typed-robot">
                         <span id="typing"></span><span class="cursor">|</span>
                     </h2>
+                      
 
-                    <!-- What the work actually is. The hero named him and
-                         stopped; a visitor had to scroll past a fold to learn
-                         what he builds or why it is worth reading. -->
-                    <p class="hero-pitch">
-                        I build embedded systems that make vehicles safer — from
-                        <strong>patent-pending AI safety hardware</strong> to
-                        <strong>published research</strong> on autonomous driving
-                        and disaster-response robotics.
-                    </p>
 
-                    <!-- The three facts that establish standing, stated before
-                         the detail rather than eight hundred pixels below it. -->
-                    <ul class="hero-marks" aria-label="Credentials">
-                        <li class="hero-mark hero-mark-lead">
-                            <i class="fa-solid fa-certificate" aria-hidden="true"></i>Patent Pending
-                        </li>
-                        <li class="hero-mark">
-                            <i class="fa-solid fa-award" aria-hidden="true"></i>Academic Excellence Award&nbsp;2025
-                        </li>
-                        <li class="hero-mark">
-                            <i class="fa-solid fa-file-lines" aria-hidden="true"></i>2 Published Papers
-                        </li>
-                    </ul>
-
-                    <div class="hero-actions pt-4">
-                        <a href="#project" class="btn btn-primary py-3 px-4 hero-cta">
-                            <i class="fas fa-diagram-project me-2"></i>View Projects
-                        </a>
-
-                        <button id="downloadCV" class="btn btn-outline-primary py-3 px-4 download-btn">
+                    <div class="d-flex align-items-center pt-5">
+                        <button id="downloadCV" class="btn btn-primary py-3 px-4 me-3 download-btn">
                           <i class="fas fa-download me-2"></i>Download CV
                         </button>
 
@@ -592,29 +566,57 @@
                               <span class="glance-mark">2 Published Papers</span>
                           </div>
 
+                          <!-- The qualification and the institution were the
+                               same weight on one wrapped line, so the two
+                               degrees read as a paragraph. Separated, the
+                               qualification carries the weight and the
+                               institution sits under it - readable at a
+                               glance, which is what the card is called. -->
                           <div class="glance-row">
                               <span class="glance-label">Education</span>
                               <span class="glance-value">
-                                  MSc Automation &amp; Robotics — Anglia Ruskin University<br>
-                                  BEng (Hons) Electrical &amp; Electronic Engineering — University of Greater Manchester
+                                  <span class="glance-item">
+                                      <span class="glance-item-main">MSc Automation &amp; Robotics</span>
+                                      <span class="glance-item-sub">Anglia Ruskin University, United Kingdom</span>
+                                  </span>
+                                  <span class="glance-item">
+                                      <span class="glance-item-main">BEng (Hons) Electrical &amp; Electronic Engineering</span>
+                                      <span class="glance-item-sub">University of Greater Manchester, United Kingdom</span>
+                                  </span>
                               </span>
                           </div>
 
                           <div class="glance-row">
                               <span class="glance-label">Recognition</span>
                               <span class="glance-value">
-                                  Dr. Vidhya Vinod Academic Excellence Award — Best Undergraduate Project, Convocation 2025
+                                  <span class="glance-item">
+                                      <span class="glance-item-main">Dr. Vidhya Vinod Academic Excellence Award</span>
+                                      <span class="glance-item-sub">Best Undergraduate Project &middot; Convocation 2025</span>
+                                  </span>
                               </span>
                           </div>
 
                           <div class="glance-row">
                               <span class="glance-label">Professional bodies</span>
-                              <span class="glance-value">IET &nbsp;·&nbsp; IEEE &nbsp;·&nbsp; IESL &nbsp;·&nbsp; Institution of Electronics</span>
+                              <span class="glance-value">
+                                  <span class="glance-tags">
+                                      <span class="glance-tag">IET</span>
+                                      <span class="glance-tag">IEEE</span>
+                                      <span class="glance-tag">IESL</span>
+                                      <span class="glance-tag">Institution of Electronics</span>
+                                  </span>
+                              </span>
                           </div>
 
                           <div class="glance-row">
                               <span class="glance-label">Focus</span>
-                              <span class="glance-value">Embedded Systems &nbsp;·&nbsp; Robotics &nbsp;·&nbsp; AI-Driven Safety Systems</span>
+                              <span class="glance-value">
+                                  <span class="glance-tags">
+                                      <span class="glance-tag">Embedded Systems</span>
+                                      <span class="glance-tag">Robotics</span>
+                                      <span class="glance-tag">AI-Driven Safety Systems</span>
+                                  </span>
+                              </span>
                           </div>
                       </div>
                 </div>

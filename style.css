@@ -1617,3 +1617,20 @@ body.is-light .ans-figure img{
   .ans-figure img, .ans-figure figcaption{ max-width:100%; }
   .ans-figure figcaption{ font-size:.76rem; }
 }
+
+/* ===== Album card entrance =====
+   Owned here rather than delegated to AOS. The cards are created after load,
+   from the album list read out of the portfolio page, and AOS only animates
+   elements that were in the DOM when it initialised - everything it does not
+   know about keeps the opacity:0 its stylesheet applies. That left six of
+   seven albums invisible on the live site. */
+.grid .card.card-in{
+  animation: card-in .42s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes card-in{
+  from{ opacity:0; transform: scale(.965) translateY(8px); }
+  to  { opacity:1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce){
+  .grid .card.card-in{ animation: none; opacity:1; transform:none; }
+}

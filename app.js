@@ -138,53 +138,24 @@ async function expertAsk(question) {
   return j.answer;
 }
 
-/* ====== Conversational Brain ====== */
-const ChatBrain = (() => {
-  const TOPICS = { AAVSS:'AAVSS', DATASET:'Sri_Lanka_Dataset' };
-  const KEYWORDS = {
-    AAVSS: ['aavss','vehicle safety','autonomous vehicle safety','jetson','sensor fusion','fusion','lidar','radar','camera','nvidia','driver monitoring','dms','adas','can bus','v2x'],
-    DATASET: ['dataset','sri lanka','colombo','kandy','galle','annotations','segmentation','bounding box','lane','night','rain','fog','traffic signs','autonomous driving dataset']
-  };
-  const store = {
-    getTopic(){ try { return sessionStorage.getItem('chat_topic') || ''; } catch { return ''; } },
-    setTopic(t){ try { sessionStorage.setItem('chat_topic', t || ''); } catch {} },
-  };
-  function currentAlbumTopic() {
-    if (!currentAlbum) return '';
-    if (currentAlbum.id === 'aavss')  return TOPICS.AAVSS;
-    if (currentAlbum.id === 'dataset') return TOPICS.DATASET;
-    return '';
-  }
-  function detectTopic(q) {
-    const txt = (q || '').toLowerCase();
-    if (/\b(aavss)\b/.test(txt)) return TOPICS.AAVSS;
-    if (/\b(sri\s*lanka|dataset)\b/.test(txt)) return TOPICS.DATASET;
-    let a=0,d=0; KEYWORDS.AAVSS.forEach(k=>{ if (txt.includes(k)) a++; }); KEYWORDS.DATASET.forEach(k=>{ if (txt.includes(k)) d++; });
-    if (a>d) return TOPICS.AAVSS; if (d>a) return TOPICS.DATASET;
-    return currentAlbumTopic() || store.getTopic() || '';
-  }
-  function isShort(q){ return (q||'').trim().split(/\s+/).filter(Boolean).length <= 3; }
-  function buildGuardedQuestion(topic, q){
-    const style = isShort(q) ? 'Style=concise bullets, 1–5 lines max.' : 'Style=clear, structured, short paragraphs.';
-    const scope =
-      topic === TOPICS.AAVSS ? 'Topic=AAVSS. Only answer about AAVSS unless explicitly asked to compare.'
-      : topic === TOPICS.DATASET ? 'Topic=Sri Lankan Autonomous Driving Dataset. Only answer about the dataset unless explicitly asked to compare.'
-      : 'Topic=Auto-detect. Prefer single-topic answer; do not mix topics unless asked.';
-    const persona = 'Persona=Friendly expert, human tone. Be concrete and practical.';
-    return `[${scope}] [${style}] [${persona}] Q: ${q}`;
-  }
-  async function ask(q){
-    let topic = detectTopic(q);
-    if (!topic && isShort(q)) {
-      throw { type:'clarify', choices:[{id:TOPICS.AAVSS,label:'AAVSS'},{id:TOPICS.DATASET,label:'Sri Lankan Dataset'}] };
-    }
-    if (topic) store.setTopic(topic);
-    const guarded = buildGuardedQuestion(topic, q);
-    return { topic, guarded };
-  }
-  function forceTopic(topic){ store.setTopic(topic); }
-  return { ask, forceTopic, TOPICS };
-})();
+/* A "clarify - pick AAVSS or Sri Lankan Dataset" prompt used to gate every
+   short question (three words or fewer) that didn't obviously name one of
+   those two, from a two-topic router built when the gallery had exactly
+   those two albums. Every question here is already scoped to the album the
+   visitor has open - answerQuestion(q, currentAlbum) - so there was never
+   anything to clarify, and the five albums added since kept hitting this
+   picker for an ordinary "What is this?" or a short question in Sinhala.
+   It also silently swallowed those - the picker is English-only, so a short
+   Sinhala question never reached the language-aware answer path at all. */
+
+/* ====== Language stickiness ====== */
+/* Once a visitor asks in a given language, later short follow-ups in the
+   same session that don't carry their own language cue should keep getting
+   that language rather than silently reverting to English. */
+const LangStore = {
+  get(){ try { return sessionStorage.getItem('chat_lang') || ''; } catch { return ''; } },
+  set(code){ try { if (code) sessionStorage.setItem('chat_lang', code); } catch {} }
+};
 
 /* ====== DOM refs ====== */
 const grid       = $('#albumGrid');
@@ -630,7 +601,16 @@ function looksLikeRefusal(text) {
    imageBlockFor above - so it never depends on any of the three. */
 async function answerQuestion(question, album) {
   const AI = window.GalleryAI;
-  const lang = AI ? AI.detectLanguage(question) : null;
+  let lang = AI ? AI.detectLanguage(question) : null;
+  if (lang && lang.code !== 'en') {
+    LangStore.set(lang.code);
+  } else if (!lang && AI) {
+    // A short follow-up with no language cue of its own - "more?", a bare
+    // number - still gets the language the conversation is already in,
+    // instead of silently reverting to English mid-conversation.
+    const remembered = LangStore.get();
+    if (remembered) lang = AI.LANGS.find(L => L.code === remembered) || null;
+  }
   const docs = (album && album.docs) || [];
   const leadBlocks = [];
   if (IMAGE_INTENT.test(question)) {
@@ -1135,27 +1115,6 @@ function wireAskUI(){
   input.value = '';
   setTimeout(() => input.focus(), 50);
 
-  const renderClarify = (choices) => {
-    out.innerHTML = '';
-    const wrap = document.createElement('div');
-    wrap.className = 'chat-bubble enter';
-    wrap.innerHTML = `
-      <div class="topic-chip"><span class="typing-dot"></span><span>What did you mean?</span></div>
-      <div class="msg">
-        <p>Please pick a topic so I can answer precisely:</p>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem">
-          ${choices.map(c => `<button class="chip" data-id="${c.id}">${c.label}</button>`).join('')}
-        </div>
-      </div>
-    `;
-    out.appendChild(wrap);
-    wrap.querySelector('.msg').onclick = (e)=>{
-      const b=e.target.closest('button[data-id]'); if(!b) return;
-      ChatBrain.forceTopic(b.dataset.id);
-      btn.click();
-    };
-  };
-
   const ask = async () => {
     const q = (input.value || '').trim();
     if (!q) return;
@@ -1164,14 +1123,6 @@ function wireAskUI(){
     renderChat('Reading the documents…', (currentAlbum && currentAlbum.title) || 'Assistant');
 
     try {
-      let routed;
-      try {
-        routed = await ChatBrain.ask(q);
-      } catch (e) {
-        if (e?.type === 'clarify') { btn.disabled = false; renderClarify(e.choices); return; }
-        throw e;
-      }
-
       const album = currentAlbum || ALBUMS[0];
       const result = await answerQuestion(q, album);
       // The chip used to come from a hard-coded two-topic router, so every

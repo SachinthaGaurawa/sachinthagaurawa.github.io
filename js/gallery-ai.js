@@ -85,18 +85,51 @@ window.GalleryAI = (function () {
     { code: 'ar', name: 'Arabic', label: 'العربية', re: /\barabic\b|العربية/i },
     { code: 'ja', name: 'Japanese', label: '日本語', re: /\bjapanese\b|日本語/i },
     { code: 'ru', name: 'Russian', label: 'Русский', re: /\brussian\b|русск/i },
-    { code: 'pt', name: 'Portuguese', label: 'Português', re: /\b(portuguese|portugu[eê]s)\b/i }
+    { code: 'pt', name: 'Portuguese', label: 'Português', re: /\b(portuguese|portugu[eê]s)\b/i },
+    { code: 'ko', name: 'Korean', label: '한국어', re: /\bkorean\b|한국어/i }
+  ];
+
+  /* Someone writing in their own script is asking IN it, not about it - the
+     strongest signal there is, and it needs no keyword. Kana is tested before
+     the CJK ideographs, because Japanese uses both and Chinese only the
+     latter. */
+  const SCRIPTS = [
+    [/[\u0D80-\u0DFF]/, 'si'], [/[\u0B80-\u0BFF]/, 'ta'],
+    [/[\u3040-\u30FF]/, 'ja'], [/[\uAC00-\uD7AF]/, 'ko'],
+    [/[\u4E00-\u9FFF]/, 'zh'], [/[\u0900-\u097F]/, 'hi'],
+    [/[\u0600-\u06FF]/, 'ar'], [/[\u0400-\u04FF]/, 'ru']
   ];
   /* Only treat it as a language request when the sentence actually asks for a
      language, so "the Sinhala road dataset" is not mistaken for one. */
-  const WANTS_LANG = /\b(in|into|to|reply|answer|respond|translate|say|write|explain)\b|වලින්|වෙන්|කියන්න|ඕන/i;
+  const WANTS_LANG = new RegExp([
+    // English
+    '\\b(in|into|to|reply|answer|respond|translate|say|write|explain)\\b',
+    // The same request made in the language being asked for - "en français",
+    // "auf Deutsch", "por favor responde en español".
+    '\\b(en|auf|em|su|dans|nel)\\b',
+    '\\b(r[ée]pond|responde|responda|antworte|rispondi|risponda|traduce|traduis|traduza)',
+    'по-|\\bответ',
+    // Sinhala
+    'වලින්|වෙන්|කියන්න|ඕන'
+  ].join('|'), 'i');
   function detectLanguage(q) {
     const s = String(q || '');
+
+    /* A question typed in Sinhala gets a Sinhala answer. This used to sit
+       behind the keyword guard below, so "සිංහලෙන් උත්තර දෙන්න" - answer in
+       Sinhala, written in Sinhala - was not recognised as a language request
+       at all, and only the English phrasing ever worked. */
+    for (const [re, code] of SCRIPTS) {
+      if (re.test(s)) {
+        const hit = LANGS.find(L => L.code === code);
+        if (hit) return hit;
+      }
+    }
+
+    /* Written in Latin script, the sentence has to actually ask for a
+       language, so "the Sinhala road dataset" is not mistaken for one. */
     if (!WANTS_LANG.test(s)) return null;
     for (const L of LANGS) if (L.re.test(s)) return L;
-    // Written in Sinhala script at all? Answer in Sinhala.
-    if (/[඀-෿]/.test(s)) return LANGS[0];
-    if (/[஀-௿]/.test(s)) return LANGS[1];
     return null;
   }
 

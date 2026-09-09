@@ -595,6 +595,17 @@ async function answerQuestion(question, album) {
         grounded = AI.answer(question, { docs });
         if (!grounded) { await AI.loadAll(); grounded = AI.answer(question, {}); }
         context = AI.contextFor(question, grounded ? { docs } : {});
+
+        /* A question typed in Sinhala matches nothing in an English report -
+           the words simply are not there - so the model would be handed the
+           album's two-line blurb and asked to write a Sinhala answer from it.
+           Retrieve on the album's own subject instead, so a Sinhala answer is
+           still built out of the document rather than out of the summary. */
+        if (!context && lang && lang.code !== 'en') {
+          const subject = album.title + ' ' + (album.tags || []).join(' ');
+          context = AI.contextFor(subject, { docs });
+          if (!grounded) grounded = AI.answer(subject, { docs });
+        }
       } else {
         context = buildAlbumContext(album);
       }

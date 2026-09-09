@@ -591,6 +591,29 @@ function looksLikeRefusal(text) {
   return REFUSAL_RE.test(t);
 }
 
+/* The model is told "(Answer entirely in <Language>.)", but a model can
+   ignore that instruction and answer in English anyway - reported directly:
+   asked a question in Sinhala, the reply came back in plain English with no
+   indication anything was lost, unlike the honest "the assistant that
+   translates is offline, so this is quoted in English" note the grounded
+   fallback shows when the model is genuinely unreachable. Silently keeping
+   an answer that ignored the request is worse than falling through to that
+   same honest disclosure. Checkable for any language with its own script -
+   its presence in the reply is a hard, uncheatable signal the instruction
+   was followed; English and the other Latin-script languages have no such
+   marker, so those are trusted as before. */
+const SCRIPT_RANGES = {
+  si: /[඀-෿]/, ta: /[஀-௿]/, ja: /[぀-ヿ]/,
+  ko: /[가-힯]/, zh: /[一-鿿]/, hi: /[ऀ-ॿ]/,
+  ar: /[؀-ۿ]/, ru: /[Ѐ-ӿ]/
+};
+function honoredRequestedLanguage(text, lang) {
+  if (!lang) return true;
+  const re = SCRIPT_RANGES[lang.code];
+  if (!re) return true;
+  return re.test(String(text || ''));
+}
+
 /* One route for every question, best source first:
    1. passages retrieved from the project's own report,
    2. handed to the hosted model when it is reachable, so it writes prose over
@@ -665,12 +688,15 @@ async function answerQuestion(question, album) {
       ? `${question}\n\n(Answer entirely in ${lang.name}.)`
       : question;
     const modelAnswer = await aiAsk(ask, context);
-    if (modelAnswer && modelAnswer.trim() && !looksLikeRefusal(modelAnswer)) {
+    if (modelAnswer && modelAnswer.trim() && !looksLikeRefusal(modelAnswer) && honoredRequestedLanguage(modelAnswer, lang)) {
       return { blocks: leadBlocks.concat([{ type: 'text', text: modelAnswer.trim() }]),
                sources: grounded ? grounded.sources : [], via: 'model', lang };
     }
     if (modelAnswer && looksLikeRefusal(modelAnswer)) {
       console.warn('[gallery] model declined instead of answering, falling back:', modelAnswer.slice(0, 120));
+    }
+    if (modelAnswer && !looksLikeRefusal(modelAnswer) && !honoredRequestedLanguage(modelAnswer, lang)) {
+      console.warn('[gallery] model ignored the requested language, falling back:', modelAnswer.slice(0, 120));
     }
   } catch (err) {
     console.warn('[gallery] hosted model unavailable:', err && err.message);

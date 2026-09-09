@@ -500,7 +500,12 @@ const PROMPTS_BY_KIND = {
              'What hardware was it evaluated on?'],
   project:  ['What sensors does it use?', 'What hardware does it run on?',
              'How does it perform?', 'What are the limitations?',
-             'How does it compare to existing systems?']
+             'How does it compare to existing systems?'],
+  /* An album with no published document can only answer from its own card.
+     Offering "What results are reported?" there invites a question it has to
+     decline; these are the ones the card can actually answer. */
+  brief:    ['What is this project?', 'What technologies does it use?',
+             'What stage is it at?', 'Where can I read more?']
 };
 
 function renderAskSuggestions(album) {
@@ -527,7 +532,10 @@ function renderAskSuggestions(album) {
   lead.textContent = 'Ask the full document behind this project — answers cite the section and page:';
   wrap.appendChild(lead);
 
-  (PROMPTS_BY_KIND[album.kind] || PROMPTS_BY_KIND.project).forEach(q => {
+  const prompts = (album.docs && album.docs.length)
+    ? (PROMPTS_BY_KIND[album.kind] || PROMPTS_BY_KIND.project)
+    : PROMPTS_BY_KIND.brief;
+  prompts.forEach(q => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'ask-chip';
@@ -565,12 +573,25 @@ async function answerQuestion(question, album) {
 
   if (AI) {
     try {
-      // Load only what this album needs; fall back to everything for a question
-      // the album's own documents cannot answer.
-      if (docs.length) await Promise.all(docs.map(d => AI.load(d).catch(() => null)));
-      grounded = AI.answer(question, { docs });
-      if (!grounded) { await AI.loadAll(); grounded = AI.answer(question, {}); }
-      context = AI.contextFor(question, grounded ? { docs: docs.length ? docs : undefined } : {});
+      // Load only what this album needs, and widen to the rest of the corpus
+      // only for an album that HAS a document - a question its own report
+      // cannot answer is often answered by a sister paper.
+      //
+      // For an album with no document, widening is how you get a confident,
+      // well-cited answer about the wrong thing: asked what the Precision RLC
+      // Meter measures, the search happily returned flood-evacuation figures
+      // from the drone-swarm paper, because ranked retrieval always returns
+      // its best match and there was nothing better. Three of the projects are
+      // hardware builds no published paper describes, and for those the honest
+      // answer comes from the project's own text.
+      if (docs.length) {
+        await Promise.all(docs.map(d => AI.load(d).catch(() => null)));
+        grounded = AI.answer(question, { docs });
+        if (!grounded) { await AI.loadAll(); grounded = AI.answer(question, {}); }
+        context = AI.contextFor(question, grounded ? { docs } : {});
+      } else {
+        context = buildAlbumContext(album);
+      }
     } catch (err) {
       console.warn('[gallery] knowledge base unavailable:', err && err.message);
     }
@@ -1097,6 +1118,18 @@ function localAnswer(question, album) {
     const hit = ALBUMS.find(a => /patent|award|recognition/i.test(a.description + a.tags.join(' ')));
     if (hit) lines.push(hit.description);
   }
+  if (has('read more', 'document', 'report', 'paper', 'publication', 'source')) {
+    const withDocs = ALBUMS.filter(a => a.docs && a.docs.length).map(a => a.title);
+    lines.push(withDocs.length
+      ? `The documents behind this portfolio are the AAVSS report and the two research papers — open ${withDocs.slice(0, 2).join(' or ')} to ask about them directly.`
+      : 'The published documents are linked from the research section of the main page.');
+  }
+  if (has('technolog', 'tech', 'built with', 'stack', 'tools')) {
+    lines.push(`${album.title} is built with ${album.tags.join(', ')}.`);
+  }
+  if (has('stage', 'what is this', 'what does this')) {
+    lines.push(album.description);
+  }
   if (has('contact', 'email', 'reach', 'hire')) {
     lines.push('The contact form on the main page reaches Sachintha directly.');
   }
@@ -1104,8 +1137,16 @@ function localAnswer(question, album) {
   // Nothing matched a specific shape: answer from the album itself.
   if (!lines.length) lines.push(album.description);
 
-  return lines.join(' ') +
-    '\n\n(Answered from this page while the AI service is unavailable.)';
+  /* Say which of the two reasons this is: no published document exists for
+     this project, or the service that writes fuller answers is not reachable.
+     They are different facts and a visitor deserves the right one. */
+  const note = (album.docs && album.docs.length)
+    ? '(Answered from this page while the AI service is unavailable.)'
+    : '(No published report covers this project, so this comes from the project '
+      + 'summary itself. The AAVSS report and both research papers are searchable '
+      + 'in their own albums.)';
+
+  return lines.join(' ') + '\n\n' + note;
 }
 
 /* ====== AI: Smart image captions ====== */
@@ -1295,6 +1336,21 @@ function wireSemanticSearch(){
 }
 
 /* ====== Deep link ====== */
+/* A shared link such as gallery.html?album=drone-disaster-response only ever
+   opened the one album that ships in the built-in fallback list. init() read
+   the parameter immediately, but the real albums are read from the portfolio
+   page a moment later, so every other id matched nothing and was dropped in
+   silence. Opening it is therefore attempted twice: once now, for the album
+   already in hand, and again once the portfolio has been read. */
+function openFromUrl() {
+  const id = new URL(location.href).searchParams.get('album');
+  if (!id) return false;
+  if (albumView && albumView.classList.contains('active')) return true;
+  if (!findAlbum(id)) return false;
+  openAlbum(id, 0, false);
+  return true;
+}
+
 window.addEventListener('popstate', ()=>{
   const id=new URL(location.href).searchParams.get('album');
   if(id) openAlbum(id,0,false); else closeAlbum();
@@ -1317,6 +1373,7 @@ async function syncFromPortfolio() {
       ALBUMS = albums;
       renderGrid(document.getElementById('searchInput') ? document.getElementById('searchInput').value : '');
       setupChips();
+      openFromUrl();      // the album a shared link asked for exists now
       console.log(`[gallery] ${albums.length} albums synced from the portfolio page`);
     }
   } catch (err) {
@@ -1372,8 +1429,7 @@ function init(){
     });
   }
 
-  const id=new URL(location.href).searchParams.get('album');
-  if(id) openAlbum(id,0,false);
+  openFromUrl();
 
   maybeSetupSemantic().then(wireSemanticSearch);
 }

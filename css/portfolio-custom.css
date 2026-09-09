@@ -1394,3 +1394,172 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
   .glance-card .glance-marks{ gap:.32rem }
   .glance-card .glance-mark{ font-size:.7rem; padding:.3rem .52rem; white-space:normal }
 }
+
+/* ===== "Ask AI about this" =====
+   The gallery's assistant answers from the actual reports and papers, with the
+   section and page it drew from. That was reachable only through a nav link
+   called "Gallery", which tells a visitor nothing - so every project and paper
+   now carries its own door into it. Styled as a live affordance rather than a
+   third button: it reads as something that will answer you. */
+.ask-ai-link {
+    display: inline-flex;
+    /* The card content is a flex column, which stretches its children to full
+       width - the pill became a wide empty bar. */
+    align-self: flex-start;
+    width: fit-content;
+    align-items: center;
+    gap: .5rem;
+    margin-top: 1rem;
+    padding: .5rem .9rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    text-decoration: none;
+    color: var(--primary-color);
+    background: rgba(98, 68, 197, .06);
+    border: 1px solid rgba(98, 68, 197, .22);
+    transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.ask-ai-link i {
+    font-size: .9em;
+    /* The one flourish: the icon breathes, so the link reads as something
+       live. Motion is dropped entirely for anyone who asks for less of it. */
+    animation: ask-ai-pulse 2.8s ease-in-out infinite;
+}
+.ask-ai-link:hover,
+.ask-ai-link:focus-visible {
+    color: #fff;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(98, 68, 197, .28);
+}
+.ask-ai-link:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
+.ask-ai-link:hover i { animation: none; }
+
+@keyframes ask-ai-pulse {
+    0%, 100% { opacity: .75; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ask-ai-link i { animation: none; }
+    .ask-ai-link   { transition: none; }
+}
+
+/* The research card ends in a row of actions, so they should sit on one line
+   and wrap together rather than stacking at odd widths. */
+.research-card .ask-ai-link { margin-top: 0; }
+.research-content .download-research { margin-right: .5rem; }
+.research-content .download-research + .ask-ai-link { vertical-align: middle; }
+
+@media (max-width: 575.98px) {
+    .ask-ai-link { font-size: .8rem; padding: .45rem .75rem; width: 100%; justify-content: center; }
+    .research-content .download-research { width: 100%; margin: 0 0 .5rem; }
+}
+
+/* ===== Hero: pitch, credentials, actions =====
+   The hero gave a name, a typed job title and two buttons. A visitor deciding
+   in five seconds whether this person is worth reading got nothing to decide
+   on - the patent, the award and the papers were all below the fold. */
+.hero-pitch {
+    max-width: 34rem;
+    margin: 1.25rem 0 0;
+    font-size: 1.08rem;
+    line-height: 1.7;
+    color: #4a4f5c;
+}
+.hero-pitch strong { color: #23262f; font-weight: 650; }
+
+.hero-marks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 1.4rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.hero-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .42rem .78rem;
+    border-radius: 999px;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    white-space: nowrap;
+    color: #3f4550;
+    background: rgba(255, 255, 255, .72);
+    border: 1px solid #e3e6ec;
+    box-shadow: 0 1px 2px rgba(16, 20, 32, .04);
+}
+.hero-mark i { font-size: .88em; opacity: .78; }
+/* The patent is the strongest single claim on the page, so it leads in colour
+   as well as in order. */
+.hero-mark-lead {
+    color: var(--primary-color);
+    background: rgba(98, 68, 197, .08);
+    border-color: rgba(98, 68, 197, .26);
+}
+.hero-mark-lead i { opacity: 1; }
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.hero-actions .btn { margin: 0; }
+
+@media (max-width: 991.98px) {
+    .hero-pitch { font-size: 1rem; max-width: none; }
+}
+@media (max-width: 575.98px) {
+    .hero-pitch { font-size: .96rem; line-height: 1.65; margin-top: 1rem; }
+    .hero-marks { gap: .4rem; margin-top: 1.1rem; }
+    .hero-mark  { font-size: .75rem; padding: .36rem .62rem; white-space: normal; }
+    .hero-actions { gap: .5rem; }
+    .hero-actions .btn { flex: 1 1 100%; justify-content: center; }
+}
+
+/* ===== Awards: one award, centred =====
+   The single award card sat in a half-width column, leaving the right half of
+   the section blank - it read as a section someone had not finished. The card
+   is capped at 480px by design, so the column is sized to the card and the row
+   centres it: one distinction, presented as one. */
+#awards .award-card { margin-inline: auto; }
+
+/* ===== Memberships: four across, badges on one line =====
+   Four cards in a three-across grid left the fourth alone on its own row. At
+   four across the row is whole, and pushing the badge to the bottom keeps the
+   four badges aligned even when a name wraps to two lines. */
+.membership-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.membership-card .membership-badge,
+.membership-card > *:last-child { margin-top: auto; }
+
+/* ===== Hero photo: a box that is there before the photo is =====
+   The photo has no reserved space, so the hero column grew when it arrived and
+   pushed the page down - measured at CLS 0.148 for a portrait photo, inside
+   Google's "needs improvement" band, and the shift lands on the first thing a
+   visitor looks at.
+
+   The frame is sized in CSS rather than from the file, so it holds for any
+   photo Sachintha swaps in later, and the photo is fitted inside it rather
+   than cropped to it - a crop chosen without seeing the picture is how you
+   cut off someone's head. */
+.profile-container {
+    height: clamp(340px, 40vw, 560px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.profile-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+@media (max-width: 991.98px) {
+    .profile-container { height: clamp(300px, 62vw, 460px); }
+}

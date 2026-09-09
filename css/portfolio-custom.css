@@ -1394,3 +1394,137 @@ ul.nav.nav-pills > li:last-child > .nav-link.active  { border-top-right-radius: 
   .glance-card .glance-marks{ gap:.32rem }
   .glance-card .glance-mark{ font-size:.7rem; padding:.3rem .52rem; white-space:normal }
 }
+
+/* ===== "Ask AI about this" =====
+   The gallery's assistant answers from the actual reports and papers, with the
+   section and page it drew from. That was reachable only through a nav link
+   called "Gallery", which tells a visitor nothing - so every project and paper
+   now carries its own door into it. Styled as a live affordance rather than a
+   third button: it reads as something that will answer you. */
+.ask-ai-link {
+    display: inline-flex;
+    /* The card content is a flex column, which stretches its children to full
+       width - the pill became a wide empty bar. */
+    align-self: flex-start;
+    width: fit-content;
+    align-items: center;
+    gap: .5rem;
+    margin-top: 1rem;
+    padding: .5rem .9rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    text-decoration: none;
+    color: var(--primary-color);
+    background: rgba(98, 68, 197, .06);
+    border: 1px solid rgba(98, 68, 197, .22);
+    transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.ask-ai-link i {
+    font-size: .9em;
+    /* The one flourish: the icon breathes, so the link reads as something
+       live. Motion is dropped entirely for anyone who asks for less of it. */
+    animation: ask-ai-pulse 2.8s ease-in-out infinite;
+}
+.ask-ai-link:hover,
+.ask-ai-link:focus-visible {
+    color: #fff;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(98, 68, 197, .28);
+}
+.ask-ai-link:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
+.ask-ai-link:hover i { animation: none; }
+
+@keyframes ask-ai-pulse {
+    0%, 100% { opacity: .75; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ask-ai-link i { animation: none; }
+    .ask-ai-link   { transition: none; }
+}
+
+/* The research card ends in a row of actions, so they should sit on one line
+   and wrap together rather than stacking at odd widths. */
+.research-card .ask-ai-link { margin-top: 0; }
+.research-content .download-research { margin-right: .5rem; }
+.research-content .download-research + .ask-ai-link { vertical-align: middle; }
+
+@media (max-width: 575.98px) {
+    .ask-ai-link { font-size: .8rem; padding: .45rem .75rem; width: 100%; justify-content: center; }
+    .research-content .download-research { width: 100%; margin: 0 0 .5rem; }
+}
+
+/* ===== Awards: one award, centred =====
+   The single award card sat in a half-width column, leaving the right half of
+   the section blank - it read as a section someone had not finished. The card
+   is capped at 480px by design, so the column is sized to the card and the row
+   centres it: one distinction, presented as one. */
+#awards .award-card { margin-inline: auto; }
+
+/* ===== Memberships: four across, badges on one line =====
+   Four cards in a three-across grid left the fourth alone on its own row. At
+   four across the row is whole, and pushing the badge to the bottom keeps the
+   four badges aligned even when a name wraps to two lines. */
+.membership-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.membership-card .membership-badge,
+.membership-card > *:last-child { margin-top: auto; }
+
+
+/* ===== At a glance — refinements =====
+   A qualification and the place that awarded it were the same weight on one
+   wrapped line, so two degrees read as a single grey paragraph. The card is
+   called "At a glance"; it should be readable at one. */
+.glance-item {
+    display: block;
+    margin-bottom: .7rem;
+}
+.glance-item:last-child { margin-bottom: 0; }
+.glance-item-main {
+    display: block;
+    font-size: .95rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: #23262f;
+}
+.glance-item-sub {
+    display: block;
+    margin-top: .12rem;
+    font-size: .86rem;
+    line-height: 1.5;
+    color: #767c8a;
+}
+
+/* Memberships and focus areas are a set of short labels, not a sentence. As
+   chips they scan in one pass and no longer depend on middot spacing holding
+   up when the line wraps. */
+.glance-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .38rem;
+}
+.glance-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: .28rem .6rem;
+    border-radius: 8px;
+    font-size: .82rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: #3f4550;
+    background: #f4f6f9;
+    border: 1px solid #e6e9ee;
+}
+
+@media (max-width: 575.98px) {
+    .glance-item-main { font-size: .9rem; }
+    .glance-item-sub  { font-size: .82rem; }
+    .glance-tag       { font-size: .78rem; padding: .24rem .5rem; }
+}

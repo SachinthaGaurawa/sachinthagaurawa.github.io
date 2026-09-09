@@ -86,17 +86,31 @@ window.GallerySync = (function () {
       .filter(r => r.hits > 0)
       .sort((a, b) => b.score - a.score);
 
-    if (!ranked.length) return docs.map(d => d.id);   // rather all than none
-    /* One clear winner, or the two closest - never every document, which would
+    /* A document has to be clearly about this card to be attached to it.
+       Measured over the real cards, a true match scores above 3 on 19-20
+       distinct terms, while every false one sits under 1.4 on 8 or fewer -
+       "Precision RLC Meter" matched the drone-swarm paper on a single word.
+       Below the bar the album gets no document, which is the honest answer
+       for a project no published paper describes: the assistant then works
+       from the card's own text and, for a question the card cannot answer,
+       from the corpus at large, naming whichever document it quotes. */
+    const strong = ranked.filter(r => r.hits >= 6 && r.score >= 2);
+    if (!strong.length) return [];
+    /* The clear winner, or the two closest - never every document, which would
        make one album pull down the whole corpus for a question about it. */
-    const keep = ranked.filter((r, i) => i === 0 || r.score >= ranked[0].score * 0.6);
+    const keep = strong.filter((r, i) => i === 0 || r.score >= strong[0].score * 0.6);
     return keep.slice(0, 2).map(r => r.id);
   }
 
   function parseProjects(doc) {
     const out = [];
     doc.querySelectorAll('.portfolio-item .project-card').forEach(card => {
-      const title = text(card, '.project-header h4') || text(card, 'h4');
+      // The two flagship cards title themselves with an h4 inside a header
+      // block; the three smaller ones use a bare h5. Reading only h4 silently
+      // dropped three of the five projects from the gallery.
+      const title = text(card, '.project-header h4') ||
+                    text(card, '.project-content h4, .project-content h5, .project-content h3') ||
+                    text(card, 'h3, h4, h5');
       if (!title) return;
       const img = card.querySelector('.project-image img');
       const large = card.querySelector('.project-links a[href]');
@@ -106,7 +120,10 @@ window.GallerySync = (function () {
       const tags = [...card.querySelectorAll('.tech-tag, .project-tech span, .project-badge')]
         .map(t => t.textContent.trim()).filter(Boolean);
       out.push({
-        id: slug(title), kind: 'project', title, cover,
+        // The card carries its own album id, so the "Ask AI" link printed on
+        // it and the album it opens are the same string, read from one place.
+        id: card.getAttribute('data-album') || slug(title),
+        kind: 'project', title, cover,
         description: desc || (badge ? badge + '.' : ''),
         tags: tags.length ? tags : ['project'],
         media: cover ? [{ type: 'image', src: cover }] : []

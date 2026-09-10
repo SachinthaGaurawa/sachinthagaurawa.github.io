@@ -102,8 +102,20 @@ async function postJSON(url, payload, { retries=0 } = {}) {
 }
 
 // Album-scoped Q&A
-async function aiAsk(question, context) {
-  const j = await postJSON(`${API_BASE}/api/ai`, { mode: 'ask', question, context });
+/* The language goes over as its own field, not only as a sentence appended to
+   the question. The backend routes on it - a question in Sinhala is sent to
+   the provider that can actually answer in Sinhala first, and its reply is
+   checked for that script before it comes back - which a line buried in the
+   prompt text could never make it do. */
+async function aiAsk(question, context, lang) {
+  const payload = { mode: 'ask', question, context };
+  if (lang) payload.lang = { code: lang.code, name: lang.name };
+  const j = await postJSON(`${API_BASE}/api/ai`, payload);
+  // langHonored:false means every provider ignored the language. Treat it as
+  // "no usable answer in that language" so the caller falls back to the
+  // grounded passages and their honest note, rather than showing English as
+  // though it were the answer that was asked for.
+  if (j && j.langHonored === false) return '';
   return j?.answer || '';
 }
 
@@ -687,7 +699,7 @@ async function answerQuestion(question, album) {
     const ask = lang
       ? `${question}\n\n(Answer entirely in ${lang.name}.)`
       : question;
-    const modelAnswer = await aiAsk(ask, context);
+    const modelAnswer = await aiAsk(ask, context, lang);
     if (modelAnswer && modelAnswer.trim() && !looksLikeRefusal(modelAnswer) && honoredRequestedLanguage(modelAnswer, lang)) {
       return { blocks: leadBlocks.concat([{ type: 'text', text: modelAnswer.trim() }]),
                sources: grounded ? grounded.sources : [], via: 'model', lang };

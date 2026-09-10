@@ -92,7 +92,14 @@ async function postJSON(url, payload, { retries=0 } = {}) {
       });
       let j = {};
       try { j = await r.json(); } catch {}
-      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+      if (!r.ok) {
+        // The backend's 502 body already names which provider failed and why
+        // (api/ai.js's `failures`/`tried`) - surfacing it here is the only way
+        // to see it, since postJSON's own callers only ever see the message
+        // below, and the backend does not log this anywhere itself either.
+        if (j?.failures || j?.tried) console.warn('[gallery] AI backend failures:', j.failures, 'tried:', j.tried);
+        throw new Error(j?.error || `HTTP ${r.status}`);
+      }
       return j;
     } catch (err) {
       if (attempt < retries) { await sleep(400 * (attempt + 1)); continue; }

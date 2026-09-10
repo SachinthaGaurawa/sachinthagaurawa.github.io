@@ -718,6 +718,95 @@ async function answerQuestion(question, album) {
   return { blocks: leadBlocks.concat([{ type: 'text', text: localAnswer(question, album) }]), sources: [], via: 'page', lang };
 }
 
+/* A source document often lists distinct points as "Heading • explanation"
+   run together with no line breaks - readable on the page it was written for,
+   a wall of text once quoted here. Recognize that shape and split it into
+   heading/body pairs, so it can render as a real list instead of one run-on
+   paragraph. Returns null when the text has no bullet marks at all, so
+   ordinary prose is left alone.
+
+   Splitting on the bullet alone isn't enough: the text between two bullets is
+   "body of the point before it, then the heading of the point after it" with
+   no marker of where one ends and the other begins - except that a heading is
+   short and a body ends in sentence punctuation. So the heading is read off
+   the *end* of that span, anchored to a ". "/"! "/"? " boundary (or the very
+   start of the span) rather than to a raw character count, which is what a
+   document's own sentence breaks actually give us for free. When no such
+   boundary exists (a stretch of text with no punctuation at all), the split
+   is left unresolved rather than guessed at a fixed length, and that text is
+   folded into the neighboring point instead of being dropped or mislabeled. */
+function splitBulletItems(raw) {
+  if (!/[•●▪]/.test(raw)) return null;
+  const parts = raw.split(/\s*[•●▪]\s*/);
+  if (parts.length < 2) return null;
+
+  const HEAD_TAIL = /(?:^|[.!?]\s+)([A-Z][^.!?\n]{1,55})$/;
+  const lead = parts[0].trim().match(/([A-Z][^.!?\n]{1,55})$/);
+  let pendingHeading = lead ? lead[1].trim() : null;
+  const leadBody = lead ? parts[0].slice(0, parts[0].length - lead[0].length).trim() : parts[0].trim();
+
+  const items = [];
+  if (leadBody) items.push({ heading: null, body: leadBody });
+
+  for (let i = 1; i < parts.length; i++) {
+    const chunk = parts[i];
+    let body = chunk.trim(), nextHeading = null;
+    if (i < parts.length - 1) {
+      const m = chunk.match(HEAD_TAIL);
+      if (m) {
+        body = chunk.slice(0, chunk.length - m[0].length).trim();
+        nextHeading = m[1].trim();
+      }
+    }
+    if (body) {
+      if (pendingHeading) items.push({ heading: pendingHeading, body });
+      else if (items.length) items[items.length - 1].body += ' ' + body;
+      else items.push({ heading: null, body });
+    }
+    pendingHeading = nextHeading;
+  }
+  return items.length ? items : null;
+}
+
+/* Render one text block as either list items (appended to the answer's
+   running <ul>, so several such blocks in a row form one list rather than
+   many one-item lists) or, for ordinary prose, one <p> per blank-line-
+   separated paragraph so a multi-point answer still reads in chunks. */
+function renderTextBlock(text, container) {
+  const raw = String(text == null ? '' : text).trim();
+  if (!raw) return;
+
+  const items = splitBulletItems(raw);
+  if (items) {
+    let ul = container.lastElementChild;
+    if (!ul || ul.tagName !== 'UL' || !ul.classList.contains('ans-list')) {
+      ul = document.createElement('ul');
+      ul.className = 'ans-list';
+      container.appendChild(ul);
+    }
+    items.forEach(it => {
+      const li = document.createElement('li');
+      if (it.heading) {
+        const strong = document.createElement('strong');
+        strong.textContent = it.heading;
+        li.appendChild(strong);
+        li.appendChild(document.createTextNode(' — ' + it.body));
+      } else {
+        li.textContent = it.body;
+      }
+      ul.appendChild(li);
+    });
+    return;
+  }
+
+  raw.split(/\n{2,}/).map(s => s.trim()).filter(Boolean).forEach(par => {
+    const p = document.createElement('p');
+    p.className = 'ans-text';
+    p.textContent = par;
+    container.appendChild(p);
+  });
+}
+
 // Citations, and a way to read the source document.
 /* Render an answer's blocks. A measurement table becomes a table, a figure
    reference becomes a labelled figure, and citations name the document, the
@@ -749,10 +838,7 @@ function renderAnswer(result, album, out) {
       return;
     }
     if (b.type === 'text') {
-      const p = document.createElement('p');
-      p.className = 'ans-text';
-      p.textContent = b.text;
-      out.appendChild(p);
+      renderTextBlock(b.text, out);
       return;
     }
     if (b.type === 'table') {
@@ -1237,7 +1323,7 @@ function localAnswer(question, album) {
       + 'summary itself. The AAVSS report and both research papers are searchable '
       + 'in their own albums.)';
 
-  return lines.join(' ') + '\n\n' + note;
+  return lines.join('\n\n') + '\n\n' + note;
 }
 
 /* ====== AI: Smart image captions ====== */

@@ -386,8 +386,11 @@ window.GalleryAI = (function () {
     const blocks = [];
     const sentences = bestSentences(hits, question, 4);
     if (sentences.length) {
-      const body = sentences.join(' ');
-      blocks.push({ type: 'text', text: /^[a-z]/.test(body) ? '…' + body : body });
+      // One block per point rather than one joined string, so the page can
+      // render each as its own paragraph or list item instead of a run-on.
+      sentences.forEach((s, i) => {
+        blocks.push({ type: 'text', text: (i === 0 && /^[a-z]/.test(s)) ? '…' + s : s });
+      });
     } else {
       blocks.push({ type: 'text', text: hits[0].c.t });
     }

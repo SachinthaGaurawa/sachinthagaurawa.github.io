@@ -1557,6 +1557,10 @@ body.is-light .ask-chip:hover{ background:rgba(0,0,0,.08); }
 
 /* ===== Answer blocks: prose, measurement tables, figure references ===== */
 .ans-text{ margin:0 0 .6rem; line-height:1.62; }
+.ans-list{ margin:0 0 .7rem; padding-left:1.1rem; }
+.ans-list li{ margin:0 0 .48rem; line-height:1.56; }
+.ans-list li:last-child{ margin-bottom:0; }
+.ans-list li strong{ font-weight:700; }
 .ans-table-wrap{ margin:.7rem 0; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .ans-table-cap{ font-size:.78rem; opacity:.72; margin-bottom:.35rem; line-height:1.4; }
 .ans-table{ border-collapse:collapse; font-size:.84rem; min-width:min(100%,320px); }

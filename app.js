@@ -741,14 +741,19 @@ async function answerQuestion(question, album) {
    document's own sentence breaks actually give us for free. When no such
    boundary exists (a stretch of text with no punctuation at all), the split
    is left unresolved rather than guessed at a fixed length, and that text is
-   folded into the neighboring point instead of being dropped or mislabeled. */
+   folded into the neighboring point instead of being dropped or mislabeled.
+
+   The heading itself is read off by length and punctuation only, never by
+   capitalization - a capital-letter check would silently do nothing for
+   Sinhala, Tamil, or any other script with no upper/lower case distinction,
+   which is exactly the kind of answer this needs to work for too. */
 function splitBulletItems(raw) {
   if (!/[•●▪]/.test(raw)) return null;
   const parts = raw.split(/\s*[•●▪]\s*/);
   if (parts.length < 2) return null;
 
-  const HEAD_TAIL = /(?:^|[.!?]\s+)([A-Z][^.!?\n]{1,55})$/;
-  const lead = parts[0].trim().match(/([A-Z][^.!?\n]{1,55})$/);
+  const HEAD_TAIL = /(?:^|[.!?]\s+)(\S[^.!?\n]{0,55})$/;
+  const lead = parts[0].trim().match(/(\S[^.!?\n]{0,55})$/);
   let pendingHeading = lead ? lead[1].trim() : null;
   const leadBody = lead ? parts[0].slice(0, parts[0].length - lead[0].length).trim() : parts[0].trim();
 
@@ -806,12 +811,39 @@ function renderTextBlock(text, container) {
     return;
   }
 
-  raw.split(/\n{2,}/).map(s => s.trim()).filter(Boolean).forEach(par => {
+  let paras = raw.split(/\n{2,}/).map(s => s.trim()).filter(Boolean);
+  if (paras.length === 1) {
+    // No blank lines either - a model composing free-form prose does not
+    // reliably add them, in any language. Group the block's own sentences
+    // into short paragraphs instead, so a long answer still reads in
+    // chunks. This keys only off sentence-ending punctuation, not
+    // capitalization or script, so it works the same for an English, a
+    // Sinhala or a Tamil answer alike.
+    const grouped = groupSentences(paras[0]);
+    if (grouped.length > 1) paras = grouped;
+  }
+
+  paras.forEach(par => {
     const p = document.createElement('p');
     p.className = 'ans-text';
     p.textContent = par;
     container.appendChild(p);
   });
+}
+
+/* Split prose into paragraphs of a couple of sentences each. Text with two
+   sentences or fewer is left as one paragraph - there is nothing to gain by
+   splitting it, and a single short answer should not end up as one-sentence
+   paragraphs. */
+function groupSentences(text, perPara) {
+  perPara = perPara || 2;
+  const sentences = text.split(/(?<=[.!?])\s+(?=\S)/).map(s => s.trim()).filter(Boolean);
+  if (sentences.length <= 2) return [text];
+  const groups = [];
+  for (let i = 0; i < sentences.length; i += perPara) {
+    groups.push(sentences.slice(i, i + perPara).join(' '));
+  }
+  return groups;
 }
 
 // Citations, and a way to read the source document.
